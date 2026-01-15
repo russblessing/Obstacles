@@ -44,8 +44,6 @@ keywords:
 date: last-modified
 bibliography: bibliography.bib
 format:
-  html:
-    toc: true
   elsevier-pdf:
     keep-tex: true
     journal:
