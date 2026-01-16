@@ -183,9 +183,9 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
-  pdftitle={Short Paper},
-  pdfauthor={Alice Anonymous; Bob Security; Cat Memes; Derek Zoolander},
-  pdfkeywords={keyword1, keyword2},
+  pdftitle={Identifying Obstacles to Equitable Flood Mitigation Funding},
+  pdfauthor={Julian Plough; Miyuki Hino; Antonia Sebastian; Helena Garcia; Russell Blessing},
+  pdfkeywords={Flood mitigation, Climate resilience},
   colorlinks=true,
   linkcolor={blue},
   filecolor={Maroon},
@@ -198,49 +198,63 @@
 \begin{document}
 
 \begin{frontmatter}
-\title{Short Paper \\\large{A Short Subtitle} }
-\author[1]{Alice Anonymous%
-\corref{cor1}%
-\fnref{fn1}}
- \ead{alice@example.com} 
-\author[2]{Bob Security%
-%
-\fnref{fn2}}
- \ead{bob@example.com} 
-\author[2]{Cat Memes%
-%
-\fnref{fn3}}
- \ead{cat@example.com} 
-\author[]{Derek Zoolander%
+\title{Identifying Obstacles to Equitable Flood Mitigation Funding}
+\author[2]{Julian Plough%
 %
 }
- \ead{derek@example.com} 
 
-\affiliation[1]{organization={Some Institute of Technology, Department
-Name},addressline={Street Address},city={City},postcode={Postal
-Code},postcodesep={}}
-\affiliation[2]{organization={Another University, Department
-Name},addressline={Street Address},city={City},postcode={Postal
-Code},postcodesep={}}
+\author[1,2]{Miyuki Hino%
+%
+}
+
+\author[1,2]{Antonia Sebastian%
+%
+}
+
+\author[2]{Helena Garcia%
+%
+}
+
+\author[1]{Russell Blessing%
+%
+}
+
+
+\affiliation[1]{organization={University of North Carolina at Chapel
+Hill, Department of Earth, Marine and Environmental
+Sciences},city={Chapel
+Hill},country={USA},countrysep={,},postcodesep={}}
+\affiliation[2]{organization={University of North Carolina, Environment,
+Ecology and Energy Program},city={Chapel
+Hill},country={USA},countrysep={,},postcodesep={}}
 
 \cortext[cor1]{Corresponding author}
-\fntext[fn1]{This is the first author footnote.}
-\fntext[fn2]{Another author footnote, this is a very long footnote and
-it should be a really long footnote. But this footnote is not yet
-sufficiently long enough to make two lines of footnote text.}
-\fntext[fn3]{Yet another author footnote.}
+
+
+
+
 
         
 \begin{abstract}
-This is the abstract. Lorem ipsum dolor sit amet, consectetur adipiscing
-elit. Vestibulum augue turpis, dictum non malesuada a, volutpat eget
-velit. Nam placerat turpis purus, eu tristique ex tincidunt et. Mauris
-sed augue eget turpis ultrices tincidunt. Sed et mi in leo porta
-egestas. Aliquam non laoreet velit. Nunc quis ex vitae eros aliquet
-auctor nec ac libero. Duis laoreet sapien eu mi luctus, in bibendum leo
-molestie. Sed hendrerit diam diam, ac dapibus nisl volutpat vitae.
-Aliquam bibendum varius libero, eu efficitur justo rutrum at. Sed at
-tempus elit.
+As damages from floods, fires, and other climate extremes mount, public
+investments in risk reduction have also grown. In the US, public
+spending on risk reduction efforts totaled over \$X in 2024, and demand
+for such funds regularly exceeds available funding. Evidence suggests
+that in this competitive landscape for funding, urban and whiter
+communities have fared better at obtaining funding but are often
+spending it on more disadvantaged neighborhoods within them. However,
+the reasons for this trend are unclear: complexities in the application
+process, cost-benefit analysis requirements, and flood damage may all
+play a role in driving the uneven funding patterns. Here, using a novel
+dataset tracking properties from flood exposure to application to
+funding receipt, we identify how each hurdle in the mitigation process
+shapes the properties that ultimately benefit. Our findings suggest that
+application for federal flood mitigation assistance serves as a pinch
+point where homeowners in less-white neighborhoods and more affordable
+homes relative to their neighbors apply. This trend deepens for those
+who ultimately receive funding, while higher flood-exposure has minimal
+correlation, implying that funding may not reach all who need it or may
+be interested.
 \end{abstract}
 
 
@@ -248,24 +262,69 @@ tempus elit.
 
 
 \begin{keyword}
-    keyword1 \sep 
-    keyword2
+    Flood mitigation \sep 
+    Climate resilience
 \end{keyword}
 \end{frontmatter}
     
 
-Please make sure that your manuscript follows the guidelines in the
-Guide for Authors of the relevant journal. It is not necessary to
-typeset your manuscript in exactly the same way as an article, unless
-you are submitting to a camera-ready copy (CRC) journal.
+\subsection{Introduction}\label{introduction}
 
-For detailed instructions regarding the elsevier article class, see
-\url{https://www.elsevier.com/authors/policies-and-guidelines/latex-instructions}
+Impacts from natural hazards in the United States are increasing in cost
+and frequency \citep{noaa2024}. While demand and funding for climate
+resilience measures has grown significantly in recent years, there are
+widespread concerns about access to those funds and the extent to which
+they perpetuate or mitigate existing inequities
+\citep{fema2023, junod2021, miller2023}. Evidence suggests that while
+vulnerable groups including mobile home residents and racial minorities
+are over-represented in flood hotspots, wealthier and whiter communities
+have received more federal funds to adapt to and recover from floods
+\citep{elliot2020, tate2021}. Several explanations for this disparity
+have been proposed, including federal cost-benefit analysis
+requirements, limited local government capacity to apply for grants, and
+lack of household awareness about funding opportunities. However,
+research to pinpoint funding obstacles has been constrained by only
+observing who ultimately receives funding, not who is eligible or who
+applies for funding.As a result, it is unclear what the barriers are,
+and therefore which policy or procedural changes would most improve
+access to climate resilience funds.
+
+Here, we combine novel datasets on over two decades of flood exposure
+and applications for federal funding in North Carolina to examine the
+full process: who floods, who applies for mitigation funding, and who
+receives it. This flooded-to-funded pipeline (Fig. 1) is critical for
+understanding the process by which households experience the Hazard
+Mitigation Assistance (HMA) process. By analyzing the household- and
+neighborhood-level characteristics at each stage of the process, we
+provide new evidence regarding how the application process shapes the
+distribution of funding. For example, if households located in
+marginalized communities rarely submit applications, the primary issue
+may be lack of awareness or resources for applying. In contrast, if they
+are applying but not being funded, the selection criteria may be driving
+disproportionate access.
+
+Our initial results demonstrate that the application stage is crucial
+for understanding the mitigation funding pipeline. 67.5\% of properties
+that experience flooding are eligible for public assistance, and 61\%
+are in communities where local governments have submitted applications
+for assistance. However, only 2.3\% of all flooded properties apply and
+\textasciitilde1\% are funded. Properties that apply are significantly
+more likely to have experienced more than one flooding event over the
+period. Compared to the population of flooded properties, properties
+that apply for funding have lower property values (58th percentile to
+42nd percentile) and come from census block groups with a lower share of
+white residents (74\% to 64\%). Among properties receiving funding,
+property values and the share of white residents in the block group are
+even lower. These results are consistent with some nationwide findings,
+where wealthier and whiter communities have been linked to mitigation
+access {[}mach2019; Elliot 2020{]}, however we add fidelity in that
+applying and funded properties are also lower-in-value than their
+flooded neighbors. Notably, these trends emerge at the newly-visible
+application stage and widen for those ultimately funded. We are the
+first to demonstrate that unpacking and examining this stage is pivotal
+to understanding potential obstacles to equitable mitigation funding.
 
 \section{Bibliography styles}\label{bibliography-styles}
-
-Here are two sample references: \citet{Feynman1963118}
-\citet{Dirac1953888}.
 
 With this template using elsevier class, natbib will be used. Three
 bibliographic style ﬁles (*.bst) are provided and their use controled by
@@ -336,7 +395,7 @@ Figure~\ref{fig-meaningless} is generated using an R chunk.
 \end{figure}%
 
 \textsubscript{Source:
-\href{https://russblessing.github.io/Obstacles/index-preview.html}{Article
+\href{https://russblessing.github.io/Obstacles/index.qmd.html}{Article
 Notebook}}
 
 \section{Tables coming from R}\label{tables-coming-from-r}
@@ -372,7 +431,7 @@ Valiant & 18.1 & 6 & 225 & 105 \\
 \end{longtable}
 
 \textsubscript{Source:
-\href{https://russblessing.github.io/Obstacles/index-preview.html}{Article
+\href{https://russblessing.github.io/Obstacles/index.qmd.html}{Article
 Notebook}}
 
 
