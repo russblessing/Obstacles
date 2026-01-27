@@ -1,0 +1,95 @@
+> install.packages("units", type="source", repos="https://cloud.r-project.org")
+Installing package into ‘/nas/longleaf/home/rbless/R/4.5/library’
+(as ‘lib’ is unspecified)
+trying URL 'https://cloud.r-project.org/src/contrib/units_1.0-0.tar.gz'
+Content type 'application/x-gzip' length 367179 bytes (358 KB)
+==================================================
+downloaded 358 KB
+
+* installing *source* package ‘units’ ...
+** this is package ‘units’ version ‘1.0-0’
+** package ‘units’ successfully unpacked and MD5 sums checked
+** using staged installation
+configure: units: 1.0-0
+checking for default C++ standard... 201703
+checking whether the C++ compiler works... yes
+checking for C++ compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether the compiler supports GNU C++... yes
+checking whether g++ -std=gnu++17 accepts -g... yes
+checking for g++ -std=gnu++17 option to enable C++11 features... none needed
+checking for stdio.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for strings.h... yes
+checking for sys/stat.h... yes
+checking for sys/types.h... yes
+checking for unistd.h... yes
+checking for _Bool... no
+checking for stdbool.h that conforms to C99 or later... yes
+checking for error_at_line... yes
+checking for gcc... gcc
+checking whether the compiler supports GNU C... yes
+checking whether gcc accepts -g... yes
+checking for gcc option to enable C11 features... none needed
+checking for brew... no
+checking for XML_ParserCreate in -lexpat... no
+checking for udunits2.h... no
+checking for udunits2/udunits2.h... yes
+checking for ut_read_xml in -ludunits2... yes
+configure: creating ./config.status
+config.status: creating src/Makevars
+** libs
+using C++ compiler: ‘g++ (GCC) 12.2.0’
+g++ -std=gnu++17 -I"/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/include" -DNDEBUG -DUDUNITS2_DIR=1  -I'/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include' -I/usr/local/include    -fpic  -g -O2   -c RcppExports.cpp -o RcppExports.o
+In file included from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/as.h:25,
+                 from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/RcppCommon.h:170,
+                 from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp.h:27,
+                 from RcppExports.cpp:4:
+/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/internal/Exporter.h: In instantiation of ‘Rcpp::traits::Exporter<T>::Exporter(SEXP) [with T = std::basic_string_view<char>; SEXP = SEXPREC*]’:
+/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/as.h:87:41:   required from ‘T Rcpp::internal::as(SEXP, Rcpp::traits::r_type_generic_tag) [with T = std::basic_string_view<char>; SEXP = SEXPREC*]’
+/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/as.h:152:31:   required from ‘T Rcpp::as(SEXP) [with T = std::basic_string_view<char>; SEXP = SEXPREC*]’
+/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/InputParameter.h:34:43:   required from ‘Rcpp::InputParameter<T>::operator T() [with T = std::basic_string_view<char>]’
+RcppExports.cpp:21:44:   required from here
+/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/internal/Exporter.h:31:42: error: no matching function for call to ‘std::basic_string_view<char>::basic_string_view(SEXPREC*&)’
+   31 |                     Exporter( SEXP x ) : t(x){}
+      |                                          ^~~~
+In file included from /nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/bits/basic_string.h:47,
+                 from /nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string:53,
+                 from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/macros/macros.h:25,
+                 from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/Rcpp/r/headers.h:68,
+                 from /nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/library/Rcpp/include/RcppCommon.h:30:
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:139:7: note: candidate: ‘constexpr std::basic_string_view<_CharT, _Traits>::basic_string_view(const _CharT*, size_type) [with _CharT = char; _Traits = std::char_traits<char>; size_type = long unsigned int]’
+  139 |       basic_string_view(const _CharT* __str, size_type __len) noexcept
+      |       ^~~~~~~~~~~~~~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:139:7: note:   candidate expects 2 arguments, 1 provided
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:133:7: note: candidate: ‘constexpr std::basic_string_view<_CharT, _Traits>::basic_string_view(const _CharT*) [with _CharT = char; _Traits = std::char_traits<char>]’
+  133 |       basic_string_view(const _CharT* __str) noexcept
+      |       ^~~~~~~~~~~~~~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:133:39: note:   no known conversion for argument 1 from ‘SEXP’ {aka ‘SEXPREC*’} to ‘const char*’
+  133 |       basic_string_view(const _CharT* __str) noexcept
+      |                         ~~~~~~~~~~~~~~^~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:130:17: note: candidate: ‘constexpr std::basic_string_view<_CharT, _Traits>::basic_string_view(const std::basic_string_view<_CharT, _Traits>&) [with _CharT = char; _Traits = std::char_traits<char>]’
+  130 |       constexpr basic_string_view(const basic_string_view&) noexcept = default;
+      |                 ^~~~~~~~~~~~~~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:130:35: note:   no known conversion for argument 1 from ‘SEXP’ {aka ‘SEXPREC*’} to ‘const std::basic_string_view<char>&’
+  130 |       constexpr basic_string_view(const basic_string_view&) noexcept = default;
+      |                                   ^~~~~~~~~~~~~~~~~~~~~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:126:7: note: candidate: ‘constexpr std::basic_string_view<_CharT, _Traits>::basic_string_view() [with _CharT = char; _Traits = std::char_traits<char>]’
+  126 |       basic_string_view() noexcept
+      |       ^~~~~~~~~~~~~~~~~
+/nas/longleaf/rhel9/apps/gcc/12.2.0/include/c++/12.2.0/string_view:126:7: note:   candidate expects 0 arguments, 1 provided
+make: *** [/nas/longleaf/rhel9/apps/r/4.5.0/lib64/R/etc/Makeconf:211: RcppExports.o] Error 1
+ERROR: compilation failed for package ‘units’
+* removing ‘/nas/longleaf/home/rbless/R/4.5/library/units’
+
+The downloaded source packages are in
+	‘/work/appscr/r/rbless/Rtmp2l3sPJ/downloaded_packages’
+Warning message:
+In install.packages("units", type = "source", repos = "https://cloud.r-project.org") :
+  installation of package ‘units’ had non-zero exit status
+> 
