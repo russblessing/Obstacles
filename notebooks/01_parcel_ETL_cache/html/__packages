@@ -1,0 +1,6 @@
+sf
+dplyr
+ggplot2
+knitr
+DBI
+RSQLite

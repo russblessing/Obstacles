@@ -17,7 +17,7 @@ execute:
 
 ## Load libraries
 
-```{r}
+```{r load-libraries}
 library(sf)
 library(dplyr)
 library(ggplot2)
@@ -55,6 +55,8 @@ theme_minimal() +
 labs(title = "Study Area Boundary")
 
 ```
+
+
 ## Identify parcel CRS
 ```{r parcel-crs, eval=FALSE}
 get_layer_crs <- function(gpkg_path, layer) {
@@ -110,14 +112,13 @@ dup_counts <- bind_rows(dup_counts)
 dup_counts
 
 dup_path <- file.path(out_dir, "dup_counts_cntyfips_parno.rds")
-saveRDS(dup_counts, dup_path)
+saveRDS(dup_counts_cntyfips_parno, dup_path)
 
 ```
 
 
 ```{r}
-dup_counts <- readRDS(dup_path)
-
+dup_counts <- readRDS("/proj/mhinolab/users/rbless/data/Obstacles_Output/dup_counts_cntyfips_parno.rds")
 
 
 ```
