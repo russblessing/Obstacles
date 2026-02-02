@@ -1,0 +1,55 @@
+---
+title: "NC CoreLogic → Study Area Trim + QA/QC (R)"
+author: "Workflow Conversion from Python to R"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+params:
+  corelogic_csv: "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/Core Logic NC/statedf_NC_2024-11-05.csv"
+  parcels_gpkg: "/proj/mhinolab/projects/obstacles2/MH_Output/parcels_study_area.gpkg"
+  output_csv: "/proj/mhinolab/projects/obstacles2/MH_Output/cl.csv"
+---
+
+
+```{r setup}
+library(readr)
+library(dplyr)
+library(sf)
+library(stringr)
+library(tidyr)
+
+corelogic_csv <- params$corelogic_csv
+parcels_gpkg  <- params$parcels_gpkg
+output_csv    <- params$output_csv
+
+stopifnot(file.exists(corelogic_csv))
+stopifnot(file.exists(parcels_gpkg))
+
+cat("CoreLogic CSV:", corelogic_csv, "\n")
+cat("Parcels GPKG :", parcels_gpkg, "\n")
+cat("Output CSV  :", output_csv, "\n")
+```
+
+```{r load-data}
+cl <- readr::read_csv(
+  corelogic_csv,
+  col_types = cols(.default = col_character())
+)
+
+parcels <- sf::st_read(parcels_gpkg, quiet = TRUE)
+
+stopifnot("cntyfips" %in% names(parcels))
+stopifnot("FIPS CODE" %in% names(cl))
+
+cat("CoreLogic rows:", nrow(cl), " cols:", ncol(cl), "\n")
+cat("Parcels rows  :", nrow(parcels), " cols:", ncol(parcels), "\n")
+
+```
+

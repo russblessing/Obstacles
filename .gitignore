@@ -1,6 +1,84 @@
-.Rproj.user
+# -------------------------
+# R / RStudio
+# -------------------------
 .Rhistory
 .RData
 .Ruserdata
+.Rproj.user/
 
-/.quarto/
+# -------------------------
+# renv
+# -------------------------
+renv/library/
+renv/staging/
+renv/python/
+!renv.lock
+!renv/activate.R
+!renv/settings.json
+
+# -------------------------
+# Quarto
+# -------------------------
+.quarto/
+.quarto-cache/
+_site/
+_site_libs/
+
+# knitr / Quarto chunk outputs
+*_cache/
+*_files/
+
+# -------------------------
+# Rendered outputs (optional)
+# -------------------------
+*.html
+*.pdf
+*.docx
+*.tex
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+*.out
+*.err
+
+# -------------------------
+# Spatial / Large data outputs
+# -------------------------
+*.gpkg
+*.shp
+*.dbf
+*.shx
+*.prj
+*.cpg
+*.sqlite
+
+# binary data
+*.rds
+*.rda
+*.parquet
+*.feather
+
+# tables
+output/
+data_output/
+
+# -------------------------
+# OS junk
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Package tarballs / install logs
+# -------------------------
+*.tar.gz
+*_install.log
+
+# -------------------------
+# Python (if any tools)
+# -------------------------
+__pycache__/
+*.pyc
+
