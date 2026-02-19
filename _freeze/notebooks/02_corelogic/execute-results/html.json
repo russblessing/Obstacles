@@ -1,0 +1,15 @@
+{
+  "hash": "83d1023d008a6ecc99173151d76f61e2",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"NC CoreLogic → Study Area Trim + QA/QC (R)\"\nauthor: \"Workflow Conversion from Python to R\"\nformat:\n  html:\n    toc: true\n    toc-depth: 3\n    code-fold: true\n    code-summary: \"Show / hide code\"\nexecute:\n  echo: true\n  warning: false\n  message: false\nparams:\n  corelogic_csv: \"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/Core Logic NC/statedf_NC_2024-11-05.csv\"\n  parcels_gpkg: \"/proj/mhinolab/projects/obstacles2/MH_Output/parcels_study_area.gpkg\"\n  output_csv: \"/proj/mhinolab/projects/obstacles2/MH_Output/cl.csv\"\n---\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(readr)\nlibrary(dplyr)\nlibrary(sf)\nlibrary(stringr)\nlibrary(tidyr)\n\ncorelogic_csv <- params$corelogic_csv\nparcels_gpkg  <- params$parcels_gpkg\noutput_csv    <- params$output_csv\n\nstopifnot(file.exists(corelogic_csv))\nstopifnot(file.exists(parcels_gpkg))\n\ncat(\"CoreLogic CSV:\", corelogic_csv, \"\\n\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nCoreLogic CSV: /proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/Core Logic NC/statedf_NC_2024-11-05.csv \n```\n\n\n:::\n\n```{.r .cell-code}\ncat(\"Parcels GPKG :\", parcels_gpkg, \"\\n\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nParcels GPKG : /proj/mhinolab/projects/obstacles2/MH_Output/parcels_study_area.gpkg \n```\n\n\n:::\n\n```{.r .cell-code}\ncat(\"Output CSV  :\", output_csv, \"\\n\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nOutput CSV  : /proj/mhinolab/projects/obstacles2/MH_Output/cl.csv \n```\n\n\n:::\n:::\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\ncl <- readr::read_csv(\n  corelogic_csv,\n  col_types = cols(.default = col_character())\n)\n\nparcels <- sf::st_read(parcels_gpkg, quiet = TRUE)\n\nstopifnot(\"cntyfips\" %in% names(parcels))\nstopifnot(\"FIPS CODE\" %in% names(cl))\n\ncat(\"CoreLogic rows:\", nrow(cl), \" cols:\", ncol(cl), \"\\n\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nCoreLogic rows: 5614526  cols: 232 \n```\n\n\n:::\n\n```{.r .cell-code}\ncat(\"Parcels rows  :\", nrow(parcels), \" cols:\", ncol(parcels), \"\\n\")\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nParcels rows  : 4180148  cols: 16 \n```\n\n\n:::\n:::\n\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,11 +1,11 @@
 project:
-  type: manuscript
+  type: website
   resources:
     - bibliography.bib
+    - notebooks/*.qmd
 
 manuscript:
   article: index.qmd
-  notebooks: []
 
 format:
   html:
