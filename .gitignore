@@ -42,6 +42,7 @@ _site_libs/
 *.log
 *.out
 *.err
+*.sh
 
 # -------------------------
 # Spatial / Large data outputs
@@ -84,3 +85,5 @@ __pycache__/
 
 
 /.quarto/
+
+**/*.quarto_ipynb

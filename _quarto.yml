@@ -1,5 +1,5 @@
 project:
-  type: website
+  type: manuscript
   resources:
     - bibliography.bib
     - notebooks/*.qmd
