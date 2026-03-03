@@ -23,6 +23,7 @@ library(dplyr)
 library(ggplot2)
 library(DBI)
 library(RSQLite)
+library(DT)
 ```
 
 ## Point to directories and data
@@ -214,11 +215,62 @@ if (!file.exists(dup_path)) {
   message("Loaded existing: ", dup_path)
 }
 
-dup_counts
+```
 
+```{r dupes-table}
+dup_counts <- readRDS(dup_path) |>
+  dplyr::filter(!is.na(parno), nzchar(parno))  # drop null/blank parno
+
+dup_keys <- dup_counts |> 
+  dplyr::distinct(cntyfips, parno)
+
+sql <- sprintf('SELECT cntyfips, parno, siteadd, scity, szip FROM "%s"', out_layer)
+
+parcel_addrs <- sf::st_read(out_gpkg, query = sql, quiet = TRUE) |>
+  sf::st_drop_geometry() |>
+  dplyr::semi_join(dup_keys, by = c("cntyfips", "parno")) |>
+  dplyr::slice_head(n = 1, by = c(cntyfips, parno))  # one address row per parcel
+
+dupes_full <- dup_counts |>
+  dplyr::left_join(parcel_addrs, by = c("cntyfips", "parno")) |>
+  dplyr::mutate(
+    full_addr = paste(
+      tidyr::replace_na(siteadd, ""),
+      tidyr::replace_na(scity, ""),
+      "NC",
+      tidyr::replace_na(szip, "")
+    ),
+    maps_url = paste0(
+      "https://www.google.com/maps/search/?api=1&query=",
+      utils::URLencode(full_addr, reserved = TRUE)
+    ),
+    maps_link = paste0('<a href="', maps_url, '" target="_blank">Map</a>')
+  ) |>
+  dplyr::select(cntyfips, parno, n, siteadd, scity, szip, maps_link)
+
+save(dupes_full, file = file.path(out_dir, "duplicate_parcels_study_area.rdata"))
+```
+
+```{r dupes-table-display}
+dupes_full <- readRDS(file.path(out_dir, "duplicate_parcels_study_area.rdata"))
+
+datatable(
+  dupes_full,
+  escape = FALSE,
+  filter = "top",
+  options = list(pageLength = 25, scrollX = TRUE),
+  caption = "Duplicate parcels (by cntyfips + parno) in study area"
+)
 ```
 
 
-
-
-
+```{r dupes-distribution}
+dupes_full |>
+  dplyr::count(n, name = "num_parcels") |>
+  dplyr::arrange(dplyr::desc(n)) |>
+  datatable(
+    colnames = c("Duplicate Count (n)", "Number of Parcels"),
+    caption = "Distribution of duplicate counts",
+    options = list(pageLength = 25)
+  )
+```
