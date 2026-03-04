@@ -20,6 +20,8 @@ library(dplyr)
 library(sf)
 library(stringr)
 library(tidyr)
+library(ggplot2)
+library(gt)
 
 corelogic_csv <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/Core Logic NC/statedf_NC_2024-11-05.csv"
 parcels_gpkg  <- "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg"
@@ -86,4 +88,113 @@ cl_trim <- cl_trim |>
 
 # Save
 readr::write_csv(cl_trim, output_csv)
+```
+
+
+```{r read-corelogic-trim}
+cl_trim <- readr::read_csv("/proj/mhinolab/users/rbless/data/Obstacles_Output/cl.csv",
+                           col_types = cols(.default = col_character()))
+```
+
+
+```{r reclassify}
+numeric_cols <- c(
+  "TOTAL VALUE CALCULATED", "LAND VALUE CALCULATED", "IMPROVEMENT VALUE CALCULATED",
+  "ASSESSED TOTAL VALUE", "ASSESSED LAND VALUE", "ASSESSED IMPROVEMENT VALUE",
+  "MARKET TOTAL VALUE", "MARKET LAND VALUE", "MARKET IMPROVEMENT VALUE",
+  "ACRES", "PARCEL LEVEL LATITUDE", "PARCEL LEVEL LONGITUDE"
+)
+
+integer_cols <- c(
+  "APN SEQUENCE NUMBER", "PROPERTY INDICATOR CODE", "cl_index"
+)
+
+year_cols <- c("YEAR BUILT", "EFFECTIVE YEAR BUILT")
+
+factor_cols <- c(
+  "LAND USE CODE", "COUNTY USE DESCRIPTION", "STATE USE DESCRIPTION",
+  "ZONING CODE DESCRIPTION", "PROPERTY INDICATOR CODE", "FIPS CODE"
+)
+
+cl_trim <- cl_trim |>
+  mutate(
+    across(all_of(numeric_cols), as.numeric),
+    across(all_of(year_cols),    ~ suppressWarnings(as.integer(.))),
+    across(all_of(integer_cols), ~ suppressWarnings(as.integer(.))),
+    across(all_of(factor_cols),  as.factor)
+  )
+```
+
+```{r missingness-analysis}
+
+missing_tbl <- cl_trim |>
+  summarise(across(everything(), ~ mean(is.na(.)) * 100)) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "pct_missing") |>
+  arrange(desc(pct_missing))
+
+missing_tbl
+```
+
+
+```{r histograms}
+hist_vars <- c(
+  "TOTAL VALUE CALCULATED",
+  "ASSESSED TOTAL VALUE",
+  "MARKET TOTAL VALUE",
+  "YEAR BUILT",
+  "EFFECTIVE YEAR BUILT"
+)
+
+value_vars <- c("TOTAL VALUE CALCULATED", "ASSESSED TOTAL VALUE", "MARKET TOTAL VALUE")
+year_vars  <- c("YEAR BUILT", "EFFECTIVE YEAR BUILT")
+
+
+cl_trim |>
+  select(all_of(hist_vars)) |>
+  mutate(across(everything(), as.numeric)) |>
+  mutate(across(all_of(value_vars), ~ if_else(. < 1000, NA_real_, log1p(.)))) |>
+  mutate(across(all_of(year_vars),  ~ if_else(. < 1890, NA_real_, .))) |>
+  pivot_longer(everything(), names_to = "variable", values_to = "value") |>
+  filter(!is.na(value)) |>
+  ggplot(aes(x = value)) +
+  geom_histogram(bins = 50) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = NULL, y = "Count")
+```
+
+
+```{r table-hist-vars}
+cl_trim |>
+  select(all_of(hist_vars)) |>
+  mutate(across(everything(), as.numeric)) |>
+  summarise(across(everything(), list(
+    min    = ~ min(.,    na.rm = TRUE),
+    median = ~ median(., na.rm = TRUE),
+    mean   = ~ mean(.,   na.rm = TRUE),
+    max    = ~ max(.,    na.rm = TRUE)
+  ))) |>
+  pivot_longer(everything(),
+               names_to  = c("variable", ".value"),
+               names_sep = "_(?=[^_]+$)") |>
+  arrange(variable) |>
+  gt() |>
+  tab_header(title = "Summary Statistics for Selected Variables") |>
+  fmt_number(
+    columns = c(min, median, mean, max),
+    rows    = variable %in% value_vars,
+    decimals = 0
+  ) |>
+  fmt_number(
+    columns = c(min, median, mean, max),
+    rows    = variable %in% year_vars,
+    decimals = 1,
+    use_seps = FALSE
+  ) |>
+  cols_label(
+    variable = "Variable",
+    min      = "Min",
+    median   = "Median",
+    mean     = "Mean",
+    max      = "Max"
+  )
 ```
