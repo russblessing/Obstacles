@@ -36,6 +36,8 @@ cat("Output CSV  :", output_csv, "\n")
 ```
 
 ```{r load-data}
+#| eval: false
+
 # Read all columns as character to preserve leading zeros in FIPS codes and other IDs
 cl <- readr::read_csv(
   corelogic_csv,
@@ -55,6 +57,8 @@ cat("Parcels rows  :", nrow(parcels), " cols:", ncol(parcels), "\n")
 ```
 
 ```{r trim-and-save}
+#| eval: false
+
 # Build the county FIPS list from parcels, prefixed with "37" (NC state code)
 cntyfips_list <- parcels |>
   sf::st_drop_geometry() |>
@@ -126,7 +130,6 @@ cl_trim <- cl_trim |>
 ```
 
 ```{r missingness-analysis}
-
 missing_tbl <- cl_trim |>
   summarise(across(everything(), ~ mean(is.na(.)) * 100)) |>
   pivot_longer(everything(), names_to = "variable", values_to = "pct_missing") |>
