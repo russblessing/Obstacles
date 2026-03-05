@@ -257,7 +257,7 @@ save(dupes_full, file = file.path(out_dir, "duplicate_parcels_study_area.rdata")
 ```
 
 ```{r dupes-table-display}
-dupes_full <- readRDS(file.path(out_dir, "duplicate_parcels_study_area.rdata"))
+load(file.path(out_dir, "duplicate_parcels_study_area.rdata"))
 
 datatable(
   dupes_full,
