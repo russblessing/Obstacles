@@ -24,7 +24,7 @@ library(ggplot2)
 library(gt)
 
 corelogic_csv <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/Core Logic NC/statedf_NC_2024-11-05.csv"
-parcels_gpkg  <- "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg"
+parcels_gpkg <- "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg"
 output_csv    <- "/proj/mhinolab/users/rbless/data/Obstacles_Output/cl.csv"
 
 stopifnot(file.exists(corelogic_csv))
