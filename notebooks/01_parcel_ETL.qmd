@@ -78,6 +78,8 @@ labs(title = "Study Area Boundary")
 
 
 ## Identify parcel CRS
+
+EPSG = 2264 (NAD83 / North Carolina (ftUS))
 ```{r parcel-crs, eval=FALSE}
 # get_layer_crs <- function(gpkg_path, layer) {
 #   sql <- sprintf('SELECT * FROM "%s" LIMIT 0', layer)
@@ -102,12 +104,29 @@ cols_keep <- c(geom_col, cols_keep_attr)
 ```
 
 ## Parcels Attributes to Keep
-- cntyfips: The county FIPS code 3-digit
-- parno: The local parcel number for the parcel record
-- altparno: Alternative or local parcel number.
-- nparno: the local parcel number with the state and county FIPS added to the beginning of the local parcel number. 
-- siteadd: the full site address as a single field
-- sunit: 
+| Variable | Description |
+|----------|-------------|
+| `cntyfips` | County FIPS code (3-digit) |
+| `parno` | Local parcel number |
+| `altparno` | Alternate/local parcel number |
+| `nparno` | National parcel number (state-county FIPS prefix + local parcel number) |
+| `siteadd` | Full site address |
+| `sunit` | Site address unit/suite/apartment number |
+| `scity` | Site address city |
+| `szip` | Site address zip code |
+| `mailadd` | Full mailing address |
+| `ownname` | Full owner name (primary surface owner) |
+| `ownfrst` | Owner first name |
+| `ownlast` | Owner last name |
+| `parval` | Total parcel value (`improvval` + `landval`), in dollars |
+| `parusedesc` | Tax parcel use description (e.g., residential, commercial, agriculture) |
+| `improvval` | Value of improvements on the parcel, in dollars |
+| `landval` | Value of land on the parcel, in dollars |
+| `structyear` | Year built of the primary building |
+| `struct` | Structure indicator: Y = yes, N = no, U = unknown |
+| `multistruc` | Multiple structures indicator: Y = yes, N = no, U = unknown |
+| `structno` | Number of structures on the parcel |
+
 
 ```{r counties}
 
@@ -126,8 +145,6 @@ cntys <- dbGetQuery(con, sql)$cntyfips
 dbDisconnect(con)
 
 cntys <- cntys[!is.na(cntys) & nzchar(cntys)]
-length(cntys)
-head(cntys)
 
 ```
 
@@ -222,6 +239,8 @@ if (!file.exists(dup_path)) {
 
 ```
 
+
+## Duplicate Parcels in Study Area
 ```{r dupes-table}
 dup_counts <- readRDS(dup_path) |>
   dplyr::filter(!is.na(parno), nzchar(parno))  # drop null/blank parno
@@ -263,10 +282,21 @@ datatable(
   dupes_full,
   escape = FALSE,
   filter = "top",
-  options = list(pageLength = 25, scrollX = TRUE),
+  options = list(pageLength = 10, scrollX = TRUE),
   caption = "Duplicate parcels (by cntyfips + parno) in study area"
 )
 ```
+
+
+```{r parcel-counts}
+#| echo: false
+
+n_parcels <- st_layers(out_gpkg)$features[1]
+n_dupes   <- nrow(dupes_full)
+```
+
+The study area contains `r format(n_parcels, big.mark = ",")` total parcels, of which `r format(n_dupes, big.mark = ",")` contain duplicates.
+
 
 
 ```{r dupes-distribution}
@@ -276,6 +306,6 @@ dupes_full |>
   datatable(
     colnames = c("Duplicate Count (n)", "Number of Parcels"),
     caption = "Distribution of duplicate counts",
-    options = list(pageLength = 25)
+    options = list(pageLength = 10)
   )
 ```
