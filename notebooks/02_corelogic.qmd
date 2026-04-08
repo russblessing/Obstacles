@@ -1,5 +1,8 @@
+
+
+
 ---
-title: "NC CoreLogic → Study Area Trim + QA/QC (R)"
+title: "a Trim + QA/QC"
 author: "Russell Blessing"
 format:
   html:
@@ -128,6 +131,9 @@ cl_trim <- cl_trim |>
     across(all_of(factor_cols),  as.factor)
   )
 ```
+
+
+The trimmed CoreLogic dataset contains `r scales::comma(nrow(cl_trim))` property records across `r n_distinct(cl_trim[["FIPS CODE"]])` counties in the study area.
 
 ```{r missingness-analysis}
 cl_trim |>
