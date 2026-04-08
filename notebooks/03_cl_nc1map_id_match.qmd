@@ -1,5 +1,5 @@
 ---
-title: "NC Corelogic and Parcel Matcing"
+title: "Step 3: NC CoreLogic and Parcel Matching"
 author: "Russell Blessing"
 format:
   html:
