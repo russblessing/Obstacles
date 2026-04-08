@@ -19,15 +19,16 @@ execute:
 This notebook replicates and extends the parcel–CoreLogic string matching approach from the prior analysis. The previous code generated **3,237,387 string-matched records** and noted that there is no single straightforward join between the OneMap parcel data and CoreLogic — matching required county-by-county inspection and manipulation of parcel ID strings (e.g., adding/removing hyphens, padding or trimming leading zeros) before merging.
 
 
-```{r setup}
-# Libraries
+```{r libraries}
 library(sf)
 library(dplyr)
 library(readr)
 library(stringr)
 library(purrr)
 library(gt)
+```
 
+```{r setup}
 # Read data
 nc1 <- st_read("/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg", quiet = TRUE) |>
   st_drop_geometry() |>
@@ -215,6 +216,9 @@ stats_df <- readr::read_csv(
   )
 
 total_matched   <- sum(stats_df$matched, na.rm = TRUE)
+total_parcels   <- sum(stats_df$total_before_merge, na.rm = TRUE)
+total_unmatched <- total_parcels - total_matched
+pct_unmatched   <- (total_unmatched / total_parcels) * 100
 prior_benchmark <- 3237387L
 diff_from_prior <- total_matched - prior_benchmark
 zero_parcel     <- stats_df |> filter(total_before_merge == 0)
@@ -229,6 +233,8 @@ This run produced **`r scales::comma(total_matched)`** matched records, compared
 `r nrow(zero_parcel)` counties (`r paste(zero_parcel$FIPS, collapse = ", ")`) had no parcels in the OneMap data and therefore produced no matches. This reflects a data gap in the parcel source rather than a matching failure, and these counties are carried forward in `remaining_all` for follow-up.
 
 ```{r table-results}
+library(gt)
+
 tibble::tibble(
   Group = c(rep("This Run", 4), rep("Comparison to Prior Analysis", 2)),
   Metric = c(
