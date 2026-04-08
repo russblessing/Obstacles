@@ -1,5 +1,5 @@
 ---
-title: "NC CoreLogic → Study Area Trim + QA/QC (R)"
+title: "Step 2: CoreLogic Trim + QA/QC"
 author: "Russell Blessing"
 format:
   html:

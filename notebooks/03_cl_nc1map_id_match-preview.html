@@ -7,7 +7,7 @@
 
     <meta name="author" content="Russell Blessing">
 
-    <title>NC Corelogic and Parcel Matcing</title>
+    <title>Step 3: NC CoreLogic and Parcel Matching</title>
     <style>
       code{white-space: pre-wrap;}
       span.smallcaps{font-variant: small-caps;}
@@ -19,6 +19,41 @@
         width: 0.8em;
         margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
         vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      html { -webkit-text-size-adjust: 100%; }
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
       }
     </style>
 
@@ -137,7 +172,7 @@
     <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
       
       <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
-      <h6><i class="bi bi-journal-code"></i> NC Corelogic and Parcel Matcing</h6>
+      <h6><i class="bi bi-journal-code"></i> Step 3: NC CoreLogic and Parcel Matching</h6>
 
             <a href="../notebooks/03_cl_nc1map_id_match.qmd" class="btn btn-primary quarto-download-embed" download="03_cl_nc1map_id_match.qmd">Download Source</a>
           </div>
@@ -145,7 +180,7 @@
      <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">NC Corelogic and Parcel Matcing</h1>
+      <h1 class="title">Step 3: NC CoreLogic and Parcel Matching</h1>
           </div>
 
     
@@ -175,13 +210,1020 @@
     </div>  </div>
 </header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
 <div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#results-and-qaqc-notes" id="toc-results-and-qaqc-notes" class="nav-link active" data-scroll-target="#results-and-qaqc-notes">Results and QA/QC Notes</a></li>
+  <li><a href="#summary-of-matching-results" id="toc-summary-of-matching-results" class="nav-link" data-scroll-target="#summary-of-matching-results">Summary of Matching Results</a></li>
+  </ul>
+</nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
 <main class="content quarto-banner-title-block" id="quarto-document-content">      
 
-     
+       <section id="results-and-qaqc-notes" class="level2">
+<h2 class="anchored" data-anchor-id="results-and-qaqc-notes">Results and QA/QC Notes</h2>
+<p>This notebook replicates and extends the parcel–CoreLogic string matching approach from the prior analysis. The previous code generated <strong>3,237,387 string-matched records</strong> and noted that there is no single straightforward join between the OneMap parcel data and CoreLogic — matching required county-by-county inspection and manipulation of parcel ID strings (e.g., adding/removing hyphens, padding or trimming leading zeros) before merging.</p>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Linking to GEOS 3.12.0, GDAL 3.11.0, PROJ 9.2.1; sf_use_s2() is TRUE</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read data</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>nc1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg"</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cntyfips =</span> <span class="fu">paste0</span>(<span class="st">"37"</span>, cntyfips))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output/cl.csv"</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper: strip non-alphanumeric characters</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>strip_alnum <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="fu">str_replace_all</span>(x, <span class="st">"[^a-zA-Z0-9]"</span>, <span class="st">""</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Core matching function for a single county</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>match_county <span class="ot">&lt;-</span> <span class="cf">function</span>(fips, nc1, cl, nc_key, cl_key,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">nc_transform =</span> <span class="cn">NULL</span>, <span class="at">cl_transform =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter datasets to target county and strip non-alphanumeric characters from keys</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  nc_fips <span class="ot">&lt;-</span> nc1 <span class="sc">|&gt;</span> <span class="fu">filter</span>(cntyfips <span class="sc">==</span> fips) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(nc_key), strip_alnum))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  cl_fips <span class="ot">&lt;-</span> cl  <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">FIPS CODE</span><span class="st">`</span> <span class="sc">==</span> fips) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(cl_key), strip_alnum))</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Apply optional transformations to datasets</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(nc_transform)) nc_fips <span class="ot">&lt;-</span> <span class="fu">nc_transform</span>(nc_fips)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(cl_transform)) cl_fips <span class="ot">&lt;-</span> <span class="fu">cl_transform</span>(cl_fips)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Store count before merging for match rate calculation</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  total_before_merge <span class="ot">&lt;-</span> <span class="fu">nrow</span>(nc_fips)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Join datasets on specified keys, allowing many-to-many relationships</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="fu">left_join</span>(nc_fips, cl_fips, <span class="at">by =</span> <span class="fu">setNames</span>(cl_key, nc_key),</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                      <span class="at">relationship =</span> <span class="st">"many-to-many"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count parcels with duplicate matches</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  n_duplicates <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">duplicated</span>(.data[[nc_key]]) <span class="sc">|</span> <span class="fu">duplicated</span>(.data[[nc_key]], <span class="at">fromLast =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(.data[[nc_key]]) <span class="sc">|&gt;</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>()</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep only first occurrence of each parcel and remove unmatched records</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(.data[[nc_key]], <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(.data[[nc_key]]))</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate match statistics</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  n_matched <span class="ot">&lt;-</span> <span class="fu">nrow</span>(joined)</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  pct_matched <span class="ot">&lt;-</span> <span class="cf">if</span> (total_before_merge <span class="sc">&gt;</span> <span class="dv">0</span>) (n_matched <span class="sc">/</span> total_before_merge) <span class="sc">*</span> <span class="dv">100</span> <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return summary statistics and matched data</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">stats =</span> <span class="fu">tibble</span>(</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">FIPS =</span> fips,</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">total_before_merge =</span> total_before_merge,</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">matched =</span> n_matched,</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">pct_matched =</span> pct_matched,</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">duplicates =</span> n_duplicates</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> joined</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># County configurations: list of lists with fips, nc_key, cl_key, and optional transforms</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>county_configs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 28 common FIPS: parno vs APN (PARCEL NUMBER UNFORMATTED)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37005"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37133"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37093"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37097"</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37025"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37167"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37117"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37041"</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37053"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37029"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37139"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37015"</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37195"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37181"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37191"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37105"</span>),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37033"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37123"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37031"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37153"</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37037"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37009"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37135"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37019"</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37179"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37049"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37017"</span>), <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37151"</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Unique cases</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37177"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37059"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37127"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37073"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37131"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37083"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37069"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37091"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37143"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37145"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37155"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37187"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37027"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37157"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37197"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37129"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37067"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37057"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>),</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37003"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37189"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>),</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37047"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37101"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37193"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37183"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37063"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37071"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37109"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37137"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37013"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37001"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37103"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37159"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>),</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37141"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>),</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37165"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>,</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_pad</span>(<span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span>, <span class="dv">11</span>, <span class="at">pad =</span> <span class="st">"0"</span>))),</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37035"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>,</span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_sub</span>(<span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">5</span>))),</span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37081"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>,</span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">parno =</span> <span class="fu">str_sub</span>(parno, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">4</span>))),</span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37085"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ORIGINAL APN"</span>,</span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">parno =</span> <span class="fu">str_sub</span>(parno, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">4</span>))),</span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37147"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>,</span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df,</span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">ALTERNATE PARCEL ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_sub</span>(<span class="st">`</span><span class="at">ALTERNATE PARCEL ID</span><span class="st">`</span>, <span class="dv">1</span>, <span class="dv">5</span>),</span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_pad</span>(<span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span>, <span class="dv">5</span>, <span class="at">pad =</span> <span class="st">"0"</span>),</span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">ALTERNATE PARCEL ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">`</span><span class="at">ALTERNATE PARCEL ID</span><span class="st">`</span>, <span class="st">`</span><span class="at">APN (PARCEL NUMBER UNFORMATTED)</span><span class="st">`</span>))),</span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37065"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_sub</span>(<span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">3</span>))),</span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37011"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_sub</span>(<span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span>, <span class="dv">2</span>, <span class="sc">-</span><span class="dv">6</span>))),</span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>  <span class="co"># nparno cases (strip leading 5 chars after alnum clean)</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37077"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>,</span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>))),</span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37007"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>)),</span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>       <span class="at">cl_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_sub</span>(<span class="st">`</span><span class="at">ONLINE FORMATTED PARCEL ID</span><span class="st">`</span>, <span class="dv">1</span>, <span class="sc">-</span><span class="dv">3</span>))),</span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37023"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>,</span>
+<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>))),</span>
+<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37125"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>))),</span>
+<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37169"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>))),</span>
+<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37171"</span>, <span class="at">nc_key =</span> <span class="st">"nparno"</span>,    <span class="at">cl_key =</span> <span class="st">"ONLINE FORMATTED PARCEL ID"</span>,</span>
+<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a>       <span class="at">nc_transform =</span> <span class="cf">function</span>(df) <span class="fu">mutate</span>(df, <span class="at">nparno =</span> <span class="fu">str_sub</span>(nparno, <span class="dv">6</span>)))</span>
+<span id="cb10-76"><a href="#cb10-76" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-77"><a href="#cb10-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-78"><a href="#cb10-78" aria-hidden="true" tabindex="-1"></a><span class="co"># Fill defaults for common cases</span></span>
+<span id="cb10-79"><a href="#cb10-79" aria-hidden="true" tabindex="-1"></a>county_configs <span class="ot">&lt;-</span> <span class="fu">map</span>(county_configs, <span class="cf">function</span>(cfg) {</span>
+<span id="cb10-80"><a href="#cb10-80" aria-hidden="true" tabindex="-1"></a>  cfg<span class="sc">$</span>nc_key        <span class="ot">&lt;-</span> cfg<span class="sc">$</span>nc_key        <span class="sc">%||%</span> <span class="st">"parno"</span></span>
+<span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a>  cfg<span class="sc">$</span>cl_key        <span class="ot">&lt;-</span> cfg<span class="sc">$</span>cl_key        <span class="sc">%||%</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span></span>
+<span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>  cfg<span class="sc">$</span>nc_transform  <span class="ot">&lt;-</span> cfg<span class="sc">$</span>nc_transform  <span class="sc">%||%</span> <span class="cn">NULL</span></span>
+<span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a>  cfg<span class="sc">$</span>cl_transform  <span class="ot">&lt;-</span> cfg<span class="sc">$</span>cl_transform  <span class="sc">%||%</span> <span class="cn">NULL</span></span>
+<span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a>  cfg</span>
+<span id="cb10-85"><a href="#cb10-85" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>stats_list <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, <span class="fu">length</span>(county_configs))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>out_file <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_stringmatch.csv"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove output file if it exists so we can append fresh</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(out_file)) <span class="fu">file.remove</span>(out_file)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(county_configs)) {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  cfg <span class="ot">&lt;-</span> county_configs[[i]]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> <span class="fu">match_county</span>(cfg<span class="sc">$</span>fips, nc1, cl, cfg<span class="sc">$</span>nc_key, cfg<span class="sc">$</span>cl_key,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                         cfg<span class="sc">$</span>nc_transform, cfg<span class="sc">$</span>cl_transform)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Append data to CSV incrementally (write header only on first iteration)</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(result<span class="sc">$</span>data, out_file, <span class="at">append =</span> (i <span class="sc">&gt;</span> <span class="dv">1</span>))</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Store stats</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  stats_list[[i]] <span class="ot">&lt;-</span> result<span class="sc">$</span>stats</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gc</span>()  <span class="co"># release memory after each county</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Done: "</span>, cfg<span class="sc">$</span>fips, <span class="st">" ("</span>, i, <span class="st">"/"</span>, <span class="fu">length</span>(county_configs), <span class="st">")"</span>)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37005 (1/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37133 (2/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37093 (3/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37097 (4/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37025 (5/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37167 (6/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37117 (7/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37041 (8/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37053 (9/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37029 (10/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37139 (11/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37015 (12/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37195 (13/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37181 (14/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37191 (15/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37105 (16/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37033 (17/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37123 (18/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37031 (19/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37153 (20/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37037 (21/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37009 (22/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37135 (23/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37019 (24/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37179 (25/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37049 (26/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37017 (27/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37151 (28/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37177 (29/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37059 (30/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37127 (31/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37073 (32/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37131 (33/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37083 (34/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37069 (35/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37091 (36/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37143 (37/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37145 (38/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37155 (39/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37187 (40/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37027 (41/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37157 (42/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37197 (43/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37129 (44/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37067 (45/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37057 (46/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37003 (47/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37189 (48/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37047 (49/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37101 (50/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37193 (51/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37183 (52/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37063 (53/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37071 (54/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37109 (55/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37137 (56/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37013 (57/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37001 (58/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37103 (59/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37159 (60/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37141 (61/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37165 (62/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37035 (63/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37081 (64/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37085 (65/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37147 (66/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37065 (67/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37011 (68/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37077 (69/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37007 (70/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37023 (71/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37125 (72/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37169 (73/74)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Done: 37171 (74/74)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>stats_df <span class="ot">&lt;-</span> <span class="fu">list_rbind</span>(stats_list)</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(stats_df, <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_str_stats.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb89"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb89-1"><a href="#cb89-1" aria-hidden="true" tabindex="-1"></a>stats_df <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(</span>
+<span id="cb89-2"><a href="#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_str_stats.csv"</span>,</span>
+<span id="cb89-3"><a href="#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb89-4"><a href="#cb89-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb89-5"><a href="#cb89-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb89-6"><a href="#cb89-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_before_merge =</span> <span class="fu">as.integer</span>(total_before_merge),</span>
+<span id="cb89-7"><a href="#cb89-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">matched            =</span> <span class="fu">as.integer</span>(matched),</span>
+<span id="cb89-8"><a href="#cb89-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct_matched        =</span> <span class="fu">as.numeric</span>(pct_matched),</span>
+<span id="cb89-9"><a href="#cb89-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">duplicates         =</span> <span class="fu">as.integer</span>(duplicates)</span>
+<span id="cb89-10"><a href="#cb89-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb89-11"><a href="#cb89-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb89-12"><a href="#cb89-12" aria-hidden="true" tabindex="-1"></a>total_matched   <span class="ot">&lt;-</span> <span class="fu">sum</span>(stats_df<span class="sc">$</span>matched, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb89-13"><a href="#cb89-13" aria-hidden="true" tabindex="-1"></a>total_parcels   <span class="ot">&lt;-</span> <span class="fu">sum</span>(stats_df<span class="sc">$</span>total_before_merge, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb89-14"><a href="#cb89-14" aria-hidden="true" tabindex="-1"></a>total_unmatched <span class="ot">&lt;-</span> total_parcels <span class="sc">-</span> total_matched</span>
+<span id="cb89-15"><a href="#cb89-15" aria-hidden="true" tabindex="-1"></a>pct_unmatched   <span class="ot">&lt;-</span> (total_unmatched <span class="sc">/</span> total_parcels) <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb89-16"><a href="#cb89-16" aria-hidden="true" tabindex="-1"></a>prior_benchmark <span class="ot">&lt;-</span> <span class="dv">3237387</span>L</span>
+<span id="cb89-17"><a href="#cb89-17" aria-hidden="true" tabindex="-1"></a>diff_from_prior <span class="ot">&lt;-</span> total_matched <span class="sc">-</span> prior_benchmark</span>
+<span id="cb89-18"><a href="#cb89-18" aria-hidden="true" tabindex="-1"></a>zero_parcel     <span class="ot">&lt;-</span> stats_df <span class="sc">|&gt;</span> <span class="fu">filter</span>(total_before_merge <span class="sc">==</span> <span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+</section>
+<section id="summary-of-matching-results" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-matching-results">Summary of Matching Results</h2>
+<p>This code follows the same county-by-county strategy across all 74 counties in the study area, joining on the best available parcel ID field for each county (<code>parno</code>, <code>altparno</code>, or <code>nparno</code> on the parcel side; <code>APN (PARCEL NUMBER UNFORMATTED)</code>, <code>ALTERNATE PARCEL ID</code>, <code>ORIGINAL APN</code>, or <code>ONLINE FORMATTED PARCEL ID</code> on the CoreLogic side).</p>
+<p>This run produced <strong>3,738,359</strong> matched records, compared to the prior benchmark of <strong>3,237,387</strong> (difference: 500,972).</p>
+<p>5 counties (37071, 37109, 37035, 37011, 37023) had no parcels in the OneMap data and therefore produced no matches. This reflects a data gap in the parcel source rather than a matching failure, and these counties are carried forward in <code>remaining_all</code> for follow-up.</p>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb90"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb90-3"><a href="#cb90-3" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb90-4"><a href="#cb90-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Group =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"This Run"</span>, <span class="dv">4</span>), <span class="fu">rep</span>(<span class="st">"Comparison to Prior Analysis"</span>, <span class="dv">2</span>)),</span>
+<span id="cb90-5"><a href="#cb90-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric =</span> <span class="fu">c</span>(</span>
+<span id="cb90-6"><a href="#cb90-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Total Parcels"</span>, <span class="st">"Matched"</span>, <span class="st">"Unmatched"</span>, <span class="st">"% Unmatched"</span>,</span>
+<span id="cb90-7"><a href="#cb90-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Prior Benchmark"</span>, <span class="st">"Difference from Prior"</span></span>
+<span id="cb90-8"><a href="#cb90-8" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb90-9"><a href="#cb90-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">Value =</span> <span class="fu">c</span>(</span>
+<span id="cb90-10"><a href="#cb90-10" aria-hidden="true" tabindex="-1"></a>    scales<span class="sc">::</span><span class="fu">comma</span>(total_parcels),</span>
+<span id="cb90-11"><a href="#cb90-11" aria-hidden="true" tabindex="-1"></a>    scales<span class="sc">::</span><span class="fu">comma</span>(total_matched),</span>
+<span id="cb90-12"><a href="#cb90-12" aria-hidden="true" tabindex="-1"></a>    scales<span class="sc">::</span><span class="fu">comma</span>(total_unmatched),</span>
+<span id="cb90-13"><a href="#cb90-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="fu">round</span>(pct_unmatched, <span class="dv">2</span>), <span class="st">"%"</span>),</span>
+<span id="cb90-14"><a href="#cb90-14" aria-hidden="true" tabindex="-1"></a>    scales<span class="sc">::</span><span class="fu">comma</span>(prior_benchmark),</span>
+<span id="cb90-15"><a href="#cb90-15" aria-hidden="true" tabindex="-1"></a>    scales<span class="sc">::</span><span class="fu">comma</span>(diff_from_prior)</span>
+<span id="cb90-16"><a href="#cb90-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb90-17"><a href="#cb90-17" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb90-18"><a href="#cb90-18" aria-hidden="true" tabindex="-1"></a>  gt<span class="sc">::</span><span class="fu">gt</span>(<span class="at">groupname_col =</span> <span class="st">"Group"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb90-19"><a href="#cb90-19" aria-hidden="true" tabindex="-1"></a>  gt<span class="sc">::</span><span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Match Summary"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb90-20"><a href="#cb90-20" aria-hidden="true" tabindex="-1"></a>  gt<span class="sc">::</span><span class="fu">cols_label</span>(<span class="at">Metric =</span> <span class="st">""</span>, <span class="at">Value =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div id="vxhahyyceb" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#vxhahyyceb table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#vxhahyyceb thead, #vxhahyyceb tbody, #vxhahyyceb tfoot, #vxhahyyceb tr, #vxhahyyceb td, #vxhahyyceb th {
+  border-style: none;
+}
+
+#vxhahyyceb p {
+  margin: 0;
+  padding: 0;
+}
+
+#vxhahyyceb .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#vxhahyyceb .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#vxhahyyceb .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#vxhahyyceb .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#vxhahyyceb .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#vxhahyyceb .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#vxhahyyceb .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#vxhahyyceb .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#vxhahyyceb .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#vxhahyyceb .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#vxhahyyceb .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#vxhahyyceb .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#vxhahyyceb .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#vxhahyyceb .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#vxhahyyceb .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#vxhahyyceb .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#vxhahyyceb .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#vxhahyyceb .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#vxhahyyceb .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#vxhahyyceb .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#vxhahyyceb .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#vxhahyyceb .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#vxhahyyceb .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#vxhahyyceb .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#vxhahyyceb .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#vxhahyyceb .gt_left {
+  text-align: left;
+}
+
+#vxhahyyceb .gt_center {
+  text-align: center;
+}
+
+#vxhahyyceb .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#vxhahyyceb .gt_font_normal {
+  font-weight: normal;
+}
+
+#vxhahyyceb .gt_font_bold {
+  font-weight: bold;
+}
+
+#vxhahyyceb .gt_font_italic {
+  font-style: italic;
+}
+
+#vxhahyyceb .gt_super {
+  font-size: 65%;
+}
+
+#vxhahyyceb .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#vxhahyyceb .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#vxhahyyceb .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#vxhahyyceb .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#vxhahyyceb .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#vxhahyyceb .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#vxhahyyceb .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#vxhahyyceb .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#vxhahyyceb div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_heading header">
+<td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border">Match Summary</td>
+</tr>
+<tr class="gt_col_headings even">
+<th id="Metric" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col"></th>
+<th id="Value" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col"></th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="gt_group_heading_row odd">
+<th colspan="2" id="This Run" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">This Run</th>
+</tr>
+<tr class="gt_row_group_first even">
+<td class="gt_row gt_left" headers="This Run  Metric">Total Parcels</td>
+<td class="gt_row gt_right" headers="This Run  Value">3,820,824</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="This Run  Metric">Matched</td>
+<td class="gt_row gt_right" headers="This Run  Value">3,738,359</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="This Run  Metric">Unmatched</td>
+<td class="gt_row gt_right" headers="This Run  Value">82,465</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="This Run  Metric">% Unmatched</td>
+<td class="gt_row gt_right" headers="This Run  Value">2.16%</td>
+</tr>
+<tr class="gt_group_heading_row even">
+<th colspan="2" id="Comparison to Prior Analysis" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Comparison to Prior Analysis</th>
+</tr>
+<tr class="gt_row_group_first odd">
+<td class="gt_row gt_left" headers="Comparison to Prior Analysis  Metric">Prior Benchmark</td>
+<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">3,237,387</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="Comparison to Prior Analysis  Metric">Difference from Prior</td>
+<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">500,972</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div></div>
+</section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
