@@ -1,33 +1,33 @@
----
-title: "Step 1: NC Parcel Data Sanity Checks"
-author: "Russell Blessing"
-format:
-  html:
-    toc: true
-    theme: cosmo
-    code-fold: true
-    code-summary: "Show / hide code"
-execute:
-  freeze: false
-  cache: true 
-  echo: true
-  message: true
-  warning: false
----
-
-## Load libraries
-
-```{r load-libraries}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 library(sf)
 library(dplyr)
 library(ggplot2)
 library(DBI)
 library(RSQLite)
 library(DT)
-```
-
-## Point to directories and data
-```{r paths-and-data}
+#
+#
+#
+#
 # Output directory (external to repo; not tracked by git)
 out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
@@ -53,10 +53,10 @@ dup_path <- file.path(out_dir, "dup_counts_studyarea_cntyfips_parno.rds")
 
 out_layer <- "parcels_study_area"
 
-```
-
-## Study Area
-```{r study-area}
+#
+#
+#
+#
 study_area <- st_read(study_area_path, quiet = TRUE)
 
 study_union <- study_area %>% 
@@ -74,13 +74,13 @@ geom_sf(data = study_union, fill = "lightblue", color = "darkblue") +
 theme_minimal() +
 labs(title = "Study Area Boundary")
 
-```
-
-
-## Identify parcel CRS
-
-EPSG = 2264 (NAD83 / North Carolina (ftUS))
-```{r parcel-crs, eval=FALSE}
+#
+#
+#
+#
+#
+#
+#
 # get_layer_crs <- function(gpkg_path, layer) {
 #   sql <- sprintf('SELECT * FROM "%s" LIMIT 0', layer)
 #   x0 <- sf::st_read(gpkg_path, query = sql, quiet = TRUE)
@@ -90,10 +90,10 @@ EPSG = 2264 (NAD83 / North Carolina (ftUS))
 # parcel_crs <- get_layer_crs(gpkg_path, parcels_layer)
 # parcel_crs$epsg   # should be 2264
 
-```
-
-
-```{r geometry-columns}
+#
+#
+#
+#
 x0 <- st_read(gpkg_path,
               query = sprintf('SELECT * FROM "%s" LIMIT 0', parcels_layer),
               quiet = TRUE)
@@ -101,34 +101,34 @@ geom_col <- attr(x0, "sf_column")
 
 cols_keep <- c(geom_col, cols_keep_attr)
 
-```
-
-## Parcels Attributes to Keep
-| Variable | Description |
-|----------|-------------|
-| `cntyfips` | County FIPS code (3-digit) |
-| `parno` | Local parcel number |
-| `altparno` | Alternate/local parcel number |
-| `nparno` | National parcel number (state-county FIPS prefix + local parcel number) |
-| `siteadd` | Full site address |
-| `sunit` | Site address unit/suite/apartment number |
-| `scity` | Site address city |
-| `szip` | Site address zip code |
-| `mailadd` | Full mailing address |
-| `ownname` | Full owner name (primary surface owner) |
-| `ownfrst` | Owner first name |
-| `ownlast` | Owner last name |
-| `parval` | Total parcel value (`improvval` + `landval`), in dollars |
-| `parusedesc` | Tax parcel use description (e.g., residential, commercial, agriculture) |
-| `improvval` | Value of improvements on the parcel, in dollars |
-| `landval` | Value of land on the parcel, in dollars |
-| `structyear` | Year built of the primary building |
-| `struct` | Structure indicator: Y = yes, N = no, U = unknown |
-| `multistruc` | Multiple structures indicator: Y = yes, N = no, U = unknown |
-| `structno` | Number of structures on the parcel |
-
-
-```{r counties}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
 
 # Open connection just for this query
 con <- dbConnect(RSQLite::SQLite(), gpkg_path)
@@ -146,11 +146,11 @@ dbDisconnect(con)
 
 cntys <- cntys[!is.na(cntys) & nzchar(cntys)]
 
-```
-
-
-
-```{r write-clipped-parcels}
+#
+#
+#
+#
+#
 #if (file.exists(out_gpkg)) file.remove(out_gpkg)
 
 if (!file.exists(out_gpkg)) {
@@ -208,10 +208,10 @@ if (!file.exists(out_gpkg)) {
 }
 
 message("Clipped gpkg size: ", round(file.size(out_gpkg)/1024^2, 1), " MB")
-```
-
-
-```{r add-parcel-index}
+#
+#
+#
+#
 # Add parcel_index as a stable unique row identifier (mirrors Python Step 1)
 # Only runs if parcel_index is not already present in the file
 existing_cols <- sf::st_layers(out_gpkg)$fields[[1]]
@@ -231,10 +231,10 @@ if (!"parcel_index" %in% existing_cols) {
 } else {
   message("parcel_index already present — skipping.")
 }
-```
-
-
-```{r dup-check}
+#
+#
+#
+#
 if (!file.exists(dup_path)) {
 
   if (!file.exists(out_gpkg)) {
@@ -260,11 +260,11 @@ if (!file.exists(dup_path)) {
   message("Loaded existing: ", dup_path)
 }
 
-```
-
-
-## Duplicate Parcels in Study Area
-```{r dupes-table}
+#
+#
+#
+#
+#
 dup_counts <- readRDS(dup_path) |>
   dplyr::filter(!is.na(parno), nzchar(parno))  # drop null/blank parno
 
@@ -296,9 +296,9 @@ dupes_full <- dup_counts |>
   dplyr::select(cntyfips, parno, n, siteadd, scity, szip, maps_link)
 
 save(dupes_full, file = file.path(out_dir, "duplicate_parcels_study_area.rdata"))
-```
-
-```{r dupes-table-display}
+#
+#
+#
 load(file.path(out_dir, "duplicate_parcels_study_area.rdata"))
 
 datatable(
@@ -308,21 +308,21 @@ datatable(
   options = list(pageLength = 10, scrollX = TRUE),
   caption = "Duplicate parcels (by cntyfips + parno) in study area"
 )
-```
-
-
-```{r parcel-counts}
+#
+#
+#
+#
 #| echo: false
 
 n_parcels <- st_layers(out_gpkg)$features[1]
 n_dupes   <- nrow(dupes_full)
-```
-
-The study area contains `r format(n_parcels, big.mark = ",")` total parcels, of which `r format(n_dupes, big.mark = ",")` contain duplicates.
-
-
-
-```{r dupes-distribution}
+#
+#
+#
+#
+#
+#
+#
 dupes_full |>
   dplyr::count(n, name = "num_parcels") |>
   dplyr::arrange(dplyr::desc(n)) |>
@@ -331,4 +331,6 @@ dupes_full |>
     caption = "Distribution of duplicate counts",
     options = list(pageLength = 10)
   )
-```
+#
+#
+#

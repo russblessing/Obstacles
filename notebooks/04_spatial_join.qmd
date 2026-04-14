@@ -1,0 +1,260 @@
+---
+title: "Step 4: Nearest-Neighbor Spatial Join for Unmatched Parcels"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+This notebook performs a nearest-neighbor spatial join for parcels that did
+not receive a string match in Step 3. For each county, the unmatched OneMap
+parcel geometries are joined to the nearest CoreLogic point. Ties (a parcel
+equidistant from multiple CL points) are resolved by Levenshtein address
+similarity. The final output combines the string-matched and distance-matched
+records into a single parcel–CoreLogic table.
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+library(stringdist)  # for levenshtein distance calculation
+library(gt)
+```
+
+```{r setup}
+out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+
+# CoreLogic (all character)
+cl <- read_csv(
+  file.path(out_dir, "cl.csv"),
+  col_types = cols(.default = col_character())
+)
+
+# Previously string-matched parcel indices
+stringmatched <- read_csv(
+  file.path(out_dir, "parcel_cl_stringmatch.csv"),
+  col_types = cols(.default = col_character())
+) |>
+  mutate(parcel_index = as.character(parcel_index))
+
+# Read spatial parcels (keep geometry for the join)
+nc1_attr <- st_read(
+  file.path(out_dir, "parcels_study_area.gpkg"),
+  query = "SELECT parcel_index, cntyfips FROM parcels_study_area",
+  quiet = TRUE
+) |>
+  st_drop_geometry() |>
+  mutate(
+    parcel_index = as.character(parcel_index),
+    cntyfips     = paste0("37", cntyfips)
+  )
+
+unmatched_ids <- nc1_attr |>
+  filter(!parcel_index %in% stringmatched$parcel_index) |>
+  pull(parcel_index)
+
+# Read only unmatched rows with geometry using a SQL filter
+unmatched_nc1 <- st_read(
+  file.path(out_dir, "parcels_study_area.gpkg"),
+  query = paste0(
+    "SELECT * FROM parcels_study_area WHERE parcel_index IN (",
+    paste(unmatched_ids, collapse = ","),
+    ")"
+  ),
+  quiet = TRUE
+) |>
+  mutate(
+    parcel_index = as.character(parcel_index),
+    cntyfips     = paste0("37", cntyfips)
+  )
+
+rm(nc1_attr); gc()
+```
+
+```{r unmatched-parcels}
+# Subset parcels NOT in the string-matched set
+unmatched_nc1 <- nc1 |>
+  filter(!parcel_index %in% stringmatched$parcel_index)
+
+county_list <- unique(unmatched_nc1$cntyfips)
+
+# Filter CL to relevant counties and build point geometry
+cl_unmatched <- cl |>
+  filter(`FIPS CODE` %in% county_list) |>
+  mutate(
+    lon = as.numeric(`PARCEL LEVEL LONGITUDE`),
+    lat = as.numeric(`PARCEL LEVEL LATITUDE`)
+  ) |>
+  filter(!is.na(lon), !is.na(lat)) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+```
+
+```{r reproject}
+# Reproject to NC State Plane (meters) for distance calculations
+unmatched_nc1  <- st_transform(unmatched_nc1,  crs = 32119)
+cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
+
+# Assign geometry IDs (factorize unique geometries)
+unmatched_nc1 <- unmatched_nc1 |>
+  mutate(geometry_id = as.integer(factor(as.character(geometry))))
+
+cl_unmatched <- cl_unmatched |>
+  mutate(geometry_id1 = as.integer(factor(as.character(geometry))))
+```
+
+```{r save-intermediates}
+# Save intermediate geopackages
+st_write(unmatched_nc1, file.path(out_dir, "nc1geoms_distmatch.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+st_write(cl_unmatched, file.path(out_dir, "cl_wID.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+```
+
+```{r nearest-neighbor-join}
+# Drop to unique CL geometries before joining (avoids redundant distance calcs)
+cl_unique <- cl_unmatched |>
+  distinct(geometry_id1, .keep_all = TRUE)
+
+# County-by-county nearest-neighbor join
+nn_results <- map(county_list, function(fips) {
+  cl_fips      <- cl_unique      |> filter(`FIPS CODE` == fips)
+  parcels_fips <- unmatched_nc1  |> filter(cntyfips    == fips)
+
+  if (nrow(cl_fips) == 0 || nrow(parcels_fips) == 0) return(NULL)
+
+  # Nearest neighbour join (st_join with st_nearest_feature gives distances
+  # via st_distance; use nngeo for the distance column directly)
+  nn <- st_join(parcels_fips, cl_fips, join = st_nearest_feature)
+
+  # Compute actual distance to the matched point
+  nn <- nn |>
+    mutate(distance = as.numeric(
+      st_distance(
+        geometry,
+        cl_fips$geometry[match(geometry_id1, cl_fips$geometry_id1)],
+        by_element = TRUE
+      )
+    ))
+
+  # For each parcel, keep only the minimum-distance match(es)
+  nn |>
+    st_drop_geometry() |>
+    group_by(parcel_index) |>
+    filter(distance == min(distance)) |>
+    ungroup()
+}, .progress = TRUE) |>
+  list_rbind()
+```
+
+```{r identify-ties}
+# Parcels that matched multiple CL geometries at equal minimum distance
+tie_counts      <- count(nn_results, parcel_index)
+tie_parcelids   <- tie_counts$parcel_index[tie_counts$n > 1]
+
+duplicated_rows <- nn_results |> filter(parcel_index %in%  tie_parcelids)
+cl_dist_nosort  <- nn_results |> filter(!parcel_index %in% tie_parcelids)
+
+write_csv(duplicated_rows, file.path(out_dir, "parcel_joins_to_sort.csv"))
+write_csv(cl_dist_nosort,  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv"))
+```
+
+```{r resolve-ties}
+# CL attribute table (no geometry) for address lookup
+cl_attr <- cl_unmatched |> st_drop_geometry()
+
+# One row per tied parcel (the nc1 side)
+nc1_pcls <- duplicated_rows |> distinct(parcel_index, .keep_all = TRUE)
+
+set.seed(987)
+
+find_best_cl_match <- function(pc_row) {
+  pc       <- nc1_pcls[pc_row, ]
+  cl_geoms <- duplicated_rows |>
+    filter(parcel_index == pc$parcel_index) |>
+    pull(geometry_id1)
+
+  cl_pcls <- cl_attr |> filter(geometry_id1 %in% cl_geoms)
+
+  # Choose address field: situs preferred, mailing as fallback
+  if (!is.na(pc$siteadd) && pc$siteadd != "") {
+    candidate_addresses <- paste(cl_pcls$`SITUS HOUSE NUMBER`,
+                                 cl_pcls$`SITUS STREET NAME`)
+    query_address       <- pc$siteadd
+  } else {
+    candidate_addresses <- paste(cl_pcls$`MAILING HOUSE NUMBER`,
+                                 cl_pcls$`MAILING STREET NAME`)
+    query_address       <- pc$mailadd
+  }
+
+  scores    <- stringdist(as.character(query_address), candidate_addresses,
+                          method = "lv")
+  best_idx  <- which(scores == min(scores))
+
+  # Break remaining ties randomly
+  if (length(best_idx) > 1) best_idx <- sample(best_idx, 1)
+
+  cl_pcls[best_idx, ]
+}
+
+matched_cls  <- map(seq_len(nrow(nc1_pcls)), find_best_cl_match)
+cl_dist_sorted <- bind_cols(
+  nc1_pcls |> select(-any_of(names(cl_attr))),   # nc1 columns only
+  list_rbind(matched_cls)                          # winning CL row
+)
+
+write_csv(cl_dist_sorted, file.path(out_dir, "cl_dist_sorted.csv"))
+```
+
+```{r combine-all}
+cl_string <- read_csv(
+  file.path(out_dir, "parcel_cl_stringmatch.csv"),
+  col_types = cols(.default = col_character())
+)
+
+# Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
+pcl_comb <- bind_rows(cl_string, cl_dist_nosort, cl_dist_sorted) |>
+  mutate(geometry_id = replace_na(as.character(geometry_id), "")) |>
+  arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
+  distinct(parcel_index, .keep_all = TRUE)             # prefer string match
+
+write_csv(pcl_comb, file.path(out_dir, "nc1_cl_merge.csv"))
+```
+
+## Summary
+
+```{r summary-stats}
+n_string   <- nrow(cl_string)
+n_nosort   <- nrow(cl_dist_nosort)
+n_sorted   <- nrow(cl_dist_sorted)
+n_total    <- nrow(pcl_comb)
+n_unmatched_input <- nrow(unmatched_nc1)
+```
+
+```{r summary-table}
+tibble::tibble(
+  Source  = c("String-matched (Step 3)", "Distance-matched (no ties)",
+              "Distance-matched (ties resolved)", "Total unique parcels in merge"),
+  Records = c(n_string, n_nosort, n_sorted, n_total)
+) |>
+  gt() |>
+  tab_header(title = "Parcel–CoreLogic Merge Summary") |>
+  fmt_integer(columns = Records) |>
+  cols_label(Source = "", Records = "N")
+```
+
+- **`r scales::comma(n_unmatched_input)`** parcels entered the spatial join (no string match found in Step 3).
+- **`r scales::comma(n_nosort)`** were unambiguously distance-matched.
+- **`r scales::comma(n_sorted)`** had tied distances and were resolved by Levenshtein address similarity.
+- The combined file `nc1_cl_merge.csv` contains **`r scales::comma(n_total)`** unique parcel records.
