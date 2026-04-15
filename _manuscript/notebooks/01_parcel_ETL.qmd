@@ -211,6 +211,29 @@ message("Clipped gpkg size: ", round(file.size(out_gpkg)/1024^2, 1), " MB")
 ```
 
 
+```{r add-parcel-index}
+# Add parcel_index as a stable unique row identifier (mirrors Python Step 1)
+# Only runs if parcel_index is not already present in the file
+existing_cols <- sf::st_layers(out_gpkg)$fields[[1]]
+
+if (!"parcel_index" %in% existing_cols) {
+  message("Adding parcel_index to ", out_gpkg)
+
+  nc1_tmp <- sf::st_read(out_gpkg, layer = out_layer, quiet = TRUE) |>
+    dplyr::mutate(parcel_index = as.integer(dplyr::row_number()))
+
+  tmp_gpkg <- paste0(out_gpkg, ".tmp.gpkg")
+  sf::st_write(nc1_tmp, tmp_gpkg, layer = out_layer, quiet = TRUE)
+  file.rename(tmp_gpkg, out_gpkg)
+
+  rm(nc1_tmp); gc()
+  message("parcel_index added. New size: ", round(file.size(out_gpkg)/1024^2, 1), " MB")
+} else {
+  message("parcel_index already present — skipping.")
+}
+```
+
+
 ```{r dup-check}
 if (!file.exists(dup_path)) {
 
