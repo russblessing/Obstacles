@@ -101,10 +101,10 @@ cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
 
 # Assign geometry IDs (factorize unique geometries)
 unmatched_nc1 <- unmatched_nc1 |>
-  mutate(geometry_id = as.integer(factor(as.character(geometry))))
+  mutate(geometry_id = as.integer(factor(as.character(st_geometry(unmatched_nc1)))))
 
 cl_unmatched <- cl_unmatched |>
-  mutate(geometry_id1 = as.integer(factor(as.character(geometry))))
+  mutate(geometry_id1 = as.integer(factor(as.character(st_geometry(cl_unmatched)))))
 ```
 
 ```{r save-intermediates}
@@ -133,10 +133,11 @@ nn_results <- map(county_list, function(fips) {
   nn <- st_join(parcels_fips, cl_fips, join = st_nearest_feature)
 
   # Compute actual distance to the matched point
+  nn_geom <- st_geometry(nn)
   nn <- nn |>
     mutate(distance = as.numeric(
       st_distance(
-        geometry,
+        nn_geom,
         cl_fips$geometry[match(geometry_id1, cl_fips$geometry_id1)],
         by_element = TRUE
       )
