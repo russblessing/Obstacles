@@ -64,46 +64,6 @@
 \fi
 \makeatother
 
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\usepackage{framed}
-\definecolor{shadecolor}{RGB}{241,243,245}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.40,0.45,0.13}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.28,0.35,0.67}{#1}}
-\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.00,0.46,0.62}{#1}}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.68,0.00,0.00}{#1}}
-\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.00,0.23,0.31}{#1}}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{#1}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.07,0.07,0.07}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.13,0.47,0.30}{#1}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.37,0.37,0.37}{\textit{#1}}}
 
 \usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
@@ -280,59 +240,68 @@ be interested.
 
 \section{Introduction}\label{introduction}
 
-Impacts from natural hazards in the United States are increasing in cost
-and frequency \citep{noaa2024}. While demand and funding for climate
-resilience measures has grown significantly in recent years, there are
-widespread concerns about access to those funds and the extent to which
-they perpetuate or mitigate existing inequities
-\citep{fema2023, junod2021, miller2023}. Evidence suggests that while
-vulnerable groups including mobile home residents and racial minorities
-are over-represented in flood hotspots, wealthier and whiter communities
-have received more federal funds to adapt to and recover from floods
-\citep{elliott2020, tate2021}. Several explanations for this disparity
-have been proposed, including federal cost-benefit analysis
-requirements, limited local government capacity to apply for grants, and
-lack of household awareness about funding opportunities. However,
-research to pinpoint funding obstacles has been constrained by only
-observing who ultimately receives funding, not who is eligible or who
-applies for funding.As a result, it is unclear what the barriers are,
-and therefore which policy or procedural changes would most improve
-access to climate resilience funds.
+Impacts from natural hazards in the United States are increasing in both
+cost and frequency
+\citep{noaanationalcentersforenvironmentalinformationUSBillionDollarWeather2024}.
+As demand for climate resilience measures has grown significantly in
+recent years, so too have widespread concerns about whether access to
+those funds perpetuates or mitigates existing inequities
+\citep{OpenFEMADatasetHazard2023, junodEquitableInvestmentsResilience2021a, millerCostCostEffectivenessExpanding2023}.
+Evidence suggests that while vulnerable groups --- including mobile home
+residents and racial minorities --- are over-represented in flood
+hotspots, wealthier and whiter communities have received
+disproportionately more federal funding to adapt to and recover from
+floods
+\citep{elliottRacialInequitiesFederal2020a, tateFloodExposureSocial2021}.
+Several explanations for this disparity have been proposed, including
+federal cost-benefit analysis requirements, limited local government
+capacity to apply for grants, and lack of household awareness about
+funding opportunities. However, research to pinpoint funding obstacles
+has been constrained by only observing who ultimately receives funding,
+not who is eligible or who applies. As a result, the specific barriers
+remain unclear, and it is therefore uncertain which policy or procedural
+changes would most improve access to climate resilience funds.
 
-Here, we combine novel datasets on over two decades of flood exposure
-and applications for federal funding in North Carolina to examine the
-full process: who floods, who applies for mitigation funding, and who
-receives it. This flooded-to-funded pipeline (Fig. 1) is critical for
-understanding the process by which households experience the Hazard
-Mitigation Assistance (HMA) process. By analyzing the household- and
-neighborhood-level characteristics at each stage of the process, we
-provide new evidence regarding how the application process shapes the
-distribution of funding. For example, if households located in
-marginalized communities rarely submit applications, the primary issue
-may be lack of awareness or resources for applying. In contrast, if they
-are applying but not being funded, the selection criteria may be driving
-disproportionate access.
+Here, we combine novel datasets spanning over two decades of flood
+exposure and applications for federal funding in North Carolina to
+examine the full process: who floods, who applies for mitigation
+funding, and who receives it. This flooded-to-funded pipeline (Fig. 1)
+is critical for understanding how households navigate the Hazard
+Mitigation Assistance (HMA) process. By analyzing household- and
+neighborhood-level characteristics at each stage, we provide new
+evidence on how the application process shapes the distribution of
+funding. For example, if households in marginalized communities rarely
+submit applications, the primary issue may be lack of awareness or
+limited resources for applying. In contrast, if they are applying but
+not being funded, the selection criteria may be driving disproportionate
+access. Flood exposure is measured using a novel random-forest-based
+flood inundation reconstruction that identifies the probability of flood
+damage at every 30 m grid cell in eastern North Carolina across 78
+events from 1996 to 2020, validated against address-level National Flood
+Insurance Program (NFIP) records
+\citep{garciaReconstructingRepetitiveFlood2025}.
 
-Our initial results demonstrate that the application stage is crucial
-for understanding the mitigation funding pipeline. 67.5\% of properties
-that experience flooding are eligible for public assistance, and 61\%
-are in communities where local governments have submitted applications
-for assistance. However, only 2.3\% of all flooded properties apply and
-\textasciitilde1\% are funded. Properties that apply are significantly
-more likely to have experienced more than one flooding event over the
-period. Compared to the population of flooded properties, properties
-that apply for funding have lower property values (58th percentile to
-42nd percentile) and come from census block groups with a lower share of
-white residents (74\% to 64\%). Among properties receiving funding,
-property values and the share of white residents in the block group are
-even lower. These results are consistent with some nationwide findings,
-where wealthier and whiter communities have been linked to mitigation
-access \citep{mach2019, elliott2020}, however we add fidelity in that
-applying and funded properties are also lower-in-value than their
-flooded neighbors. Notably, these trends emerge at the newly-visible
-application stage and widen for those ultimately funded. We are the
-first to demonstrate that unpacking and examining this stage is pivotal
-to understanding potential obstacles to equitable mitigation funding.
+Our initial results demonstrate that the application stage is the
+critical pinch point in the mitigation funding pipeline. Of all flooded
+properties, 67.5\% are eligible for public assistance and 61\% are
+located in communities where local governments have submitted
+applications. However, only 2.3\% of all flooded properties apply and
+approximately 1\% are ultimately funded. Properties that do apply are
+significantly more likely to have experienced more than one flooding
+event. Compared to the broader population of flooded properties, those
+that apply have lower property values (declining from the 58th to the
+42nd percentile statewide) and are located in census block groups with a
+lower share of white residents (declining from 74\% to 64\%). These
+patterns deepen further among properties that receive funding. While
+consistent with some nationwide findings linking wealthier and whiter
+communities to greater mitigation access
+\citep{machManagedRetreatVoluntary2019, elliottRacialInequitiesFederal2020a},
+our analysis adds resolution: applying and funded properties are also
+lower in value relative to their immediate flooded neighbors, not just
+to the state overall. Notably, these trends emerge at the newly visible
+application stage and widen among properties ultimately funded. We are
+the first to demonstrate that unpacking this stage is pivotal to
+understanding potential obstacles to equitable mitigation funding.
 
 \begin{figure}
 
@@ -440,115 +409,17 @@ Our analysis leverages new address-level data on the project development
 and application process to identify how each stage in this process
 shapes the distribution of funding. First, we\ldots{}
 
-\section{Bibliography styles}\label{bibliography-styles}
+\section{Results}\label{results}
 
-With this template using elsevier class, natbib will be used. Three
-bibliographic style ﬁles (*.bst) are provided and their use controled by
-\texttt{cite-style} option:
-
-\begin{itemize}
-\tightlist
-\item
-  \texttt{citestyle:\ number} (default) will use
-  \texttt{elsarticle-num.bst} - can be used for the numbered scheme
-\item
-  \texttt{citestyle:\ numbername} will use
-  \texttt{elsarticle-num-names.bst} - can be used for numbered with new
-  options of natbib.sty
-\item
-  \texttt{citestyle:\ authoryear} will use \texttt{elsarticle-harv.bst}
-  --- can be used for author year scheme
-\end{itemize}
-
-This \texttt{citestyle} will insert the right \texttt{.bst} and set the
-correct \texttt{classoption} for \texttt{elsarticle} document class.
-
-Using \texttt{natbiboptions} variable in YAML header, you can set more
-options for \texttt{natbib} itself . Example
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{natbiboptions}\KeywordTok{:}\AttributeTok{ longnamesfirst,angle,semicolon}
-\end{Highlighting}
-\end{Shaded}
-
-\subsection{Using CSL}\label{using-csl}
-
-If \texttt{cite-method} is set to \texttt{citeproc} in
-\texttt{elsevier\_article()}, then pandoc is used for citations instead
-of \texttt{natbib}. In this case, the \texttt{csl} option is used to
-format the references. By default, this template will provide an
-appropriate style, but alternative \texttt{csl} files are available from
-\url{https://www.zotero.org/styles?q=elsevier}. These can be downloaded
-and stored locally, or the url can be used as in the example header.
-
-\section{Equations}\label{equations}
-
-Here is an equation: \[ 
-  f_{X}(x) = \left(\frac{\alpha}{\beta}\right)
-  \left(\frac{x}{\beta}\right)^{\alpha-1}
-  e^{-\left(\frac{x}{\beta}\right)^{\alpha}}; 
-  \alpha,\beta,x > 0 .
-\]
-
-Inline equations work as well: \(\sum_{i = 2}^\infty\{\alpha_i^\beta\}\)
-
-\section{Figures and tables}\label{figures-and-tables}
-
-Figure~\ref{fig-meaningless} is generated using an R chunk.
-
-\phantomsection\label{cell-fig-meaningless}
-\begin{figure}[H]
-
-\centering{
-
-\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{index_files/figure-pdf/fig-meaningless-1.pdf}
-
-}
-
-\caption{\label{fig-meaningless}A meaningless scatterplot}
-
-\end{figure}%
-
-\textsubscript{Source:
-\href{https://russblessing.github.io/Obstacles/index-preview.html}{Article
-Notebook}}
-
-\section{Tables coming from R}\label{tables-coming-from-r}
-
-Tables can also be generated using R chunks, as shown in
-Table~\ref{tbl-simple} example.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{knitr}\SpecialCharTok{::}\FunctionTok{kable}\NormalTok{(}\FunctionTok{head}\NormalTok{(mtcars)[,}\DecValTok{1}\SpecialCharTok{:}\DecValTok{4}\NormalTok{])}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{longtable}[]{@{}lrrrr@{}}
-
-\caption{\label{tbl-simple}Caption centered above table}
-
-\tabularnewline
-
-\toprule\noalign{}
-& mpg & cyl & disp & hp \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Mazda RX4 & 21.0 & 6 & 160 & 110 \\
-Mazda RX4 Wag & 21.0 & 6 & 160 & 110 \\
-Datsun 710 & 22.8 & 4 & 108 & 93 \\
-Hornet 4 Drive & 21.4 & 6 & 258 & 110 \\
-Hornet Sportabout & 18.7 & 8 & 360 & 175 \\
-Valiant & 18.1 & 6 & 225 & 105 \\
-
-\end{longtable}
-
-\textsubscript{Source:
-\href{https://russblessing.github.io/Obstacles/index-preview.html}{Article
-Notebook}}
+While most flooded properties are eligible and in communities that have
+applied for funding, very few properties submit applications (Fig. 2).
+Among all flooded properties (Fig. 2, left panel), we find that around
+2/3 are eligible for federal funding (67.5\%). Of these eligible
+properties, 89.9\% are in communities where local government assisted
+with the submission of at least one application. Only a small fraction
+(3.8\%) of eligible properties in applying communities apply themselves,
+equal to 2.3\% of all flooded properties. Of those that apply, around
+half are funded (49.4\%).
 
 
 \renewcommand\refname{References}
