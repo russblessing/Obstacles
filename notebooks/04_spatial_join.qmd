@@ -30,6 +30,7 @@ library(stringr)
 library(purrr)
 library(stringdist)  # for levenshtein distance calculation
 library(gt)
+library(tidyr)
 ```
 
 ```{r setup}
@@ -257,3 +258,91 @@ tibble::tibble(
 - **`r scales::comma(n_nosort)`** were unambiguously distance-matched.
 - **`r scales::comma(n_sorted)`** had tied distances and were resolved by Levenshtein address similarity.
 - The combined file `nc1_cl_merge.csv` contains **`r scales::comma(n_total)`** unique parcel records.
+
+## One-to-Many CL Match Diagnostic
+
+In a distance-based spatial join, it is expected that a single CoreLogic (CL)
+point may be the nearest neighbor to multiple OneMap parcels — for example,
+when a large tract has been subdivided, when many parcels lack site addresses,
+or when a condominium building appears as one polygon in OneMap but has many
+individual unit records in CL. 
+
+The following tables describe the scope of this issue in the distance-matched
+output.
+
+```{r one-to-many-summary}
+cl_dist_nosort <- read_csv(
+  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv"),
+  col_types = cols(.default = col_character())
+)
+
+# Count how many OneMap parcels share each CL geometry_id1
+cl_match_counts <- cl_dist_nosort |>
+  count(geometry_id1, name = "n_parcels")
+
+one_to_many_summary <- cl_match_counts |>
+  summarise(
+    `Total CL records matched`          = n(),
+    `Matched to exactly 1 parcel`       = sum(n_parcels == 1),
+    `Matched to 2–5 parcels`            = sum(n_parcels > 1 & n_parcels <= 5),
+    `Matched to 6–20 parcels`           = sum(n_parcels > 5 & n_parcels <= 20),
+    `Matched to >20 parcels`            = sum(n_parcels > 20),
+    `Max parcels sharing one CL record` = max(n_parcels),
+    `Parcels affected (n_parcels > 1)`  = sum(n_parcels[n_parcels > 1])
+  ) |>
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value")
+
+one_to_many_summary |>
+  gt() |>
+  tab_header(title = "Distance-Matched: One-to-Many CL Record Summary") |>
+  fmt_integer(columns = Value) |>
+  cols_label(Metric = "", Value = "N")
+```
+
+```{r one-to-many-by-type}
+# Break down multi-matched parcels by CL property type
+cl_dist_nosort |>
+  inner_join(
+    cl_match_counts |> filter(n_parcels > 1),
+    by = "geometry_id1"
+  ) |>
+  distinct(geometry_id1, n_parcels, `PROPERTY INDICATOR CODE`,
+           `LAND USE CODE`, `COUNTY USE DESCRIPTION`) |>
+  count(`PROPERTY INDICATOR CODE`, `LAND USE CODE`, `COUNTY USE DESCRIPTION`,
+        wt = n_parcels, name = "n_parcels_affected") |>
+  arrange(desc(n_parcels_affected)) |>
+  slice_head(n = 20) |>
+  gt() |>
+  tab_header(
+    title    = "Top 20 CoreLogic Property Types with Multi-Parcel Matches",
+    subtitle = "Weighted by number of OneMap parcels affected"
+  ) |>
+  fmt_integer(columns = n_parcels_affected) |>
+  cols_label(
+    `PROPERTY INDICATOR CODE` = "Property Indicator",
+    `LAND USE CODE`            = "Land Use Code",
+    `COUNTY USE DESCRIPTION`   = "County Use Description",
+    n_parcels_affected         = "Parcels Affected"
+  )
+```
+
+**Key findings:**
+
+- The majority of CL records (**`r scales::comma(sum(cl_match_counts$n_parcels == 1))`**,
+  `r scales::percent(mean(cl_match_counts$n_parcels == 1), accuracy = 0.1)`) match
+  exactly one OneMap parcel — these are clean one-to-one matches.
+- **`r scales::comma(sum(cl_match_counts$n_parcels[cl_match_counts$n_parcels > 1]))`**
+  parcels share a CL record with at least one other parcel.
+- Multi-match cases fall into three broad categories:
+  - **Condominiums** (`PROPERTY INDICATOR CODE = 11`, `LAND USE CODE = 112`): One
+    building polygon in OneMap is the nearest neighbor for many individual CL unit
+    records. This is expected behavior.
+  - **Single-family residential** (`PROPERTY INDICATOR CODE = 10`, `LAND USE CODE = 163`):
+    A CL residential point is the nearest neighbor to multiple surrounding OneMap
+    parcels (e.g., adjacent vacant lots, subdivided tracts with no site addresses).
+    This is the primary risk for downstream application duplication.
+  - **Vacant land** (`PROPERTY INDICATOR CODE = 80` or `10`, `LAND USE CODE = 400`
+    or `100`): Similar to the residential case — many parcels cluster around a
+    single CL vacant land point.
+- A `n_cl_matches` flag column should be added in downstream joins to allow
+  filtering to clean one-to-one matches when needed.
