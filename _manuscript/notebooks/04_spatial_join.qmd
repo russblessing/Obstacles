@@ -80,25 +80,19 @@ unmatched_nc1 <- st_read(
   )
 
 rm(nc1_attr); gc()
-```
-
-```{r unmatched-parcels}
-# Subset parcels NOT in the string-matched set
-unmatched_nc1 <- nc1 |>
-  filter(!parcel_index %in% stringmatched$parcel_index)
 
 county_list <- unique(unmatched_nc1$cntyfips)
 
-# Filter CL to relevant counties and build point geometry
+# Build sf object for CL records in counties that have unmatched parcels
 cl_unmatched <- cl |>
   filter(`FIPS CODE` %in% county_list) |>
-  mutate(
-    lon = as.numeric(`PARCEL LEVEL LONGITUDE`),
-    lat = as.numeric(`PARCEL LEVEL LATITUDE`)
-  ) |>
-  filter(!is.na(lon), !is.na(lat)) |>
-  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+  filter(!is.na(`PARCEL LEVEL LATITUDE`) & !is.na(`PARCEL LEVEL LONGITUDE`)) |>
+  st_as_sf(
+    coords = c("PARCEL LEVEL LONGITUDE", "PARCEL LEVEL LATITUDE"),
+    crs = 4326
+  )
 ```
+
 
 ```{r reproject}
 # Reproject to NC State Plane (meters) for distance calculations
@@ -107,10 +101,10 @@ cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
 
 # Assign geometry IDs (factorize unique geometries)
 unmatched_nc1 <- unmatched_nc1 |>
-  mutate(geometry_id = as.integer(factor(as.character(geometry))))
+  mutate(geometry_id = as.integer(factor(as.character(st_geometry(unmatched_nc1)))))
 
 cl_unmatched <- cl_unmatched |>
-  mutate(geometry_id1 = as.integer(factor(as.character(geometry))))
+  mutate(geometry_id1 = as.integer(factor(as.character(st_geometry(cl_unmatched)))))
 ```
 
 ```{r save-intermediates}
@@ -139,10 +133,11 @@ nn_results <- map(county_list, function(fips) {
   nn <- st_join(parcels_fips, cl_fips, join = st_nearest_feature)
 
   # Compute actual distance to the matched point
+  nn_geom <- st_geometry(nn)
   nn <- nn |>
     mutate(distance = as.numeric(
       st_distance(
-        geometry,
+        nn_geom,
         cl_fips$geometry[match(geometry_id1, cl_fips$geometry_id1)],
         by_element = TRUE
       )
@@ -224,8 +219,12 @@ cl_string <- read_csv(
 )
 
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
-pcl_comb <- bind_rows(cl_string, cl_dist_nosort, cl_dist_sorted) |>
-  mutate(geometry_id = replace_na(as.character(geometry_id), "")) |>
+pcl_comb <- bind_rows(
+    cl_string      |> mutate(across(everything(), as.character)),
+    cl_dist_nosort |> mutate(across(everything(), as.character)),
+    cl_dist_sorted |> mutate(across(everything(), as.character))
+  ) |>
+  mutate(geometry_id = ifelse(is.na(geometry_id), "", as.character(geometry_id))) |>
   arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
 
