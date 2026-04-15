@@ -32,7 +32,9 @@ library(gt)
 # Read data
 nc1 <- st_read("/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg", quiet = TRUE) |>
   st_drop_geometry() |>
-  mutate(cntyfips = paste0("37", cntyfips))
+  mutate(
+    parcel_index = as.character(parcel_index),
+    cntyfips = paste0("37", cntyfips))
 
 cl <- read_csv("/proj/mhinolab/users/rbless/data/Obstacles_Output/cl.csv",
                col_types = cols(.default = col_character()))

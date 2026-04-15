@@ -129,6 +129,9 @@ cl_trim <- cl_trim |>
   )
 ```
 
+
+The trimmed CoreLogic dataset contains `r scales::comma(nrow(cl_trim))` property records across `r n_distinct(cl_trim[["FIPS CODE"]])` counties in the study area.
+
 ```{r missingness-analysis}
 cl_trim |>
   summarise(across(everything(), ~ mean(is.na(.)) * 100)) |>
