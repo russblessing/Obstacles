@@ -224,7 +224,7 @@ pcl_comb <- bind_rows(
     cl_dist_nosort |> mutate(across(everything(), as.character)),
     cl_dist_sorted |> mutate(across(everything(), as.character))
   ) |>
-  mutate(geometry_id = replace_na(as.character(geometry_id), "")) |>
+  mutate(geometry_id = ifelse(is.na(geometry_id), "", as.character(geometry_id))) |>
   arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
 
