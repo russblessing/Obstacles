@@ -219,7 +219,11 @@ cl_string <- read_csv(
 )
 
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
-pcl_comb <- bind_rows(cl_string, cl_dist_nosort, cl_dist_sorted) |>
+pcl_comb <- bind_rows(
+    cl_string      |> mutate(across(everything(), as.character)),
+    cl_dist_nosort |> mutate(across(everything(), as.character)),
+    cl_dist_sorted |> mutate(across(everything(), as.character))
+  ) |>
   mutate(geometry_id = replace_na(as.character(geometry_id), "")) |>
   arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
