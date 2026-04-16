@@ -35,6 +35,7 @@ library(tidyr)
 ```
 
 ```{r setup}
+#| eval: false
 out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 
 # CoreLogic (all character)
@@ -97,6 +98,7 @@ cl_unmatched <- cl |>
 
 
 ```{r reproject}
+#| eval: false
 # Reproject to NC State Plane (meters) for distance calculations
 unmatched_nc1  <- st_transform(unmatched_nc1,  crs = 32119)
 cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
@@ -110,12 +112,24 @@ cl_unmatched <- cl_unmatched |>
 ```
 
 ```{r save-intermediates}
+#| eval: false
 # Save intermediate geopackages
 st_write(unmatched_nc1, file.path(out_dir, "nc1geoms_distmatch.gpkg"),
          delete_dsn = TRUE, quiet = TRUE)
 
 st_write(cl_unmatched, file.path(out_dir, "cl_wID.gpkg"),
          delete_dsn = TRUE, quiet = TRUE)
+```
+
+```{r load-intermediates}
+out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+
+unmatched_nc1 <- st_read(file.path(out_dir, "nc1geoms_distmatch.gpkg"), quiet = TRUE) |>
+  mutate(parcel_index = as.character(parcel_index))
+
+cl_unmatched <- st_read(file.path(out_dir, "cl_wID.gpkg"), quiet = TRUE)
+
+county_list <- unique(unmatched_nc1$cntyfips)
 ```
 
 ```{r nearest-neighbor-join}
@@ -156,6 +170,7 @@ nn_results <- map(county_list, function(fips) {
 ```
 
 ```{r identify-ties}
+#| eval: false
 # Parcels that matched multiple CL geometries at equal minimum distance
 tie_counts      <- count(nn_results, parcel_index)
 tie_parcelids   <- tie_counts$parcel_index[tie_counts$n > 1]
@@ -168,6 +183,7 @@ write_csv(cl_dist_nosort,  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv")
 ```
 
 ```{r resolve-ties}
+#| eval: false
 # CL attribute table (no geometry) for address lookup
 cl_attr <- cl_unmatched |> st_drop_geometry()
 
@@ -214,11 +230,25 @@ cl_dist_sorted <- bind_cols(
 write_csv(cl_dist_sorted, file.path(out_dir, "cl_dist_sorted.csv"))
 ```
 
-```{r combine-all}
+```{r load-csvs}
 cl_string <- read_csv(
   file.path(out_dir, "parcel_cl_stringmatch.csv"),
   col_types = cols(.default = col_character())
 )
+
+cl_dist_nosort <- read_csv(
+  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv"),
+  col_types = cols(.default = col_character())
+)
+
+cl_dist_sorted <- read_csv(
+  file.path(out_dir, "cl_dist_sorted.csv"),
+  col_types = cols(.default = col_character())
+)
+```
+
+```{r combine-all}
+#| eval: false
 
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
 pcl_comb <- bind_rows(
@@ -231,6 +261,13 @@ pcl_comb <- bind_rows(
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
 
 write_csv(pcl_comb, file.path(out_dir, "nc1_cl_merge.csv"))
+```
+
+```{r read-combine-all}
+pcl_comb <- read_csv(
+  file.path(out_dir, "nc1_cl_merge.csv"),
+  col_types = cols(.default = col_character())
+)
 ```
 
 ## Summary
@@ -272,11 +309,6 @@ The following tables describe the scope of this issue in the distance-matched
 output.
 
 ```{r one-to-many-summary}
-cl_dist_nosort <- read_csv(
-  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv"),
-  col_types = cols(.default = col_character())
-)
-
 # Count how many OneMap parcels share each CL geometry_id1
 cl_match_counts <- cl_dist_nosort |>
   count(geometry_id1, name = "n_parcels")

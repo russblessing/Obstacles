@@ -133,6 +133,7 @@ county_list <- unique(unmatched_nc1$cntyfips)
 ```
 
 ```{r nearest-neighbor-join}
+#| eval: false
 # Drop to unique CL geometries before joining (avoids redundant distance calcs)
 cl_unique <- cl_unmatched |>
   distinct(geometry_id1, .keep_all = TRUE)
@@ -184,6 +185,7 @@ write_csv(cl_dist_nosort,  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv")
 
 ```{r resolve-ties}
 #| eval: false
+
 # CL attribute table (no geometry) for address lookup
 cl_attr <- cl_unmatched |> st_drop_geometry()
 
