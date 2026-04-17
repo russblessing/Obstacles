@@ -66,6 +66,8 @@ geoms_path          <- file.path(out_dir, "parcels_study_area.gpkg")
 ## 1  Load & prepare parcels
 
 ```{r load-parcels}
+#| eval: false
+
 # load-parcels — remove the mit_sa/app_sa mutates entirely
 parcels_raw <- read_csv(
   file.path(out_dir, "nc1_cl_merge.csv"),
@@ -92,6 +94,8 @@ parcels <- parcels_raw |>
 ## 2  Filter invalid parcels
 
 ```{r filter-parcels}
+#| eval: false
+
 # Remove water parcels (flagged via parcel number keywords)
 water_keywords <- "bay|creek|sound|water|ocean|river|canal|pond|inlet"
 
@@ -173,6 +177,8 @@ luc_bottom      <- c("605","606","607","609","610","614","615","618","620","630"
 > Fixed here.
 
 ```{r score-parcels}
+#| eval: false
+
 parcels <- parcels |>
   mutate(
     `LAND USE CODE` = as.character(`LAND USE CODE`),
@@ -212,6 +218,8 @@ st_write(parcels, file.path(out_dir, "parcels_pri.gpkg"),
 ```
 
 ```{r priority-split}
+#| eval: false
+
 # Split into priority tiers
 highpri <- parcels |> filter(match_priority == "high")
 medpri  <- parcels |> filter(match_priority == "med")
@@ -288,13 +296,35 @@ unique_app <- app_sa |> distinct(g_indicator, .keep_all = TRUE) |>
 Matching is done on unique geometries then merged back, avoiding redundant
 spatial operations where multiple records share a coordinate.
 
+```{r load-parcels-priority}
+read_priority <- function(priority, path) {
+  st_read(
+    path,
+    query = paste0("SELECT match_priority, geom FROM \"parcels_pri\" WHERE match_priority = '", priority, "'"),
+    quiet = TRUE
+  ) |>
+    st_transform(crs = 32119)
+}
+
+parcels_path <- file.path(out_dir, "parcels_pri.gpkg")
+
+highpri <- read_priority("high", parcels_path)
+medpri  <- read_priority("med",  parcels_path)
+lowpri  <- read_priority("low",  parcels_path)
+gc()
+```
+
+
 ```{r unique-geoms-parcels}
 # Reproject parcel priority sets to EPSG:32119
-to_unique_geoms <- function(df, id_col = "geometry_id") {
+to_unique_geoms <- function(df) {
+  geom_col <- attr(df, "sf_column")
   df |>
     st_transform(crs = 32119) |>
-    distinct(across(all_of(id_col)), .keep_all = TRUE) |>
-    select(all_of(id_col), geometry)
+    (\(x) mutate(x, geometry_id = as.integer(factor(as.character(st_geometry(x))))))() |>
+    distinct(geometry_id, .keep_all = TRUE) |>
+    select(geometry_id, all_of(geom_col)) |>
+    rename(geometry = all_of(geom_col))
 }
 
 ug_high <- to_unique_geoms(highpri)
@@ -303,27 +333,6 @@ ug_low  <- to_unique_geoms(lowpri)  |> filter(!geometry_id %in% ug_high$geometry
                                                !geometry_id %in% ug_med$geometry_id)
 ```
 
-```{r unique-geoms-mit-app}
-mit_geom_col <- attr(mit_sa, "sf_column")
-app_geom_col <- attr(app_sa, "sf_column")
-
-mit_sa <- mit_sa |>
-  mutate(g_indicator = as.integer(factor(as.character(st_geometry(mit_sa)))))
-
-app_sa <- app_sa |>
-  mutate(
-    g_indicator = as.integer(factor(as.character(st_geometry(app_sa)))),
-    app_id      = row_number()
-  )
-
-unique_mit <- mit_sa |> distinct(g_indicator, .keep_all = TRUE) |>
-  select(g_indicator, all_of(mit_geom_col)) |>
-  st_transform(crs = st_crs(flood_boundary))
-
-unique_app <- app_sa |> distinct(g_indicator, .keep_all = TRUE) |>
-  select(g_indicator, all_of(app_geom_col)) |>
-  st_transform(crs = st_crs(flood_boundary))
-```
 
 ---
 
@@ -353,27 +362,26 @@ match_to_tier <- function(candidates, parcel_tier, max_dist = 50) {
 
   unmatched <- intersect_raw |>
     filter(is.na(geometry_id)) |>
-    select(g_indicator, geometry)           # drop stale geometry_id col
+    select(g_indicator)
 
   # --- distance pass on the remainder ---
   if (nrow(unmatched) == 0 || nrow(parcel_tier) == 0) {
     dist_matched <- tibble(g_indicator = integer(), geometry_id = integer(),
                            distance = numeric())
   } else {
-    dist_raw <- st_join(unmatched, parcel_tier, join = st_nearest_feature) |>
+    dist_joined <- st_join(unmatched, parcel_tier, join = st_nearest_feature)
+
+    parcel_geoms <- parcel_tier$geometry[match(dist_joined$geometry_id, parcel_tier$geometry_id)]
+
+    dist_matched <- dist_joined |>
       mutate(distance = as.numeric(
-        st_distance(geometry,
-                    parcel_tier$geometry[match(geometry_id, parcel_tier$geometry_id)],
-                    by_element = TRUE)
+        st_distance(st_geometry(dist_joined), parcel_geoms, by_element = TRUE)
       )) |>
       st_drop_geometry() |>
       distinct(g_indicator, .keep_all = TRUE) |>
       filter(distance <= max_dist)
-
-    dist_matched <- dist_raw
   }
 
-  # Combine and return only the key columns
   bind_rows(
     intersect_matched |> select(g_indicator, geometry_id),
     dist_matched      |> select(g_indicator, geometry_id, any_of("distance"))
@@ -419,11 +427,14 @@ nn_fallback <- function(remaining, all_geoms) {
     return(tibble(g_indicator = integer(), geometry_id = integer(),
                   distance = numeric()))
   }
-  st_join(remaining, all_geoms, join = st_nearest_feature) |>
+  joined <- st_join(remaining, all_geoms, join = st_nearest_feature)
+  joined |>
     mutate(distance = as.numeric(
-      st_distance(geometry,
-                  all_geoms$geometry[match(geometry_id, all_geoms$geometry_id)],
-                  by_element = TRUE)
+      st_distance(
+        st_geometry(joined),
+        all_geoms$geometry[match(geometry_id, all_geoms$geometry_id)],
+        by_element = TRUE
+      )
     )) |>
     st_drop_geometry() |>
     distinct(g_indicator, .keep_all = TRUE) |>
@@ -477,6 +488,8 @@ st_write(mit_sa_full, file.path(out_dir, "mit_sa_full_noqa.gpkg"),
 ## 10  Join back to parcels
 
 ```{r join-to-parcels}
+parcels <- st_read(parcels_path, quiet = TRUE)
+
 # Drop geometry from app/mit before joining to avoid geometry column conflicts
 apps_nogeom <- app_sa_full |> st_drop_geometry()
 mits_nogeom <- mit_sa_full |> st_drop_geometry()

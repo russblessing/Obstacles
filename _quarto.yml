@@ -3,13 +3,6 @@ project:
   resources:
     - bibliography.bib
     - notebooks/*.qmd
-  render:
-    - "*.qmd"
-    - "notebooks/01_*.qmd"
-    - "notebooks/02_*.qmd"
-    - "notebooks/03_*.qmd"
-    - "notebooks/04_*.qmd"
-    - "!notebooks/05_*.qmd"
 
 manuscript:
   article: index.qmd
