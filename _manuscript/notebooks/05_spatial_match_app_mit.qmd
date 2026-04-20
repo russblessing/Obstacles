@@ -321,21 +321,15 @@ to_unique_geoms <- function(df) {
   geom_col <- attr(df, "sf_column")
   df |>
     st_transform(crs = 32119) |>
-    (\(x) mutate(x, geom_str   = as.character(st_geometry(x)),
-                    geometry_id = as.integer(factor(geom_str))))() |>
-    distinct(geom_str, .keep_all = TRUE) |>
-    select(geometry_id, geom_str, all_of(geom_col)) |>
+    mutate(geometry_id = row_number()) |>   # stable, unique within tier
+    distinct(geometry_id, .keep_all = TRUE) |>
+    select(geometry_id, all_of(geom_col)) |>
     rename(geometry = all_of(geom_col))
 }
 
 ug_high <- to_unique_geoms(highpri)
-
-ug_med  <- to_unique_geoms(medpri) |>
-  filter(!geom_str %in% ug_high$geom_str)
-
-ug_low  <- to_unique_geoms(lowpri) |>
-  filter(!geom_str %in% ug_high$geom_str,
-         !geom_str %in% ug_med$geom_str)
+ug_med  <- to_unique_geoms(medpri)
+ug_low  <- to_unique_geoms(lowpri)
 
 c(nrow(ug_high), nrow(ug_med), nrow(ug_low))
 ```
@@ -566,5 +560,12 @@ tibble::tibble(
     nrow(mits_rem),
     nrow(apps_rem)
   )
-)
+) |>
+  knitr::kable(
+    format    = "html",
+    col.names = c("Stage", "N"),
+    format.args = list(big.mark = ","),
+    align     = c("l", "r")
+  )
+
 ```
