@@ -321,16 +321,21 @@ to_unique_geoms <- function(df) {
   geom_col <- attr(df, "sf_column")
   df |>
     st_transform(crs = 32119) |>
-    (\(x) mutate(x, geometry_id = as.integer(factor(as.character(st_geometry(x))))))() |>
-    distinct(geometry_id, .keep_all = TRUE) |>
-    select(geometry_id, all_of(geom_col)) |>
+    (\(x) mutate(x, geom_str   = as.character(st_geometry(x)),
+                    geometry_id = as.integer(factor(geom_str))))() |>
+    distinct(geom_str, .keep_all = TRUE) |>
+    select(geometry_id, geom_str, all_of(geom_col)) |>
     rename(geometry = all_of(geom_col))
 }
 
 ug_high <- to_unique_geoms(highpri)
-ug_med  <- to_unique_geoms(medpri)  |> filter(!geometry_id %in% ug_high$geometry_id)
-ug_low  <- to_unique_geoms(lowpri)  |> filter(!geometry_id %in% ug_high$geometry_id,
-                                               !geometry_id %in% ug_med$geometry_id)
+
+ug_med  <- to_unique_geoms(medpri) |>
+  filter(!geom_str %in% ug_high$geom_str)
+
+ug_low  <- to_unique_geoms(lowpri) |>
+  filter(!geom_str %in% ug_high$geom_str,
+         !geom_str %in% ug_med$geom_str)
 ```
 
 
@@ -489,6 +494,14 @@ st_write(mit_sa_full, file.path(out_dir, "mit_sa_full_noqa.gpkg"),
 
 ```{r join-to-parcels}
 parcels <- st_read(parcels_path, quiet = TRUE)
+
+# Reconstruct nc1_geoms (needed for final geometry join; load-parcels is eval:false)
+nc1_geoms <- st_read(geoms_path, quiet = TRUE) |>
+  mutate(
+    parcel_index = as.integer(parcel_index),
+    geometry_id  = as.integer(factor(as.character(geom)))
+  ) |>
+  select(parcel_index, geometry_id, geom)
 
 # Drop geometry from app/mit before joining to avoid geometry column conflicts
 apps_nogeom <- app_sa_full |> st_drop_geometry()
