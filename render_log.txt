@@ -1,0 +1,50 @@
+renv 1.1.6 was loaded from project library, but this project is configured to use renv 1.1.6.
+- Use `renv::record("renv@1.1.6")` to record renv 1.1.6 in the lockfile.
+- Use `renv::restore(packages = "renv")` to install renv 1.1.6 into the project library.
+- The project is out-of-sync -- use `renv::status()` for details.
+[31m
+
+processing file: 05_spatial_match_app_mit.qmd
+[39m1/47                        
+2/47 [libraries]            
+3/47                        
+4/47 [setup]                
+5/47                        
+6/47 [load-parcels]         
+7/47                        
+8/47 [filter-parcels]       
+9/47                        
+10/47 [luc-definitions]      
+11/47                        
+12/47 [score-parcels]        
+13/47                        
+14/47 [priority-split]       
+15/47                        
+16/47 [load-flood-boundary]  
+17/47                        
+18/47 [load-mit]             
+19/47                        
+20/47 [load-app]             
+21/47                        
+22/47 [unique-geoms-setup]   
+23/47                        
+24/47 [load-parcels-priority]
+25/47                        
+26/47 [unique-geoms-parcels] 
+27/47                        
+28/47 [match-function]       
+29/47                        
+30/47 [match-high]           
+31/47                        
+32/47 [match-med]            
+33/47                        
+34/47 [match-low]            
+35/47                        
+36/47 [match-fallback]       
+37/47                        
+38/47 [save-tier-csvs]       
+39/47                        
+40/47 [merge-back]           
+41/47                        
+42/47 [join-to-parcels]      
+[33mWARN: Error encountered when rendering files[39m
