@@ -226,6 +226,7 @@
   <li><a href="#merge-geometry-tags-back-to-full-mit-app-datasets" id="toc-merge-geometry-tags-back-to-full-mit-app-datasets" class="nav-link" data-scroll-target="#merge-geometry-tags-back-to-full-mit-app-datasets">9 Merge geometry tags back to full mit / app datasets</a></li>
   <li><a href="#join-back-to-parcels" id="toc-join-back-to-parcels" class="nav-link" data-scroll-target="#join-back-to-parcels">10 Join back to parcels</a></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#comparison-with-previous-analysis" id="toc-comparison-with-previous-analysis" class="nav-link" data-scroll-target="#comparison-with-previous-analysis">Comparison with previous analysis</a></li>
   </ul>
 </nav>
 </div>
@@ -594,8 +595,8 @@ Attaching package: 'dplyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  31753886 1695.9   60008118 3204.8  60008118 3204.8
-Vcells 255618464 1950.3  497498201 3795.7 497497718 3795.7</code></pre>
+Ncells  31755174 1696.0   59086367 3155.6  59086367 3155.6
+Vcells 255623988 1950.3  495724950 3782.1 424584840 3239.4</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
@@ -847,55 +848,184 @@ Vcells 255618464 1950.3  497498201 3795.7 497497718 3795.7</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Stage =</span> <span class="fu">c</span>(</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mitigations in study area"</span>,</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Applications in study area"</span>,</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mit matched — high priority"</span>,</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"App matched — high priority"</span>,</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mit matched — med priority"</span>,</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"App matched — med priority"</span>,</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mit matched — low priority"</span>,</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"App matched — low priority"</span>,</span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mit fallback (global NN)"</span>,</span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"App fallback (global NN)"</span>,</span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mit unmatched"</span>,</span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"App unmatched"</span></span>
-<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="fu">c</span>(</span>
-<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mit_sa),</span>
-<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(app_sa),</span>
-<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mit_highpri),</span>
-<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(app_highpri),</span>
-<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mit_medpri),</span>
-<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(app_medpri),</span>
-<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mit_lowpri),</span>
-<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(app_lowpri),</span>
-<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mit_dist),</span>
-<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(app_dist),</span>
-<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(mits_rem),</span>
-<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(apps_rem)</span>
-<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>), <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 12 × 2
-   Stage                           N
-   &lt;chr&gt;                       &lt;int&gt;
- 1 Mitigations in study area    8801
- 2 Applications in study area  23232
- 3 Mit matched — high priority  5353
- 4 App matched — high priority  7626
- 5 Mit matched — med priority    951
- 6 App matched — med priority   1229
- 7 Mit matched — low priority   1046
- 8 App matched — low priority   1426
- 9 Mit fallback (global NN)        5
-10 App fallback (global NN)       15
-11 Mit unmatched                   5
-12 App unmatched                  15</code></pre>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>), <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>mit_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>app_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>mit_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>app_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>mit_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>),    <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>()))</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>app_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>),    <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [23]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Type        =</span> <span class="fu">c</span>(<span class="st">"Mitigations"</span>, <span class="st">"Applications"</span>),</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Total       =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_sa),      <span class="fu">nrow</span>(app_sa)),</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">High        =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_highpri), <span class="fu">nrow</span>(app_highpri)),</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Med         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_medpri),  <span class="fu">nrow</span>(app_medpri)),</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Low         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_lowpri),  <span class="fu">nrow</span>(app_lowpri)),</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fallback_NN =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_dist),    <span class="fu">nrow</span>(app_dist)),</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unmatched   =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mits_rem),    <span class="fu">nrow</span>(apps_rem))</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Matched =</span> High <span class="sc">+</span> Med <span class="sc">+</span> Low <span class="sc">+</span> Fallback_NN</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) <span class="sc">|&gt;</span></span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names   =</span> <span class="fu">c</span>(<span class="st">"Type"</span>, <span class="st">"Total"</span>, <span class="st">"High"</span>, <span class="st">"Med"</span>, <span class="st">"Low"</span>, <span class="st">"Fallback NN"</span>,</span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Total Matched"</span>, <span class="st">"Unmatched"</span>)</span>
+<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 16%">
+<col style="width: 18%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Type</th>
+<th style="text-align: right;">Total</th>
+<th style="text-align: right;">High</th>
+<th style="text-align: right;">Med</th>
+<th style="text-align: right;">Low</th>
+<th style="text-align: right;">Fallback NN</th>
+<th style="text-align: right;">Total Matched</th>
+<th style="text-align: right;">Unmatched</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Mitigations</td>
+<td style="text-align: right;">8,801</td>
+<td style="text-align: right;">5,353</td>
+<td style="text-align: right;">951</td>
+<td style="text-align: right;">1,046</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">7,355</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Applications</td>
+<td style="text-align: right;">23,232</td>
+<td style="text-align: right;">7,626</td>
+<td style="text-align: right;">1,229</td>
+<td style="text-align: right;">1,426</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">10,296</td>
+<td style="text-align: right;">15</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div></div>
+<hr>
+</section>
+<section id="comparison-with-previous-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-with-previous-analysis">Comparison with previous analysis</h2>
+<p>The table below compares final matched parcel counts between this run and the prior team’s Python-based pipeline. Differences stem from four sources:</p>
+<ol type="1">
+<li><p><strong>Input record counts</strong> — the source <code>.gpkg</code> files have been updated since the prior run (mitigations: 8,801 vs.&nbsp;8,803; applications: 23,232 vs.&nbsp;23,256).</p></li>
+<li><p><strong>Priority scoring revision</strong> — the original <code>gov</code> LUC list had a missing comma bug (<code>['604' '603', '601']</code>), meaning no parcel ever matched that category. The revised scheme also separates 1–4 family residential into its own tier and weights site address 2× mailing address, producing a cleaner high/med/low split.</p></li>
+<li><p><strong>Geometry deduplication method</strong> — the prior script assigned <code>g_indicator</code> via <code>groupby('geometry').ngroup()</code>, which groups on WKT string representations. Two geometries that are visually identical but differ by sub-micron floating-point precision will receive different group IDs, potentially inflating unique geometry counts. This pipeline uses <code>factor(as.character(st_geometry(.)))</code>, which is consistent with how R represents geometries and avoids this edge case.</p></li>
+<li><p><strong>Low-priority parcel pool asymmetry</strong> — the prior script correctly excluded high-priority geometry IDs from the medium-priority pool, but failed to exclude medium-priority IDs from the low-priority pool. This slightly inflated the low-priority candidate set, allowing some geometries to be matched twice across tiers. This pipeline uses sequential remainder sets (<code>mits_rem</code> / <code>apps_rem</code>) so each geometry can only match in one tier.</p></li>
+</ol>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th style="text-align: right;">Prior run</th>
+<th style="text-align: right;">This run</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Parcels with a mitigation</td>
+<td style="text-align: right;">6,087</td>
+<td style="text-align: right;">5,702</td>
+</tr>
+<tr class="even">
+<td>Parcels with an application</td>
+<td style="text-align: right;">8,782</td>
+<td style="text-align: right;">8,412</td>
+</tr>
+<tr class="odd">
+<td>Parcels with both (mit ∩ app)</td>
+<td style="text-align: right;">4,292</td>
+<td style="text-align: right;">4,047</td>
+</tr>
+<tr class="even">
+<td>Share of app parcels with a mit</td>
+<td style="text-align: right;">48.9%</td>
+<td style="text-align: right;">48.1%</td>
+</tr>
+</tbody>
+</table>
+<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.1%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring and deduplication fixes above.</p>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">

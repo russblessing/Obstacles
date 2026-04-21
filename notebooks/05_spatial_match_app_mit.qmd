@@ -564,10 +564,6 @@ tibble::tibble(
 
 ## Comparison with previous analysis
 
----
-
-## Comparison with previous analysis
-
 The table below compares final matched parcel counts between this run and the
 prior team's Python-based pipeline. Differences stem from four sources:
 
