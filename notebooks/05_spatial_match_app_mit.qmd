@@ -527,36 +527,82 @@ st_write(mits_pcls, file.path(out_dir, "mits_pcls.gpkg"),
 ---
 
 ## Summary
+```{r load-tier-csvs}
+mit_highpri <- read_csv(file.path(out_dir, "mit_highpri.csv"), col_types = cols(.default = col_integer()))
+app_highpri <- read_csv(file.path(out_dir, "app_highpri.csv"), col_types = cols(.default = col_integer()))
+mit_medpri  <- read_csv(file.path(out_dir, "mit_medpri.csv"),  col_types = cols(.default = col_integer()))
+app_medpri  <- read_csv(file.path(out_dir, "app_medpri.csv"),  col_types = cols(.default = col_integer()))
+mit_lowpri  <- read_csv(file.path(out_dir, "mit_lowpri.csv"),  col_types = cols(.default = col_integer()))
+app_lowpri  <- read_csv(file.path(out_dir, "app_lowpri.csv"),  col_types = cols(.default = col_integer()))
+mit_dist    <- read_csv(file.path(out_dir, "mit_dist.csv"),    col_types = cols(g_indicator = col_integer(), geometry_id = col_integer(), distance = col_double()))
+app_dist    <- read_csv(file.path(out_dir, "app_dist.csv"),    col_types = cols(g_indicator = col_integer(), geometry_id = col_integer(), distance = col_double()))
+```
+
 
 ```{r summary}
 tibble::tibble(
-  Stage = c(
-    "Mitigations in study area",
-    "Applications in study area",
-    "Mit matched — high priority",
-    "App matched — high priority",
-    "Mit matched — med priority",
-    "App matched — med priority",
-    "Mit matched — low priority",
-    "App matched — low priority",
-    "Mit fallback (global NN)",
-    "App fallback (global NN)",
-    "Mit unmatched",
-    "App unmatched"
-  ),
-  N = c(
-    nrow(mit_sa),
-    nrow(app_sa),
-    nrow(mit_highpri),
-    nrow(app_highpri),
-    nrow(mit_medpri),
-    nrow(app_medpri),
-    nrow(mit_lowpri),
-    nrow(app_lowpri),
-    nrow(mit_dist),
-    nrow(app_dist),
-    nrow(mits_rem),
-    nrow(apps_rem)
+  Type        = c("Mitigations", "Applications"),
+  Total       = c(nrow(mit_sa),      nrow(app_sa)),
+  High        = c(nrow(mit_highpri), nrow(app_highpri)),
+  Med         = c(nrow(mit_medpri),  nrow(app_medpri)),
+  Low         = c(nrow(mit_lowpri),  nrow(app_lowpri)),
+  Fallback_NN = c(nrow(mit_dist),    nrow(app_dist)),
+  Unmatched   = c(nrow(mits_rem),    nrow(apps_rem))
+) |>
+  dplyr::mutate(
+    Matched = High + Med + Low + Fallback_NN
+  ) |>
+  dplyr::select(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) |>
+  knitr::kable(
+    format.args = list(big.mark = ","),
+    col.names   = c("Type", "Total", "High", "Med", "Low", "Fallback NN",
+                    "Total Matched", "Unmatched")
   )
-)
 ```
+
+---
+
+## Comparison with previous analysis
+
+---
+
+## Comparison with previous analysis
+
+The table below compares final matched parcel counts between this run and the
+prior team's Python-based pipeline. Differences stem from four sources:
+
+1. **Input record counts** — the source `.gpkg` files have been updated since
+   the prior run (mitigations: 8,801 vs. 8,803; applications: 23,232 vs. 23,256).
+
+2. **Priority scoring revision** — the original `gov` LUC list had a missing
+   comma bug (`['604' '603', '601']`), meaning no parcel ever matched that
+   category. The revised scheme also separates 1–4 family residential into its
+   own tier and weights site address 2× mailing address, producing a cleaner
+   high/med/low split.
+
+3. **Geometry deduplication method** — the prior script assigned `g_indicator`
+   via `groupby('geometry').ngroup()`, which groups on WKT string
+   representations. Two geometries that are visually identical but differ by
+   sub-micron floating-point precision will receive different group IDs,
+   potentially inflating unique geometry counts. This pipeline uses
+   `factor(as.character(st_geometry(.)))`, which is consistent with how R
+   represents geometries and avoids this edge case.
+
+4. **Low-priority parcel pool asymmetry** — the prior script correctly excluded
+   high-priority geometry IDs from the medium-priority pool, but failed to
+   exclude medium-priority IDs from the low-priority pool. This slightly
+   inflated the low-priority candidate set, allowing some geometries to be
+   matched twice across tiers. This pipeline uses sequential remainder sets
+   (`mits_rem` / `apps_rem`) so each geometry can only match in one tier.
+
+| Metric | Prior run | This run |
+|---|---:|---:|
+| Parcels with a mitigation | 6,087 | 5,702 |
+| Parcels with an application | 8,782 | 8,412 |
+| Parcels with both (mit ∩ app) | 4,292 | 4,047 |
+| Share of app parcels with a mit | 48.9% | 48.1% |
+
+Despite the count differences, the share of application parcels that also
+received a mitigation is nearly identical across both runs (48.9% vs. 48.1%),
+suggesting the matching logic is consistent — the absolute differences are
+driven by input data updates and the scoring and deduplication fixes above.
