@@ -579,7 +579,7 @@ Attaching package: 'dplyr'</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>read_priority <span class="ot">&lt;-</span> <span class="cf">function</span>(priority, path) {</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_read</span>(</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    path,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">query =</span> <span class="fu">paste0</span>(<span class="st">"SELECT match_priority, geom FROM </span><span class="sc">\"</span><span class="st">parcels_pri</span><span class="sc">\"</span><span class="st"> WHERE match_priority = '"</span>, priority, <span class="st">"'"</span>),</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">query =</span> <span class="fu">paste0</span>(<span class="st">"SELECT parcel_index, match_priority, geom FROM </span><span class="sc">\"</span><span class="st">parcels_pri</span><span class="sc">\"</span><span class="st"> WHERE match_priority = '"</span>, priority, <span class="st">"'"</span>),</span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">quiet =</span> <span class="cn">TRUE</span></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>)</span>
@@ -594,28 +594,27 @@ Attaching package: 'dplyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  31754337 1695.9   63695897 3401.8  63695897 3401.8
-Vcells 253511401 1934.2  535677400 4086.9 446331160 3405.3</code></pre>
+Ncells  31754113 1695.9   57159947 3052.7  57159947 3052.7
+Vcells 255618882 1950.3  577452808 4405.7 481143855 3670.9</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproject parcel priority sets to EPSG:32119</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>to_unique_geoms <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>to_unique_geoms <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">id_offset =</span> <span class="dv">0</span>L) {</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(df, <span class="st">"sf_column"</span>)</span>
 <span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span></span>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    (\(x) <span class="fu">mutate</span>(x, <span class="at">geometry_id =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(x))))))() <span class="sc">|&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">geometry_id =</span> <span class="fu">row_number</span>() <span class="sc">+</span> id_offset) <span class="sc">|&gt;</span></span>
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(geometry_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
 <span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(geometry_id, <span class="fu">all_of</span>(geom_col)) <span class="sc">|&gt;</span></span>
 <span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">geometry =</span> <span class="fu">all_of</span>(geom_col))</span>
 <span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>ug_high <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(highpri)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>ug_med  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(medpri)  <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>geometry_id <span class="sc">%in%</span> ug_high<span class="sc">$</span>geometry_id)</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>ug_low  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(lowpri)  <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>geometry_id <span class="sc">%in%</span> ug_high<span class="sc">$</span>geometry_id,</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>                                               <span class="sc">!</span>geometry_id <span class="sc">%in%</span> ug_med<span class="sc">$</span>geometry_id)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>ug_high <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(highpri, <span class="at">id_offset =</span> <span class="dv">0</span>L)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>ug_med  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(medpri,  <span class="at">id_offset =</span> <span class="fu">nrow</span>(ug_high))</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>ug_low  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(lowpri,  <span class="at">id_offset =</span> <span class="fu">nrow</span>(ug_high) <span class="sc">+</span> <span class="fu">nrow</span>(ug_med))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -788,48 +787,48 @@ Vcells 253511401 1934.2  535677400 4086.9 446331160 3405.3</code></pre>
 <summary>Show / hide code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> <span class="fu">st_read</span>(parcels_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruct nc1_geoms (needed for final geometry join; load-parcels is eval:false)</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)</span></span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>nc1_geoms <span class="ot">&lt;-</span> <span class="fu">st_read</span>(geoms_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index),</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">geometry_id  =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(geom)))</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, geometry_id, geom)</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop geometry from app/mit before joining to avoid geometry column conflicts</span></span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>apps_nogeom <span class="ot">&lt;-</span> app_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>mits_nogeom <span class="ot">&lt;-</span> mit_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>parcels_nogeom <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
-<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"vacant"</span>,<span class="st">"gov_lu"</span>,<span class="st">"res_lu"</span>,<span class="st">"fr_1_4"</span>,</span>
-<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"qual_siteadd"</span>,<span class="st">"qual_mailadd"</span>,<span class="st">"qual_luc"</span>,</span>
-<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"qual_sum"</span>,<span class="st">"match_priority"</span>)))</span>
-<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index)) <span class="sc">|&gt;</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, geom)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop geometry from app/mit before joining</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>apps_nogeom <span class="ot">&lt;-</span> app_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>mits_nogeom <span class="ot">&lt;-</span> mit_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a><span class="co"># parcels_nogeom: keep parcel_index + all attribute columns, drop spatial scoring cols</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>parcels_nogeom <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"vacant"</span>,<span class="st">"gov_lu"</span>,<span class="st">"res_lu"</span>,<span class="st">"fr_1_4"</span>,</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_siteadd"</span>,<span class="st">"qual_mailadd"</span>,<span class="st">"qual_luc"</span>,</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_sum"</span>,<span class="st">"match_priority"</span>)))</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Join mit/app → parcel attributes via geometry_id, then attach parcel geometry</span></span>
 <span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>apps_pcls <span class="ot">&lt;-</span> apps_nogeom <span class="sc">|&gt;</span></span>
-<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(parcels_nogeom), <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
 <span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning in left_join(apps_nogeom, st_drop_geometry(parcels_nogeom), by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
-ℹ Row 7104 of `x` matches multiple rows in `y`.
-ℹ Row 893452 of `y` matches multiple rows in `x`.
+<pre><code>Warning in left_join(apps_nogeom, parcels_nogeom, by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 1124 of `x` matches multiple rows in `y`.
+ℹ Row 3092561 of `y` matches multiple rows in `x`.
 ℹ If a many-to-many relationship is expected, set `relationship =
   "many-to-many"` to silence this warning.</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>mits_pcls <span class="ot">&lt;-</span> mits_nogeom <span class="sc">|&gt;</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(parcels_nogeom), <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning in left_join(mits_nogeom, st_drop_geometry(parcels_nogeom), by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
-ℹ Row 1818 of `x` matches multiple rows in `y`.
-ℹ Row 3764770 of `y` matches multiple rows in `x`.
+<pre><code>Warning in left_join(mits_nogeom, parcels_nogeom, by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
+ℹ Row 485 of `x` matches multiple rows in `y`.
+ℹ Row 1369155 of `y` matches multiple rows in `x`.
 ℹ If a many-to-many relationship is expected, set `relationship =
   "many-to-many"` to silence this warning.</code></pre>
 </div>
@@ -887,14 +886,14 @@ Vcells 253511401 1934.2  535677400 4086.9 446331160 3405.3</code></pre>
  2 Applications in study area  23232
  3 Mit matched — high priority  5353
  4 App matched — high priority  7626
- 5 Mit matched — med priority      0
- 6 App matched — med priority      0
- 7 Mit matched — low priority      0
- 8 App matched — low priority      0
- 9 Mit fallback (global NN)     2002
-10 App fallback (global NN)     2670
-11 Mit unmatched                2002
-12 App unmatched                2670</code></pre>
+ 5 Mit matched — med priority    951
+ 6 App matched — med priority   1229
+ 7 Mit matched — low priority   1046
+ 8 App matched — low priority   1426
+ 9 Mit fallback (global NN)        5
+10 App fallback (global NN)       15
+11 Mit unmatched                   5
+12 App unmatched                  15</code></pre>
 </div>
 </div></div>
 </section>
