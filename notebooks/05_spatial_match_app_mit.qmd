@@ -300,7 +300,7 @@ spatial operations where multiple records share a coordinate.
 read_priority <- function(priority, path) {
   st_read(
     path,
-    query = paste0("SELECT parcel_index, match_priority, geom FROM \"parcels_pri\" WHERE match_priority = '", priority, "'"),
+    query = paste0("SELECT parcel_index, match_priority, geometry_id, geom FROM \"parcels_pri\" WHERE match_priority = '", priority, "'"),
     quiet = TRUE
   ) |>
     st_transform(crs = 32119)
@@ -317,19 +317,18 @@ gc()
 
 ```{r unique-geoms-parcels}
 # Reproject parcel priority sets to EPSG:32119
-to_unique_geoms <- function(df, id_offset = 0L) {
+to_unique_geoms <- function(df) {
   geom_col <- attr(df, "sf_column")
   df |>
     st_transform(crs = 32119) |>
-    mutate(geometry_id = row_number() + id_offset) |>
     distinct(geometry_id, .keep_all = TRUE) |>
     select(geometry_id, all_of(geom_col)) |>
     rename(geometry = all_of(geom_col))
 }
 
-ug_high <- to_unique_geoms(highpri, id_offset = 0L)
-ug_med  <- to_unique_geoms(medpri,  id_offset = nrow(ug_high))
-ug_low  <- to_unique_geoms(lowpri,  id_offset = nrow(ug_high) + nrow(ug_med))
+ug_high <- to_unique_geoms(highpri)
+ug_med  <- to_unique_geoms(medpri)
+ug_low  <- to_unique_geoms(lowpri)
 ```
 
 
@@ -565,7 +564,7 @@ tibble::tibble(
 ## Comparison with previous analysis
 
 The table below compares final matched parcel counts between this run and the
-prior team's Python-based pipeline. Differences stem from four sources:
+prior team's Python-based pipeline. Differences stem from five sources:
 
 1. **Input record counts** — the source `.gpkg` files have been updated since
    the prior run (mitigations: 8,801 vs. 8,803; applications: 23,232 vs. 23,256).
@@ -591,6 +590,11 @@ prior team's Python-based pipeline. Differences stem from four sources:
    matched twice across tiers. This pipeline uses sequential remainder sets
    (`mits_rem` / `apps_rem`) so each geometry can only match in one tier.
 
+5. **Parcel duplicate preservation** — the Python pipeline's final
+   `merge(apps, parcels, on='geometry_id')` naturally re-inflates matched
+   records across all parcel rows that share a `geometry_id` (i.e. a common
+   physical footprint). 
+
 | Metric | Prior run | This run |
 |---|---:|---:|
 | Parcels with a mitigation | 6,087 | 5,702 |
@@ -601,4 +605,5 @@ prior team's Python-based pipeline. Differences stem from four sources:
 Despite the count differences, the share of application parcels that also
 received a mitigation is nearly identical across both runs (48.9% vs. 48.1%),
 suggesting the matching logic is consistent — the absolute differences are
-driven by input data updates and the scoring and deduplication fixes above.
+driven by input data updates and the scoring, deduplication, and parcel
+duplicate-preservation fixes above.
