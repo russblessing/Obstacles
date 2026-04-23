@@ -285,21 +285,31 @@ Attaching package: 'dplyr'</code></pre>
 <summary>Show / hide code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringdist)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'tidyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:stringdist':
+
+    extract</code></pre>
+</div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [2]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>out_dir  <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output"</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># External data paths</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>flood_boundary_path <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles/NC_huc6_data_union_sf/NC_huc6_data_union_sf.shp"</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>mit_path            <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_newgeo.gpkg"</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>mit_elev_path       <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_elevation_qaqc_filled.csv"</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>app_path            <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/applications_final.gpkg"</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>geoms_path          <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_study_area.gpkg"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>out_dir  <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output"</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># External data paths</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>flood_boundary_path <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles/NC_huc6_data_union_sf/NC_huc6_data_union_sf.shp"</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>mit_path            <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_newgeo.gpkg"</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>mit_elev_path       <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_elevation_qaqc_filled.csv"</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>app_path            <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/applications_final.gpkg"</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>geoms_path          <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_study_area.gpkg"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -309,26 +319,25 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># load-parcels — remove the mit_sa/app_sa mutates entirely</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>parcels_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>),</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index))</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>nc1_geoms <span class="ot">&lt;-</span> <span class="fu">st_read</span>(geoms_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index),</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">geometry_id  =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(geom)))</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, geometry_id)</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels_raw <span class="sc">|&gt;</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"geometry_id1"</span>, <span class="st">"index_right"</span>, <span class="st">"geometry_id"</span>, <span class="st">"geometry"</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(nc1_geoms), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>parcels_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index))</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>nc1_geoms <span class="ot">&lt;-</span> <span class="fu">st_read</span>(geoms_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index),</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">geometry_id  =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(geom)))</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, geometry_id)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels_raw <span class="sc">|&gt;</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"geometry_id1"</span>, <span class="st">"index_right"</span>, <span class="st">"geometry_id"</span>, <span class="st">"geometry"</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">st_drop_geometry</span>(nc1_geoms), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -338,38 +347,38 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove water parcels (flagged via parcel number keywords)</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>water_keywords <span class="ot">&lt;-</span> <span class="st">"bay|creek|sound|water|ocean|river|canal|pond|inlet"</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">str_detect</span>(parno, <span class="fu">regex</span>(water_keywords, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)))</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Flag and remove invalid parcels</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">invalidparcels =</span> <span class="fu">case_when</span>(</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="co"># No identifying info at all</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> mailadd <span class="sc">==</span> <span class="st">""</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Carteret: no land use code, blank parno → likely right-of-way</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"031"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Brunswick: no parno or altparno → right-of-way</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> altparno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"019"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Explicit ROW tags (excluding "ROWAN COUNTY")</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>      (<span class="fu">str_detect</span>(parno,    <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)) <span class="sc">|</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_detect</span>(altparno, <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">&amp;</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        parno <span class="sc">!=</span> <span class="st">"ROWAN COUNTY"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span>L</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(invalidparcels <span class="sc">==</span> <span class="dv">0</span>L)</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Save pre-priority filtered parcels for diagnostic mapping</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>invalidparcels),</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>         <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_matcheable.gpkg"</span>),</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>invalidparcels)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove water parcels (flagged via parcel number keywords)</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>water_keywords <span class="ot">&lt;-</span> <span class="st">"bay|creek|sound|water|ocean|river|canal|pond|inlet"</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">str_detect</span>(parno, <span class="fu">regex</span>(water_keywords, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Flag and remove invalid parcels</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">invalidparcels =</span> <span class="fu">case_when</span>(</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="co"># No identifying info at all</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> mailadd <span class="sc">==</span> <span class="st">""</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Carteret: no land use code, blank parno → likely right-of-way</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"031"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Brunswick: no parno or altparno → right-of-way</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> altparno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"019"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Explicit ROW tags (excluding "ROWAN COUNTY")</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>      (<span class="fu">str_detect</span>(parno,    <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)) <span class="sc">|</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_detect</span>(altparno, <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">&amp;</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        parno <span class="sc">!=</span> <span class="st">"ROWAN COUNTY"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span>L</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(invalidparcels <span class="sc">==</span> <span class="dv">0</span>L)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Save pre-priority filtered parcels for diagnostic mapping</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>invalidparcels),</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>         <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_matcheable.gpkg"</span>),</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>invalidparcels)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -380,17 +389,17 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>luc_vacant      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"465"</span>,<span class="st">"460"</span>,<span class="st">"455"</span>,<span class="st">"454"</span>,<span class="st">"453"</span>,<span class="st">"452"</span>,<span class="st">"450"</span>,<span class="st">"400"</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>luc_gov         <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"604"</span>,<span class="st">"603"</span>,<span class="st">"601"</span>)           <span class="co"># muni/county/tax-exempt owned</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>luc_residential <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"134"</span>,<span class="st">"133"</span>,</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"132"</span>,<span class="st">"131"</span>,<span class="st">"117"</span>,<span class="st">"116"</span>,<span class="st">"115"</span>,<span class="st">"113"</span>,<span class="st">"112"</span>,<span class="st">"111"</span>,<span class="st">"109"</span>,<span class="st">"106"</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"103"</span>,<span class="st">"102"</span>,<span class="st">"100"</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>luc_fr_1_4      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"132"</span>,<span class="st">"115"</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"102"</span>,<span class="st">"100"</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>luc_top         <span class="ot">&lt;-</span> <span class="fu">c</span>(luc_vacant, luc_gov, luc_residential)</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>luc_bottom      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"605"</span>,<span class="st">"606"</span>,<span class="st">"607"</span>,<span class="st">"609"</span>,<span class="st">"610"</span>,<span class="st">"614"</span>,<span class="st">"615"</span>,<span class="st">"618"</span>,<span class="st">"620"</span>,<span class="st">"630"</span>,</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"800"</span>,<span class="st">"818"</span>,<span class="st">"839"</span>,<span class="st">"850"</span>,<span class="st">"860"</span>,<span class="st">"872"</span>,<span class="st">"875"</span>,<span class="st">"877"</span>,<span class="st">"880"</span>,<span class="st">"883"</span>,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"885"</span>,<span class="st">"886"</span>,<span class="st">"114"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>luc_vacant      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"465"</span>,<span class="st">"460"</span>,<span class="st">"455"</span>,<span class="st">"454"</span>,<span class="st">"453"</span>,<span class="st">"452"</span>,<span class="st">"450"</span>,<span class="st">"400"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>luc_gov         <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"604"</span>,<span class="st">"603"</span>,<span class="st">"601"</span>)           <span class="co"># muni/county/tax-exempt owned</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>luc_residential <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"134"</span>,<span class="st">"133"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"132"</span>,<span class="st">"131"</span>,<span class="st">"117"</span>,<span class="st">"116"</span>,<span class="st">"115"</span>,<span class="st">"113"</span>,<span class="st">"112"</span>,<span class="st">"111"</span>,<span class="st">"109"</span>,<span class="st">"106"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"103"</span>,<span class="st">"102"</span>,<span class="st">"100"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>luc_fr_1_4      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"132"</span>,<span class="st">"115"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"102"</span>,<span class="st">"100"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>luc_top         <span class="ot">&lt;-</span> <span class="fu">c</span>(luc_vacant, luc_gov, luc_residential)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>luc_bottom      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"605"</span>,<span class="st">"606"</span>,<span class="st">"607"</span>,<span class="st">"609"</span>,<span class="st">"610"</span>,<span class="st">"614"</span>,<span class="st">"615"</span>,<span class="st">"618"</span>,<span class="st">"620"</span>,<span class="st">"630"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"800"</span>,<span class="st">"818"</span>,<span class="st">"839"</span>,<span class="st">"850"</span>,<span class="st">"860"</span>,<span class="st">"872"</span>,<span class="st">"875"</span>,<span class="st">"877"</span>,<span class="st">"880"</span>,<span class="st">"883"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"885"</span>,<span class="st">"886"</span>,<span class="st">"114"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <blockquote class="blockquote">
@@ -449,53 +458,53 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">as.character</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>),</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Land use flags (kept for downstream use)</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Address quality: site address weighted 2x, mail address 1x</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_siteadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> siteadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">2</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_mailadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(mailadd) <span class="sc">&amp;</span> mailadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tiered LUC score (0–4)</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">luc_tier =</span> <span class="fu">case_when</span>(</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                                     <span class="sc">~</span> <span class="dv">1</span>L</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Composite score (0–7) and priority tier</span></span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_sum =</span> luc_tier <span class="sc">+</span> qual_siteadd <span class="sc">+</span> qual_mailadd,</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">match_priority =</span> <span class="fu">case_when</span>(</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> qual_siteadd <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"high"</span>,   <span class="co"># 1-4 family + site address</span></span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">|</span> qual_sum <span class="sc">&gt;=</span> <span class="dv">5</span>     <span class="sc">~</span> <span class="st">"med"</span>,</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                              <span class="sc">~</span> <span class="st">"low"</span></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Save prioritised parcel layer</span></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels, <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>),</span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">as.character</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Land use flags (kept for downstream use)</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Address quality: site address weighted 2x, mail address 1x</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_siteadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> siteadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">2</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_mailadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(mailadd) <span class="sc">&amp;</span> mailadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tiered LUC score (0–4)</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">luc_tier =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                                     <span class="sc">~</span> <span class="dv">1</span>L</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Composite score (0–7) and priority tier</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_sum =</span> luc_tier <span class="sc">+</span> qual_siteadd <span class="sc">+</span> qual_mailadd,</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">match_priority =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> qual_siteadd <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"high"</span>,   <span class="co"># 1-4 family + site address</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">|</span> qual_sum <span class="sc">&gt;=</span> <span class="dv">5</span>     <span class="sc">~</span> <span class="st">"med"</span>,</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                              <span class="sc">~</span> <span class="st">"low"</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Save prioritised parcel layer</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels, <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>),</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Split into priority tiers</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>highpri <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"high"</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>medpri  <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"med"</span>)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>lowpri  <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"low"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Split into priority tiers</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>highpri <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"high"</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>medpri  <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"med"</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>lowpri  <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span> <span class="fu">filter</span>(match_priority <span class="sc">==</span> <span class="st">"low"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -505,68 +514,68 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>flood_boundary <span class="ot">&lt;-</span> <span class="fu">st_read</span>(flood_boundary_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>flood_boundary <span class="ot">&lt;-</span> <span class="fu">st_read</span>(flood_boundary_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [9]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> <span class="fu">st_read</span>(mit_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge elevation QAQC scores</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>mit_elev <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(mit_elev_path, <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())) <span class="sc">|&gt;</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(str_trim)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mit_elev <span class="sc">|&gt;</span> </span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_ID, elevation_score), <span class="at">by =</span> <span class="st">"record_ID"</span>)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Clip to study area</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Inside_SA =</span> <span class="fu">as.integer</span>(<span class="fu">lengths</span>(<span class="fu">st_within</span>(<span class="fu">st_geometry</span>(mit_gdf), flood_boundary)) <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>mit_sa <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span> <span class="fu">filter</span>(Inside_SA <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> <span class="fu">st_read</span>(mit_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge elevation QAQC scores</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>mit_elev <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(mit_elev_path, <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())) <span class="sc">|&gt;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(str_trim)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mit_elev <span class="sc">|&gt;</span> </span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(record_ID, elevation_score), <span class="at">by =</span> <span class="st">"record_ID"</span>)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Clip to study area</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>mit_gdf <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Inside_SA =</span> <span class="fu">as.integer</span>(<span class="fu">lengths</span>(<span class="fu">st_within</span>(<span class="fu">st_geometry</span>(mit_gdf), flood_boundary)) <span class="sc">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>mit_sa <span class="ot">&lt;-</span> mit_gdf <span class="sc">|&gt;</span> <span class="fu">filter</span>(Inside_SA <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [10]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>app <span class="ot">&lt;-</span> <span class="fu">st_read</span>(app_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>app <span class="ot">&lt;-</span> app <span class="sc">|&gt;</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">app_id    =</span> <span class="fu">row_number</span>(),</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Inside_SA =</span> <span class="fu">as.integer</span>(<span class="fu">lengths</span>(<span class="fu">st_within</span>(<span class="fu">st_geometry</span>(app), flood_boundary)) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>app_sa <span class="ot">&lt;-</span> app <span class="sc">|&gt;</span> <span class="fu">filter</span>(Inside_SA <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>app <span class="ot">&lt;-</span> <span class="fu">st_read</span>(app_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>app <span class="ot">&lt;-</span> app <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">app_id    =</span> <span class="fu">row_number</span>(),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Inside_SA =</span> <span class="fu">as.integer</span>(<span class="fu">lengths</span>(<span class="fu">st_within</span>(<span class="fu">st_geometry</span>(app), flood_boundary)) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>app_sa <span class="ot">&lt;-</span> app <span class="sc">|&gt;</span> <span class="fu">filter</span>(Inside_SA <span class="sc">==</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>mit_geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(mit_sa, <span class="st">"sf_column"</span>)</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>app_geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(app_sa, <span class="st">"sf_column"</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>mit_sa <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">g_indicator =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(mit_sa)))))</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>app_sa <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">g_indicator =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(app_sa)))),</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">app_id      =</span> <span class="fu">row_number</span>()</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>unique_mit <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span> <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(g_indicator, <span class="fu">all_of</span>(mit_geom_col)) <span class="sc">|&gt;</span></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>unique_app <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span> <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(g_indicator, <span class="fu">all_of</span>(app_geom_col)) <span class="sc">|&gt;</span></span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>mit_geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(mit_sa, <span class="st">"sf_column"</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>app_geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(app_sa, <span class="st">"sf_column"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>mit_sa <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">g_indicator =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(mit_sa)))))</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>app_sa <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">g_indicator =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(app_sa)))),</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">app_id      =</span> <span class="fu">row_number</span>()</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>unique_mit <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span> <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(g_indicator, <span class="fu">all_of</span>(mit_geom_col)) <span class="sc">|&gt;</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>unique_app <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span> <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(g_indicator, <span class="fu">all_of</span>(app_geom_col)) <span class="sc">|&gt;</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(flood_boundary))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -577,44 +586,44 @@ Attaching package: 'dplyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>read_priority <span class="ot">&lt;-</span> <span class="cf">function</span>(priority, path) {</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_read</span>(</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    path,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">query =</span> <span class="fu">paste0</span>(<span class="st">"SELECT parcel_index, match_priority, geometry_id, geom FROM </span><span class="sc">\"</span><span class="st">parcels_pri</span><span class="sc">\"</span><span class="st"> WHERE match_priority = '"</span>, priority, <span class="st">"'"</span>),</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">quiet =</span> <span class="cn">TRUE</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>)</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>parcels_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>)</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>highpri <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"high"</span>, parcels_path)</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>medpri  <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"med"</span>,  parcels_path)</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>lowpri  <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"low"</span>,  parcels_path)</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>read_priority <span class="ot">&lt;-</span> <span class="cf">function</span>(priority, path) {</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_read</span>(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    path,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">query =</span> <span class="fu">paste0</span>(<span class="st">"SELECT parcel_index, match_priority, geometry_id, geom FROM </span><span class="sc">\"</span><span class="st">parcels_pri</span><span class="sc">\"</span><span class="st"> WHERE match_priority = '"</span>, priority, <span class="st">"'"</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">quiet =</span> <span class="cn">TRUE</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>parcels_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>highpri <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"high"</span>, parcels_path)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>medpri  <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"med"</span>,  parcels_path)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>lowpri  <span class="ot">&lt;-</span> <span class="fu">read_priority</span>(<span class="st">"low"</span>,  parcels_path)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  31754893 1695.9   72451485 3869.4  56076544 2994.9
-Vcells 257731921 1966.4  574642376 4384.2 478801944 3653.0</code></pre>
+Ncells  31756755 1696.0   73668565 3934.4  57286718 3059.5
+Vcells 257737440 1966.4  583639678 4452.9 486299732 3710.2</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproject parcel priority sets to EPSG:32119</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>to_unique_geoms <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(df, <span class="st">"sf_column"</span>)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(geometry_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(geometry_id, <span class="fu">all_of</span>(geom_col)) <span class="sc">|&gt;</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">geometry =</span> <span class="fu">all_of</span>(geom_col))</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>ug_high <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(highpri)</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>ug_med  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(medpri)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>ug_low  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(lowpri)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproject parcel priority sets to EPSG:32119</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>to_unique_geoms <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  geom_col <span class="ot">&lt;-</span> <span class="fu">attr</span>(df, <span class="st">"sf_column"</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">|&gt;</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="dv">32119</span>) <span class="sc">|&gt;</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(geometry_id, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(geometry_id, <span class="fu">all_of</span>(geom_col)) <span class="sc">|&gt;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">geometry =</span> <span class="fu">all_of</span>(geom_col))</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>ug_high <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(highpri)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>ug_med  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(medpri)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>ug_low  <span class="ot">&lt;-</span> <span class="fu">to_unique_geoms</span>(lowpri)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -625,51 +634,51 @@ Vcells 257731921 1966.4  574642376 4384.2 478801944 3653.0</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [14]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Match unique geometries to a parcel tier via intersect + nearest-neighbour</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param candidates sf with columns g_indicator + geometry (mit or app unique geoms)</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param parcel_tier sf with columns geometry_id + geometry (unique parcel geoms)</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param max_dist   maximum allowable distance in metres for distance matches</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return tibble with columns g_indicator, geometry_id, and optionally distance</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>match_to_tier <span class="ot">&lt;-</span> <span class="cf">function</span>(candidates, parcel_tier, <span class="at">max_dist =</span> <span class="dv">50</span>) {</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- intersect pass ---</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  intersect_raw <span class="ot">&lt;-</span> <span class="fu">st_join</span>(candidates, parcel_tier, <span class="at">join =</span> st_intersects, <span class="at">left =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  intersect_matched <span class="ot">&lt;-</span> intersect_raw <span class="sc">|&gt;</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(geometry_id)) <span class="sc">|&gt;</span></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">intersect =</span> <span class="dv">1</span>L) <span class="sc">|&gt;</span></span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  unmatched <span class="ot">&lt;-</span> intersect_raw <span class="sc">|&gt;</span></span>
-<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">is.na</span>(geometry_id)) <span class="sc">|&gt;</span></span>
-<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(g_indicator)</span>
-<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- distance pass on the remainder ---</span></span>
-<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(unmatched) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">nrow</span>(parcel_tier) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>    dist_matched <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">g_indicator =</span> <span class="fu">integer</span>(), <span class="at">geometry_id =</span> <span class="fu">integer</span>(),</span>
-<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>                           <span class="at">distance =</span> <span class="fu">numeric</span>())</span>
-<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>    dist_joined <span class="ot">&lt;-</span> <span class="fu">st_join</span>(unmatched, parcel_tier, <span class="at">join =</span> st_nearest_feature)</span>
-<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>    parcel_geoms <span class="ot">&lt;-</span> parcel_tier<span class="sc">$</span>geometry[<span class="fu">match</span>(dist_joined<span class="sc">$</span>geometry_id, parcel_tier<span class="sc">$</span>geometry_id)]</span>
-<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>    dist_matched <span class="ot">&lt;-</span> dist_joined <span class="sc">|&gt;</span></span>
-<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
-<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>        <span class="fu">st_distance</span>(<span class="fu">st_geometry</span>(dist_joined), parcel_geoms, <span class="at">by_element =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>      )) <span class="sc">|&gt;</span></span>
-<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(distance <span class="sc">&lt;=</span> max_dist)</span>
-<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
-<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>    intersect_matched <span class="sc">|&gt;</span> <span class="fu">select</span>(g_indicator, geometry_id),</span>
-<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>    dist_matched      <span class="sc">|&gt;</span> <span class="fu">select</span>(g_indicator, geometry_id, <span class="fu">any_of</span>(<span class="st">"distance"</span>))</span>
-<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Match unique geometries to a parcel tier via intersect + nearest-neighbour</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param candidates sf with columns g_indicator + geometry (mit or app unique geoms)</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param parcel_tier sf with columns geometry_id + geometry (unique parcel geoms)</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param max_dist   maximum allowable distance in metres for distance matches</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return tibble with columns g_indicator, geometry_id, and optionally distance</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>match_to_tier <span class="ot">&lt;-</span> <span class="cf">function</span>(candidates, parcel_tier, <span class="at">max_dist =</span> <span class="dv">50</span>) {</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- intersect pass ---</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  intersect_raw <span class="ot">&lt;-</span> <span class="fu">st_join</span>(candidates, parcel_tier, <span class="at">join =</span> st_intersects, <span class="at">left =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  intersect_matched <span class="ot">&lt;-</span> intersect_raw <span class="sc">|&gt;</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(geometry_id)) <span class="sc">|&gt;</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">intersect =</span> <span class="dv">1</span>L) <span class="sc">|&gt;</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  unmatched <span class="ot">&lt;-</span> intersect_raw <span class="sc">|&gt;</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">is.na</span>(geometry_id)) <span class="sc">|&gt;</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(g_indicator)</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- distance pass on the remainder ---</span></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(unmatched) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">nrow</span>(parcel_tier) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    dist_matched <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">g_indicator =</span> <span class="fu">integer</span>(), <span class="at">geometry_id =</span> <span class="fu">integer</span>(),</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>                           <span class="at">distance =</span> <span class="fu">numeric</span>())</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    dist_joined <span class="ot">&lt;-</span> <span class="fu">st_join</span>(unmatched, parcel_tier, <span class="at">join =</span> st_nearest_feature)</span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>    parcel_geoms <span class="ot">&lt;-</span> parcel_tier<span class="sc">$</span>geometry[<span class="fu">match</span>(dist_joined<span class="sc">$</span>geometry_id, parcel_tier<span class="sc">$</span>geometry_id)]</span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>    dist_matched <span class="ot">&lt;-</span> dist_joined <span class="sc">|&gt;</span></span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>        <span class="fu">st_distance</span>(<span class="fu">st_geometry</span>(dist_joined), parcel_geoms, <span class="at">by_element =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>      )) <span class="sc">|&gt;</span></span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(distance <span class="sc">&lt;=</span> max_dist)</span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(</span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>    intersect_matched <span class="sc">|&gt;</span> <span class="fu">select</span>(g_indicator, geometry_id),</span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>    dist_matched      <span class="sc">|&gt;</span> <span class="fu">select</span>(g_indicator, geometry_id, <span class="fu">any_of</span>(<span class="st">"distance"</span>))</span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -679,61 +688,61 @@ Vcells 257731921 1966.4  574642376 4384.2 478801944 3653.0</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [15]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(unique_mit, ug_high)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(unique_app, ug_high)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove matched records before next tier</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> unique_mit <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_highpri<span class="sc">$</span>g_indicator)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> unique_app <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_highpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(unique_mit, ug_high)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(unique_app, ug_high)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove matched records before next tier</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> unique_mit <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_highpri<span class="sc">$</span>g_indicator)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> unique_app <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_highpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [16]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>mit_medpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(mits_rem, ug_med)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>app_medpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(apps_rem, ug_med)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> mits_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_medpri<span class="sc">$</span>g_indicator)</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> apps_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_medpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>mit_medpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(mits_rem, ug_med)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>app_medpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(apps_rem, ug_med)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> mits_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_medpri<span class="sc">$</span>g_indicator)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> apps_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_medpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [17]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>mit_lowpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(mits_rem, ug_low)</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>app_lowpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(apps_rem, ug_low)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> mits_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_lowpri<span class="sc">$</span>g_indicator)</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> apps_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_lowpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>mit_lowpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(mits_rem, ug_low)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>app_lowpri <span class="ot">&lt;-</span> <span class="fu">match_to_tier</span>(apps_rem, ug_low)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>mits_rem <span class="ot">&lt;-</span> mits_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> mit_lowpri<span class="sc">$</span>g_indicator)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>apps_rem <span class="ot">&lt;-</span> apps_rem <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>g_indicator <span class="sc">%in%</span> app_lowpri<span class="sc">$</span>g_indicator)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fallback: global nearest-neighbour across all parcel tiers (no distance cap)</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>ug_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ug_high, ug_med, ug_low)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>nn_fallback <span class="ot">&lt;-</span> <span class="cf">function</span>(remaining, all_geoms) {</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(remaining) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">g_indicator =</span> <span class="fu">integer</span>(), <span class="at">geometry_id =</span> <span class="fu">integer</span>(),</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">distance =</span> <span class="fu">numeric</span>()))</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="fu">st_join</span>(remaining, all_geoms, <span class="at">join =</span> st_nearest_feature)</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  joined <span class="sc">|&gt;</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_distance</span>(</span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">st_geometry</span>(joined),</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>        all_geoms<span class="sc">$</span>geometry[<span class="fu">match</span>(geometry_id, all_geoms<span class="sc">$</span>geometry_id)],</span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">by_element =</span> <span class="cn">TRUE</span></span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">|&gt;</span></span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(g_indicator, geometry_id, distance)</span>
-<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>mit_dist <span class="ot">&lt;-</span> <span class="fu">nn_fallback</span>(mits_rem, ug_all)</span>
-<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>app_dist <span class="ot">&lt;-</span> <span class="fu">nn_fallback</span>(apps_rem, ug_all)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fallback: global nearest-neighbour across all parcel tiers (no distance cap)</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>ug_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ug_high, ug_med, ug_low)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>nn_fallback <span class="ot">&lt;-</span> <span class="cf">function</span>(remaining, all_geoms) {</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(remaining) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">g_indicator =</span> <span class="fu">integer</span>(), <span class="at">geometry_id =</span> <span class="fu">integer</span>(),</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">distance =</span> <span class="fu">numeric</span>()))</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="fu">st_join</span>(remaining, all_geoms, <span class="at">join =</span> st_nearest_feature)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  joined <span class="sc">|&gt;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_distance</span>(</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">st_geometry</span>(joined),</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>        all_geoms<span class="sc">$</span>geometry[<span class="fu">match</span>(geometry_id, all_geoms<span class="sc">$</span>geometry_id)],</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">by_element =</span> <span class="cn">TRUE</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">|&gt;</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(g_indicator, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(g_indicator, geometry_id, distance)</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>mit_dist <span class="ot">&lt;-</span> <span class="fu">nn_fallback</span>(mits_rem, ug_all)</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>app_dist <span class="ot">&lt;-</span> <span class="fu">nn_fallback</span>(apps_rem, ug_all)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -743,14 +752,14 @@ Vcells 257731921 1966.4  574642376 4384.2 478801944 3653.0</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_highpri, <span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>))</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_highpri, <span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>))</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_medpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>))</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_medpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>))</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_lowpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>))</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_lowpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>))</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_dist,    <span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>))</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_dist,    <span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_highpri, <span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>))</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_highpri, <span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_medpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>))</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_medpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>))</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_lowpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>))</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_lowpri,  <span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>))</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(mit_dist,    <span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>))</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(app_dist,    <span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
@@ -760,194 +769,224 @@ Vcells 257731921 1966.4  574642376 4384.2 478801944 3653.0</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [20]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>mit_geom_full <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(mit_highpri, mit_medpri, mit_lowpri, mit_dist)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>app_geom_full <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(app_highpri, app_medpri, app_lowpri, app_dist)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>mit_sa_full <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mit_geom_full, <span class="at">by =</span> <span class="st">"g_indicator"</span>)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>app_sa_full <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(app_geom_full, <span class="at">by =</span> <span class="st">"g_indicator"</span>)</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Save geometry-tagged full datasets before QA</span></span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(app_sa_full, <span class="fu">file.path</span>(out_dir, <span class="st">"app_sa_full_noqa.gpkg"</span>),</span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(mit_sa_full, <span class="fu">file.path</span>(out_dir, <span class="st">"mit_sa_full_noqa.gpkg"</span>),</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>mit_geom_full <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(mit_highpri, mit_medpri, mit_lowpri, mit_dist)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>app_geom_full <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(app_highpri, app_medpri, app_lowpri, app_dist)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>mit_sa_full <span class="ot">&lt;-</span> mit_sa <span class="sc">|&gt;</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mit_geom_full, <span class="at">by =</span> <span class="st">"g_indicator"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>app_sa_full <span class="ot">&lt;-</span> app_sa <span class="sc">|&gt;</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(app_geom_full, <span class="at">by =</span> <span class="st">"g_indicator"</span>)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Save geometry-tagged full datasets before QA</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(app_sa_full, <span class="fu">file.path</span>(out_dir, <span class="st">"app_sa_full_noqa.gpkg"</span>),</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(mit_sa_full, <span class="fu">file.path</span>(out_dir, <span class="st">"mit_sa_full_noqa.gpkg"</span>),</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
 </section>
 <section id="join-back-to-parcels" class="level2">
 <h2 class="anchored" data-anchor-id="join-back-to-parcels">10 Join back to parcels</h2>
+<p>The spatial matching in steps 1–9 assigns each mit/app record a <code>geometry_id</code> — the identifier of the parcel polygon it fell inside or nearest to. The goal here is to recover the full parcel attribute table (owner, land use, address, improvement value, etc.) and the parcel geometry for every matched record.</p>
+<p>The complication is that <code>geometry_id</code> is not a unique key into <code>parcels_nogeom</code>. Two situations produce a many-to-many relationship:</p>
+<ol type="1">
+<li><p><strong>Condo / multi-unit complexes.</strong> Each individual unit (e.g., the 95 units at 9620–9630 Vinca Circle) is a separate legal parcel with its own APN, but all units are registered against the same polygon, so they all share one <code>geometry_id</code>. The mit/app address (e.g., <em>“9624 VINCA CIR APT C”</em>) identifies one specific unit, not the whole complex.</p></li>
+<li><p><strong>Recorder duplicates.</strong> A small number of geometry_ids have 2–6 parcel rows that differ only in <code>APN.SEQUENCE.NUMBER</code>. The row with <code>APN.SEQUENCE.NUMBER = 1</code> is the primary (canonical) recorder entry; the others are supplemental filings.</p></li>
+</ol>
+<p>To resolve both cases without inflating the output row count, a two-stage selection is applied within each duplicate <code>geometry_id</code> group:</p>
+<ul>
+<li><strong>Stage 1 — address similarity.</strong> Jaro-Winkler string similarity is computed between the mit/app address field and each candidate parcel’s <code>siteadd</code>. The candidate(s) with the highest similarity score are retained. This is the decisive criterion for condo complexes where <code>APN.SEQUENCE.NUMBER</code> is 1 for every unit.</li>
+<li><strong>Stage 2 — tiebreaking.</strong> Among remaining ties (equal similarity scores), records are ranked by <code>APN.SEQUENCE.NUMBER</code> ascending (primary recorder entry first), then <code>luc_tier</code> descending (most specific land use), then <code>improvval</code> descending (parcel with a structure). A single winner is taken.</li>
+</ul>
+<p>Non-duplicate <code>geometry_id</code>s bypass this logic entirely and are joined directly. The two paths are recombined before the geometry attachment and file write.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [21]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>n_mits_rem <span class="ot">&lt;-</span> <span class="fu">nrow</span>(mits_rem)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>n_apps_rem <span class="ot">&lt;-</span> <span class="fu">nrow</span>(apps_rem)</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(ug_high, ug_med, ug_low, ug_all,</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>   highpri, medpri, lowpri,</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>   mit_highpri, app_highpri, mit_medpri, app_medpri,</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>   mit_lowpri, app_lowpri, mit_dist, app_dist,</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>   unique_mit, unique_app, mits_rem, apps_rem)</span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>n_mits_rem <span class="ot">&lt;-</span> <span class="fu">nrow</span>(mits_rem)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>n_apps_rem <span class="ot">&lt;-</span> <span class="fu">nrow</span>(apps_rem)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(ug_high, ug_med, ug_low, ug_all,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>   highpri, medpri, lowpri,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>   mit_highpri, app_highpri, mit_medpri, app_medpri,</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>   mit_lowpri, app_lowpri, mit_dist, app_dist,</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>   unique_mit, unique_app, mits_rem, apps_rem)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>           used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  1748792 93.4   78693564 4202.7  98366955 5253.4
-Vcells 10246861 78.2  794618580 6062.5 934691767 7131.2</code></pre>
+Ncells  1750654 93.5   95071857 5077.4 118839821 6346.8
+Vcells 10252380 78.3  672493708 5130.8 840617135 6413.4</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>parcels_nogeom <span class="ot">&lt;-</span> <span class="fu">st_read</span>(parcels_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"vacant"</span>,<span class="st">"gov_lu"</span>,<span class="st">"res_lu"</span>,<span class="st">"fr_1_4"</span>,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_siteadd"</span>,<span class="st">"qual_mailadd"</span>,<span class="st">"qual_luc"</span>,</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_sum"</span>,<span class="st">"match_priority"</span>)))</span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                   </span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>nc1_geoms <span class="ot">&lt;-</span> <span class="fu">st_read</span>(geoms_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>                     <span class="at">query =</span> <span class="st">'SELECT parcel_index, geom FROM parcels_study_area'</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index))</span>
-<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop geometry from app/mit before joining</span></span>
-<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>apps_nogeom <span class="ot">&lt;-</span> app_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>mits_nogeom <span class="ot">&lt;-</span> mit_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Join mit/app → parcel attributes via geometry_id, then attach parcel geometry</span></span>
-<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>apps_pcls <span class="ot">&lt;-</span> apps_nogeom <span class="sc">|&gt;</span></span>
-<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
-<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>parcels_nogeom <span class="ot">&lt;-</span> <span class="fu">st_read</span>(parcels_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"vacant"</span>,<span class="st">"gov_lu"</span>,<span class="st">"res_lu"</span>,<span class="st">"fr_1_4"</span>,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_siteadd"</span>,<span class="st">"qual_mailadd"</span>,<span class="st">"qual_luc"</span>,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"qual_sum"</span>,<span class="st">"match_priority"</span>)))</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>                   </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>nc1_geoms <span class="ot">&lt;-</span> <span class="fu">st_read</span>(geoms_path, <span class="at">quiet =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>                     <span class="at">query =</span> <span class="st">'SELECT parcel_index, geom FROM parcels_study_area'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index))</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop geometry from app/mit before joining</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>apps_nogeom <span class="ot">&lt;-</span> app_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>mits_nogeom <span class="ot">&lt;-</span> mit_sa_full <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in left_join(apps_nogeom, parcels_nogeom, by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
-ℹ Row 8560 of `x` matches multiple rows in `y`.
-ℹ Row 4146433 of `y` matches multiple rows in `x`.
-ℹ If a many-to-many relationship is expected, set `relationship =
-  "many-to-many"` to silence this warning.</code></pre>
-</div>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [23]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>mits_pcls <span class="ot">&lt;-</span> mits_nogeom <span class="sc">|&gt;</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="st">"geometry_id"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom), <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Identify geometry_ids with multiple parcel rows ---</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>dup_geom_ids <span class="ot">&lt;-</span> parcels_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(geometry_id) <span class="sc">|&gt;</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(geometry_id)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Helper: pick the best parcel for one (record, geometry_id) pair ----------</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Priority:</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   1. Highest address similarity (Jaro-Winkler) between record address and siteadd</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   2. Lowest APN.SEQUENCE.NUMBER (primary recorder record)</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   3. Highest luc_tier (most specific land use)</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   4. Highest improvval (parcel has a structure)</span></span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>pick_best_parcel <span class="ot">&lt;-</span> <span class="cf">function</span>(records_nogeom, addr_col) {</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>  dup_pool <span class="ot">&lt;-</span> parcels_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(geometry_id <span class="sc">%in%</span> dup_geom_ids)</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>  records_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(geometry_id <span class="sc">%in%</span> dup_geom_ids) <span class="sc">|&gt;</span></span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(unique_id, geometry_id, <span class="at">raw_addr =</span> <span class="fu">all_of</span>(addr_col)) <span class="sc">|&gt;</span></span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(dup_pool, <span class="at">by =</span> <span class="st">"geometry_id"</span>, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">addr_sim =</span> <span class="fu">stringsim</span>(</span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>        <span class="fu">toupper</span>(<span class="fu">coalesce</span>(raw_addr, <span class="st">""</span>)),</span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>        <span class="fu">toupper</span>(<span class="fu">coalesce</span>(siteadd,  <span class="st">""</span>)),</span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">method =</span> <span class="st">"jw"</span></span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(unique_id, geometry_id) <span class="sc">|&gt;</span></span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(addr_sim,             <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(APN.SEQUENCE.NUMBER,  <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(luc_tier,             <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_max</span>(improvval,            <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(unique_id, geometry_id, parcel_index)</span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>app_winners <span class="ot">&lt;-</span> <span class="fu">pick_best_parcel</span>(apps_nogeom <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()), <span class="st">"address"</span>)</span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a>mit_winners <span class="ot">&lt;-</span> <span class="fu">pick_best_parcel</span>(mits_nogeom <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()), <span class="st">"raw_addr"</span>)</span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Build deduplicated parcel tables scoped to each record type ---------------</span></span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a><span class="co"># For non-dup geometry_ids: keep all parcel rows (1-to-1, no change)</span></span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a><span class="co"># For dup geometry_ids:     keep only the winner row per (unique_id, geometry_id)</span></span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a>parcels_nogeom_app_dedup <span class="ot">&lt;-</span> parcels_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb33-44"><a href="#cb33-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>geometry_id <span class="sc">%in%</span> dup_geom_ids)   <span class="co"># non-dup rows</span></span>
+<span id="cb33-45"><a href="#cb33-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-46"><a href="#cb33-46" aria-hidden="true" tabindex="-1"></a>parcels_nogeom_mit_dedup <span class="ot">&lt;-</span> parcels_nogeom_app_dedup  <span class="co"># same base</span></span>
+<span id="cb33-47"><a href="#cb33-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-48"><a href="#cb33-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Winner rows — join winner parcel_index back to full parcel attributes</span></span>
+<span id="cb33-49"><a href="#cb33-49" aria-hidden="true" tabindex="-1"></a>app_dup_rows <span class="ot">&lt;-</span> app_winners <span class="sc">|&gt;</span></span>
+<span id="cb33-50"><a href="#cb33-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"geometry_id"</span>, <span class="st">"parcel_index"</span>))</span>
+<span id="cb33-51"><a href="#cb33-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-52"><a href="#cb33-52" aria-hidden="true" tabindex="-1"></a>mit_dup_rows <span class="ot">&lt;-</span> mit_winners <span class="sc">|&gt;</span></span>
+<span id="cb33-53"><a href="#cb33-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(parcels_nogeom, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"geometry_id"</span>, <span class="st">"parcel_index"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning in left_join(mits_nogeom, parcels_nogeom, by = "geometry_id"): Detected an unexpected many-to-many relationship between `x` and `y`.
-ℹ Row 324 of `x` matches multiple rows in `y`.
-ℹ Row 3548862 of `y` matches multiple rows in `x`.
-ℹ If a many-to-many relationship is expected, set `relationship =
-  "many-to-many"` to silence this warning.</code></pre>
-</div>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [24]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(apps_pcls, <span class="fu">file.path</span>(out_dir, <span class="st">"apps_pcls.gpkg"</span>),</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(mits_pcls, <span class="fu">file.path</span>(out_dir, <span class="st">"mits_pcls.gpkg"</span>),</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Join mit/app → parcel attributes via geometry_id, then attach parcel geometry.</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Dup geometry_ids use the address-similarity winner; non-dup geometry_ids join</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># normally (no many-to-many inflation).</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>join_dedup <span class="ot">&lt;-</span> <span class="cf">function</span>(records_nogeom, dup_rows, id_col, nc1_geoms) {</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  id_sym <span class="ot">&lt;-</span> <span class="fu">sym</span>(id_col)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  non_dup <span class="ot">&lt;-</span> records_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">.uid =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>geometry_id <span class="sc">%in%</span> dup_geom_ids) <span class="sc">|&gt;</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(parcels_nogeom_app_dedup, <span class="at">by =</span> <span class="st">"geometry_id"</span>)</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  dup <span class="ot">&lt;-</span> records_nogeom <span class="sc">|&gt;</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">.uid =</span> <span class="fu">row_number</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(geometry_id <span class="sc">%in%</span> dup_geom_ids) <span class="sc">|&gt;</span></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>      dup_rows <span class="sc">|&gt;</span> <span class="fu">select</span>(unique_id, geometry_id, parcel_index,</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>                         <span class="fu">any_of</span>(<span class="fu">names</span>(parcels_nogeom))),</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">by =</span> <span class="fu">c</span>(<span class="st">".uid"</span> <span class="ot">=</span> <span class="st">"unique_id"</span>, <span class="st">"geometry_id"</span>)</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(non_dup, dup) <span class="sc">|&gt;</span></span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(nc1_geoms <span class="sc">|&gt;</span> <span class="fu">select</span>(parcel_index, <span class="at">geometry =</span> geom),</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>              <span class="at">by =</span> <span class="st">"parcel_index"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>.uid) <span class="sc">|&gt;</span></span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_as_sf</span>(<span class="at">crs =</span> <span class="fu">st_crs</span>(nc1_geoms))</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>apps_pcls <span class="ot">&lt;-</span> <span class="fu">join_dedup</span>(</span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>  apps_nogeom <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()),</span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>  app_dup_rows, <span class="st">"unique_id"</span>, nc1_geoms</span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>mits_pcls <span class="ot">&lt;-</span> <span class="fu">join_dedup</span>(</span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>  mits_nogeom <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">unique_id =</span> <span class="fu">row_number</span>()),</span>
+<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>  mit_dup_rows, <span class="st">"unique_id"</span>, nc1_geoms</span>
+<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(apps_pcls, <span class="fu">file.path</span>(out_dir, <span class="st">"apps_pcls.gpkg"</span>),</span>
+<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(mits_pcls, <span class="fu">file.path</span>(out_dir, <span class="st">"mits_pcls.gpkg"</span>),</span>
+<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <hr>
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [23]:</pre></div><div class="cell">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [25]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>), <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>), <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>mit_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>app_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>mit_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>app_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>),  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_integer</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
-e.g.:
-  dat &lt;- vroom(...)
-  problems(dat)</code></pre>
-</div>
-<details class="code-fold">
-<summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>mit_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>),    <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>()))</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>app_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>),    <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>pri_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>())</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>mit_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>app_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>mit_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>app_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>mit_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>app_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [24]:</pre></div><div class="cell">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [26]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Type        =</span> <span class="fu">c</span>(<span class="st">"Mitigations"</span>, <span class="st">"Applications"</span>),</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Total       =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_sa),      <span class="fu">nrow</span>(app_sa)),</span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">High        =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_highpri), <span class="fu">nrow</span>(app_highpri)),</span>
-<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Med         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_medpri),  <span class="fu">nrow</span>(app_medpri)),</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Low         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_lowpri),  <span class="fu">nrow</span>(app_lowpri)),</span>
-<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fallback_NN =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_dist),    <span class="fu">nrow</span>(app_dist)),</span>
-<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unmatched   =</span> <span class="fu">c</span>(n_mits_rem,    n_apps_rem)</span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
-<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Matched =</span> High <span class="sc">+</span> Med <span class="sc">+</span> Low <span class="sc">+</span> Fallback_NN</span>
-<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) <span class="sc">|&gt;</span></span>
-<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names   =</span> <span class="fu">c</span>(<span class="st">"Type"</span>, <span class="st">"Total"</span>, <span class="st">"High"</span>, <span class="st">"Med"</span>, <span class="st">"Low"</span>, <span class="st">"Fallback NN"</span>,</span>
-<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Total Matched"</span>, <span class="st">"Unmatched"</span>)</span>
-<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Type        =</span> <span class="fu">c</span>(<span class="st">"Mitigations"</span>, <span class="st">"Applications"</span>),</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Total       =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_sa),      <span class="fu">nrow</span>(app_sa)),</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">High        =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_highpri), <span class="fu">nrow</span>(app_highpri)),</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Med         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_medpri),  <span class="fu">nrow</span>(app_medpri)),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Low         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_lowpri),  <span class="fu">nrow</span>(app_lowpri)),</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fallback_NN =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_dist),    <span class="fu">nrow</span>(app_dist)),</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unmatched   =</span> <span class="fu">c</span>(n_mits_rem,    n_apps_rem)</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Matched =</span> High <span class="sc">+</span> Med <span class="sc">+</span> Low <span class="sc">+</span> Fallback_NN</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) <span class="sc">|&gt;</span></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names   =</span> <span class="fu">c</span>(<span class="st">"Type"</span>, <span class="st">"Total"</span>, <span class="st">"High"</span>, <span class="st">"Med"</span>, <span class="st">"Low"</span>, <span class="st">"Fallback NN"</span>,</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Total Matched"</span>, <span class="st">"Unmatched"</span>)</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
