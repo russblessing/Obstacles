@@ -300,7 +300,7 @@ spatial operations where multiple records share a coordinate.
 read_priority <- function(priority, path) {
   st_read(
     path,
-    query = paste0("SELECT parcel_index, match_priority, geom FROM \"parcels_pri\" WHERE match_priority = '", priority, "'"),
+    query = paste0("SELECT parcel_index, match_priority, geometry_id, geom FROM \"parcels_pri\" WHERE match_priority = '", priority, "'"),
     quiet = TRUE
   ) |>
     st_transform(crs = 32119)
@@ -317,19 +317,18 @@ gc()
 
 ```{r unique-geoms-parcels}
 # Reproject parcel priority sets to EPSG:32119
-to_unique_geoms <- function(df, id_offset = 0L) {
+to_unique_geoms <- function(df) {
   geom_col <- attr(df, "sf_column")
   df |>
     st_transform(crs = 32119) |>
-    mutate(geometry_id = row_number() + id_offset) |>
     distinct(geometry_id, .keep_all = TRUE) |>
     select(geometry_id, all_of(geom_col)) |>
     rename(geometry = all_of(geom_col))
 }
 
-ug_high <- to_unique_geoms(highpri, id_offset = 0L)
-ug_med  <- to_unique_geoms(medpri,  id_offset = nrow(ug_high))
-ug_low  <- to_unique_geoms(lowpri,  id_offset = nrow(ug_high) + nrow(ug_med))
+ug_high <- to_unique_geoms(highpri)
+ug_med  <- to_unique_geoms(medpri)
+ug_low  <- to_unique_geoms(lowpri)
 ```
 
 
@@ -485,25 +484,34 @@ st_write(mit_sa_full, file.path(out_dir, "mit_sa_full_noqa.gpkg"),
 ---
 
 ## 10  Join back to parcels
+```{r free-up-memory}
+n_mits_rem <- nrow(mits_rem)
+n_apps_rem <- nrow(apps_rem)
+
+rm(ug_high, ug_med, ug_low, ug_all,
+   highpri, medpri, lowpri,
+   mit_highpri, app_highpri, mit_medpri, app_medpri,
+   mit_lowpri, app_lowpri, mit_dist, app_dist,
+   unique_mit, unique_app, mits_rem, apps_rem)
+gc()
+```
+
 
 ```{r join-to-parcels}
-parcels <- st_read(parcels_path, quiet = TRUE)
-
-# Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)
-nc1_geoms <- st_read(geoms_path, quiet = TRUE) |>
-  mutate(parcel_index = as.integer(parcel_index)) |>
-  select(parcel_index, geom)
-
-# Drop geometry from app/mit before joining
-apps_nogeom <- app_sa_full |> st_drop_geometry()
-mits_nogeom <- mit_sa_full |> st_drop_geometry()
-
-# parcels_nogeom: keep parcel_index + all attribute columns, drop spatial scoring cols
-parcels_nogeom <- parcels |>
+parcels_nogeom <- st_read(parcels_path, quiet = TRUE) |>
   st_drop_geometry() |>
   select(-any_of(c("vacant","gov_lu","res_lu","fr_1_4",
                    "qual_siteadd","qual_mailadd","qual_luc",
                    "qual_sum","match_priority")))
+                   
+# Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)
+nc1_geoms <- st_read(geoms_path, quiet = TRUE,
+                     query = 'SELECT parcel_index, geom FROM parcels_study_area') |>
+  mutate(parcel_index = as.integer(parcel_index))
+
+# Drop geometry from app/mit before joining
+apps_nogeom <- app_sa_full |> st_drop_geometry()
+mits_nogeom <- mit_sa_full |> st_drop_geometry()
 
 # Join mit/app → parcel attributes via geometry_id, then attach parcel geometry
 apps_pcls <- apps_nogeom |>
@@ -547,7 +555,7 @@ tibble::tibble(
   Med         = c(nrow(mit_medpri),  nrow(app_medpri)),
   Low         = c(nrow(mit_lowpri),  nrow(app_lowpri)),
   Fallback_NN = c(nrow(mit_dist),    nrow(app_dist)),
-  Unmatched   = c(nrow(mits_rem),    nrow(apps_rem))
+  Unmatched   = c(n_mits_rem,    n_apps_rem)
 ) |>
   dplyr::mutate(
     Matched = High + Med + Low + Fallback_NN
@@ -565,7 +573,7 @@ tibble::tibble(
 ## Comparison with previous analysis
 
 The table below compares final matched parcel counts between this run and the
-prior team's Python-based pipeline. Differences stem from four sources:
+prior team's Python-based pipeline. Differences stem from five sources:
 
 1. **Input record counts** — the source `.gpkg` files have been updated since
    the prior run (mitigations: 8,801 vs. 8,803; applications: 23,232 vs. 23,256).
@@ -591,6 +599,11 @@ prior team's Python-based pipeline. Differences stem from four sources:
    matched twice across tiers. This pipeline uses sequential remainder sets
    (`mits_rem` / `apps_rem`) so each geometry can only match in one tier.
 
+5. **Parcel duplicate preservation** — the Python pipeline's final
+   `merge(apps, parcels, on='geometry_id')` naturally re-inflates matched
+   records across all parcel rows that share a `geometry_id` (i.e. a common
+   physical footprint). 
+
 | Metric | Prior run | This run |
 |---|---:|---:|
 | Parcels with a mitigation | 6,087 | 5,702 |
@@ -601,4 +614,5 @@ prior team's Python-based pipeline. Differences stem from four sources:
 Despite the count differences, the share of application parcels that also
 received a mitigation is nearly identical across both runs (48.9% vs. 48.1%),
 suggesting the matching logic is consistent — the absolute differences are
-driven by input data updates and the scoring and deduplication fixes above.
+driven by input data updates and the scoring, deduplication, and parcel
+duplicate-preservation fixes above.
