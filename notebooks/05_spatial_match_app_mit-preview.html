@@ -604,8 +604,8 @@ Attaching package: 'tidyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  31756755 1696.0   73668565 3934.4  57286718 3059.5
-Vcells 257737440 1966.4  583639678 4452.9 486299732 3710.2</code></pre>
+Ncells  31758376 1696.1   74741182 3991.7  53942287 2880.9
+Vcells 257741000 1966.5  577942052 4409.4 481551674 3674.0</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
@@ -818,8 +818,8 @@ Vcells 257737440 1966.4  583639678 4452.9 486299732 3710.2</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>           used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  1750654 93.5   95071857 5077.4 118839821 6346.8
-Vcells 10252380 78.3  672493708 5130.8 840617135 6413.4</code></pre>
+Ncells  1752220 93.6   78207348 4176.8  97759184 5221.0
+Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
@@ -1048,39 +1048,66 @@ Vcells 10252380 78.3  672493708 5130.8 840617135 6413.4</code></pre>
 <li><p><strong>Geometry deduplication method</strong> — the prior script assigned <code>g_indicator</code> via <code>groupby('geometry').ngroup()</code>, which groups on WKT string representations. Two geometries that are visually identical but differ by sub-micron floating-point precision will receive different group IDs, potentially inflating unique geometry counts. This pipeline uses <code>factor(as.character(st_geometry(.)))</code>, which is consistent with how R represents geometries and avoids this edge case.</p></li>
 <li><p><strong>Low-priority parcel pool asymmetry</strong> — the prior script correctly excluded high-priority geometry IDs from the medium-priority pool, but failed to exclude medium-priority IDs from the low-priority pool. This slightly inflated the low-priority candidate set, allowing some geometries to be matched twice across tiers. This pipeline uses sequential remainder sets (<code>mits_rem</code> / <code>apps_rem</code>) so each geometry can only match in one tier.</p></li>
 <li><p><strong>Parcel duplicate preservation</strong> — the Python pipeline’s final <code>merge(apps, parcels, on='geometry_id')</code> naturally re-inflates matched records across all parcel rows that share a <code>geometry_id</code> (i.e.&nbsp;a common physical footprint).</p></li>
+<li><p><strong>Duplicate-geometry deduplication</strong> — this pipeline resolves the 39 <code>geometry_id</code>s with multiple candidate parcel rows by selecting a single winner per record using address similarity (Jaro-Winkler on <code>siteadd</code>) with <code>APN.SEQUENCE.NUMBER</code>, <code>luc_tier</code>, and <code>improvval</code> as tiebreakers. The prior pipeline retained all matching rows, inflating parcel counts.</p></li>
 </ol>
-<table class="caption-top table">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [27]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>n_mit_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(mits_pcls<span class="sc">$</span>parcel_index)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>n_app_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(apps_pcls<span class="sc">$</span>parcel_index)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>n_both     <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">intersect</span>(mits_pcls<span class="sc">$</span>parcel_index, apps_pcls<span class="sc">$</span>parcel_index))</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>pct_both   <span class="ot">&lt;-</span> <span class="fu">round</span>(n_both <span class="sc">/</span> n_app_pcls <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric      =</span> <span class="fu">c</span>(<span class="st">"Parcels with a mitigation"</span>,</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with an application"</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with both (mit \u2229 app)"</span>,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Share of app parcels with a mit"</span>),</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Prior run</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"6,087"</span>, <span class="st">"8,782"</span>, <span class="st">"4,292"</span>, <span class="st">"48.9%"</span>),</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">This run</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_mit_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_app_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_both,     <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(pct_both, <span class="st">"%"</span>)</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="fu">c</span>(<span class="st">"l"</span>, <span class="st">"r"</span>, <span class="st">"r"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
-<th>Metric</th>
+<th style="text-align: left;">Metric</th>
 <th style="text-align: right;">Prior run</th>
 <th style="text-align: right;">This run</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Parcels with a mitigation</td>
+<td style="text-align: left;">Parcels with a mitigation</td>
 <td style="text-align: right;">6,087</td>
-<td style="text-align: right;">5,702</td>
+<td style="text-align: right;">5,749</td>
 </tr>
 <tr class="even">
-<td>Parcels with an application</td>
+<td style="text-align: left;">Parcels with an application</td>
 <td style="text-align: right;">8,782</td>
-<td style="text-align: right;">8,412</td>
+<td style="text-align: right;">8,458</td>
 </tr>
 <tr class="odd">
-<td>Parcels with both (mit ∩ app)</td>
+<td style="text-align: left;">Parcels with both (mit ∩ app)</td>
 <td style="text-align: right;">4,292</td>
-<td style="text-align: right;">4,047</td>
+<td style="text-align: right;">4,084</td>
 </tr>
 <tr class="even">
-<td>Share of app parcels with a mit</td>
+<td style="text-align: left;">Share of app parcels with a mit</td>
 <td style="text-align: right;">48.9%</td>
-<td style="text-align: right;">48.1%</td>
+<td style="text-align: right;">48.3%</td>
 </tr>
 </tbody>
 </table>
-<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.1%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
+</div>
+</div></div>
+<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.3%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
