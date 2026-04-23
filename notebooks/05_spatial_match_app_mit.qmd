@@ -484,25 +484,34 @@ st_write(mit_sa_full, file.path(out_dir, "mit_sa_full_noqa.gpkg"),
 ---
 
 ## 10  Join back to parcels
+```{r free-up-memory}
+n_mits_rem <- nrow(mits_rem)
+n_apps_rem <- nrow(apps_rem)
+
+rm(ug_high, ug_med, ug_low, ug_all,
+   highpri, medpri, lowpri,
+   mit_highpri, app_highpri, mit_medpri, app_medpri,
+   mit_lowpri, app_lowpri, mit_dist, app_dist,
+   unique_mit, unique_app, mits_rem, apps_rem)
+gc()
+```
+
 
 ```{r join-to-parcels}
-parcels <- st_read(parcels_path, quiet = TRUE)
-
-# Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)
-nc1_geoms <- st_read(geoms_path, quiet = TRUE) |>
-  mutate(parcel_index = as.integer(parcel_index)) |>
-  select(parcel_index, geom)
-
-# Drop geometry from app/mit before joining
-apps_nogeom <- app_sa_full |> st_drop_geometry()
-mits_nogeom <- mit_sa_full |> st_drop_geometry()
-
-# parcels_nogeom: keep parcel_index + all attribute columns, drop spatial scoring cols
-parcels_nogeom <- parcels |>
+parcels_nogeom <- st_read(parcels_path, quiet = TRUE) |>
   st_drop_geometry() |>
   select(-any_of(c("vacant","gov_lu","res_lu","fr_1_4",
                    "qual_siteadd","qual_mailadd","qual_luc",
                    "qual_sum","match_priority")))
+                   
+# Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)
+nc1_geoms <- st_read(geoms_path, quiet = TRUE,
+                     query = 'SELECT parcel_index, geom FROM parcels_study_area') |>
+  mutate(parcel_index = as.integer(parcel_index))
+
+# Drop geometry from app/mit before joining
+apps_nogeom <- app_sa_full |> st_drop_geometry()
+mits_nogeom <- mit_sa_full |> st_drop_geometry()
 
 # Join mit/app → parcel attributes via geometry_id, then attach parcel geometry
 apps_pcls <- apps_nogeom |>
@@ -546,7 +555,7 @@ tibble::tibble(
   Med         = c(nrow(mit_medpri),  nrow(app_medpri)),
   Low         = c(nrow(mit_lowpri),  nrow(app_lowpri)),
   Fallback_NN = c(nrow(mit_dist),    nrow(app_dist)),
-  Unmatched   = c(nrow(mits_rem),    nrow(apps_rem))
+  Unmatched   = c(n_mits_rem,    n_apps_rem)
 ) |>
   dplyr::mutate(
     Matched = High + Med + Low + Fallback_NN
