@@ -485,6 +485,9 @@ st_write(mit_sa_full, file.path(out_dir, "mit_sa_full_noqa.gpkg"),
 
 ## 10  Join back to parcels
 ```{r free-up-memory}
+n_mits_rem <- nrow(mits_rem)
+n_apps_rem <- nrow(apps_rem)
+
 rm(ug_high, ug_med, ug_low, ug_all,
    highpri, medpri, lowpri,
    mit_highpri, app_highpri, mit_medpri, app_medpri,
@@ -503,7 +506,7 @@ parcels_nogeom <- st_read(parcels_path, quiet = TRUE) |>
                    
 # Reconstruct nc1_geoms for final geometry join (load-parcels is eval:false)
 nc1_geoms <- st_read(geoms_path, quiet = TRUE,
-                     query = 'SELECT parcel_index, geom FROM nc1_geoms') |>
+                     query = 'SELECT parcel_index, geom FROM parcels_study_area') |>
   mutate(parcel_index = as.integer(parcel_index))
 
 # Drop geometry from app/mit before joining
@@ -552,7 +555,7 @@ tibble::tibble(
   Med         = c(nrow(mit_medpri),  nrow(app_medpri)),
   Low         = c(nrow(mit_lowpri),  nrow(app_lowpri)),
   Fallback_NN = c(nrow(mit_dist),    nrow(app_dist)),
-  Unmatched   = c(nrow(mits_rem),    nrow(apps_rem))
+  Unmatched   = c(n_mits_rem,    n_apps_rem)
 ) |>
   dplyr::mutate(
     Matched = High + Med + Low + Fallback_NN
