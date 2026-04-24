@@ -34,7 +34,7 @@ library(tidyr)
 ```
 
 ```{r setup}
-#| eval: false
+#| eval: true
 out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 
 # CoreLogic (all character)
@@ -97,7 +97,7 @@ cl_unmatched <- cl |>
 
 
 ```{r reproject}
-#| eval: false
+#| eval: true
 # Reproject to NC State Plane (meters) for distance calculations
 unmatched_nc1  <- st_transform(unmatched_nc1,  crs = 32119)
 cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
@@ -111,7 +111,7 @@ cl_unmatched <- cl_unmatched |>
 ```
 
 ```{r save-intermediates}
-#| eval: false
+#| eval: true
 # Save intermediate geopackages
 st_write(unmatched_nc1, file.path(out_dir, "nc1geoms_distmatch.gpkg"),
          delete_dsn = TRUE, quiet = TRUE)
@@ -132,7 +132,7 @@ county_list <- unique(unmatched_nc1$cntyfips)
 ```
 
 ```{r nearest-neighbor-join}
-#| eval: false
+#| eval: true
 # Drop to unique CL geometries before joining (avoids redundant distance calcs)
 cl_unique <- cl_unmatched |>
   distinct(geometry_id1, .keep_all = TRUE)
@@ -170,7 +170,7 @@ nn_results <- map(county_list, function(fips) {
 ```
 
 ```{r identify-ties}
-#| eval: false
+#| eval: true
 # Parcels that matched multiple CL geometries at equal minimum distance
 tie_counts      <- count(nn_results, parcel_index)
 tie_parcelids   <- tie_counts$parcel_index[tie_counts$n > 1]
@@ -249,7 +249,7 @@ cl_dist_sorted <- read_csv(
 ```
 
 ```{r combine-all}
-#| eval: false
+#| eval: true
 
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
 pcl_comb <- bind_rows(

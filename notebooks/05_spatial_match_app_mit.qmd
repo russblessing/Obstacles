@@ -67,7 +67,7 @@ geoms_path          <- file.path(out_dir, "parcels_study_area.gpkg")
 ## 1  Load & prepare parcels
 
 ```{r load-parcels}
-#| eval: false
+#| eval: true
 
 parcels_raw <- read_csv(
   file.path(out_dir, "nc1_cl_merge.csv"),
@@ -94,7 +94,7 @@ parcels <- parcels_raw |>
 ## 2  Filter invalid parcels
 
 ```{r filter-parcels}
-#| eval: false
+#| eval: true
 
 # Remove water parcels (flagged via parcel number keywords)
 water_keywords <- "bay|creek|sound|water|ocean|river|canal|pond|inlet"
@@ -177,7 +177,7 @@ luc_bottom      <- c("605","606","607","609","610","614","615","618","620","630"
 > Fixed here.
 
 ```{r score-parcels}
-#| eval: false
+#| eval: true
 
 parcels <- parcels |>
   mutate(
@@ -218,7 +218,7 @@ st_write(parcels, file.path(out_dir, "parcels_pri.gpkg"),
 ```
 
 ```{r priority-split}
-#| eval: false
+#| eval: true
 
 # Split into priority tiers
 highpri <- parcels |> filter(match_priority == "high")
