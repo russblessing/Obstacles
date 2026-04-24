@@ -725,15 +725,36 @@ prior team's Python-based pipeline. Differences stem from five sources:
    records across all parcel rows that share a `geometry_id` (i.e. a common
    physical footprint). 
 
-| Metric | Prior run | This run |
-|---|---:|---:|
-| Parcels with a mitigation | 6,087 | 5,702 |
-| Parcels with an application | 8,782 | 8,412 |
-| Parcels with both (mit ∩ app) | 4,292 | 4,047 |
-| Share of app parcels with a mit | 48.9% | 48.1% |
+6. **Duplicate-geometry deduplication** — this pipeline resolves the 39
+   `geometry_id`s with multiple candidate parcel rows by selecting a single
+   winner per record using address similarity (Jaro-Winkler on `siteadd`) with
+   `APN.SEQUENCE.NUMBER`, `luc_tier`, and `improvval` as tiebreakers. The prior
+   pipeline retained all matching rows, inflating parcel counts.
+
+```{r comparison-table}
+n_mit_pcls <- n_distinct(mits_pcls$parcel_index)
+n_app_pcls <- n_distinct(apps_pcls$parcel_index)
+n_both     <- length(intersect(mits_pcls$parcel_index, apps_pcls$parcel_index))
+pct_both   <- round(n_both / n_app_pcls * 100, 1)
+
+tibble::tibble(
+  Metric      = c("Parcels with a mitigation",
+                  "Parcels with an application",
+                  "Parcels with both (mit \u2229 app)",
+                  "Share of app parcels with a mit"),
+  `Prior run` = c("6,087", "8,782", "4,292", "48.9%"),
+  `This run`  = c(
+    format(n_mit_pcls, big.mark = ","),
+    format(n_app_pcls, big.mark = ","),
+    format(n_both,     big.mark = ","),
+    paste0(pct_both, "%")
+  )
+) |>
+  knitr::kable(align = c("l", "r", "r"))
+```
 
 Despite the count differences, the share of application parcels that also
-received a mitigation is nearly identical across both runs (48.9% vs. 48.1%),
-suggesting the matching logic is consistent — the absolute differences are
-driven by input data updates and the scoring, deduplication, and parcel
-duplicate-preservation fixes above.
+received a mitigation is nearly identical across both runs (48.9%
+vs. `r paste0(pct_both, "%")`), suggesting the matching logic is consistent —
+the absolute differences are driven by input data updates and the scoring,
+deduplication, and parcel duplicate-preservation fixes above.

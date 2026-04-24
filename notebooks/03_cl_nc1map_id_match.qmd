@@ -59,19 +59,23 @@ match_county <- function(fips, nc1, cl, nc_key, cl_key,
   total_before_merge <- nrow(nc_fips)
 
   # Join datasets on specified keys, allowing many-to-many relationships
-  joined <- left_join(nc_fips, cl_fips, by = setNames(cl_key, nc_key),
-                      relationship = "many-to-many")
+  joined <- left_join(
+    nc_fips, cl_fips,
+    by = setNames(cl_key, nc_key),
+    keep = TRUE,
+    relationship = "many-to-many"
+  )
 
   # Count parcels with duplicate matches
   n_duplicates <- joined |>
-    filter(duplicated(.data[[nc_key]]) | duplicated(.data[[nc_key]], fromLast = TRUE)) |>
-    distinct(.data[[nc_key]]) |>
+    filter(duplicated(parcel_index) | duplicated(parcel_index, fromLast = TRUE)) |>
+    distinct(parcel_index) |>
     nrow()
 
   # Keep only first occurrence of each parcel and remove unmatched records
   joined <- joined |>
-    distinct(.data[[nc_key]], .keep_all = TRUE) |>
-    filter(!is.na(.data[[nc_key]]))
+    distinct(parcel_index, .keep_all = TRUE) |>
+    filter(!is.na(.data[[cl_key]]))
 
   # Calculate match statistics
   n_matched <- nrow(joined)
