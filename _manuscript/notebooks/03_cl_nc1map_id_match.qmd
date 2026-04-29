@@ -1,0 +1,262 @@
+---
+title: "Step 3: NC CoreLogic and Parcel Matching"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+
+## Results and QA/QC Notes
+
+This notebook replicates and extends the parcel–CoreLogic string matching approach from the prior analysis. The previous code generated **3,237,387 string-matched records** and noted that there is no single straightforward join between the OneMap parcel data and CoreLogic — matching required county-by-county inspection and manipulation of parcel ID strings (e.g., adding/removing hyphens, padding or trimming leading zeros) before merging.
+
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(stringr)
+library(purrr)
+library(gt)
+```
+
+```{r setup}
+# Read data
+nc1 <- st_read("/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg", quiet = TRUE) |>
+  st_drop_geometry() |>
+  mutate(
+    parcel_index = as.character(parcel_index),
+    cntyfips = paste0("37", cntyfips))
+
+cl <- read_csv("/proj/mhinolab/users/rbless/data/Obstacles_Output/cl.csv",
+               col_types = cols(.default = col_character()))
+```
+
+```{r matching-function}
+# Helper: strip non-alphanumeric characters
+strip_alnum <- function(x) str_replace_all(x, "[^a-zA-Z0-9]", "")
+
+# Core matching function for a single county
+match_county <- function(fips, nc1, cl, nc_key, cl_key,
+                         nc_transform = NULL, cl_transform = NULL) {
+  # Filter datasets to target county and strip non-alphanumeric characters from keys
+  nc_fips <- nc1 |> filter(cntyfips == fips) |> mutate(across(all_of(nc_key), strip_alnum))
+  cl_fips <- cl  |> filter(`FIPS CODE` == fips) |> mutate(across(all_of(cl_key), strip_alnum))
+
+  # Apply optional transformations to datasets
+  if (!is.null(nc_transform)) nc_fips <- nc_transform(nc_fips)
+  if (!is.null(cl_transform)) cl_fips <- cl_transform(cl_fips)
+
+  # Store count before merging for match rate calculation
+  total_before_merge <- nrow(nc_fips)
+
+  # Join datasets on specified keys, allowing many-to-many relationships
+  joined <- left_join(
+    nc_fips, cl_fips,
+    by = setNames(cl_key, nc_key),
+    keep = TRUE,
+    relationship = "many-to-many"
+  )
+
+  # Count parcels with duplicate matches
+  n_duplicates <- joined |>
+    filter(duplicated(parcel_index) | duplicated(parcel_index, fromLast = TRUE)) |>
+    distinct(parcel_index) |>
+    nrow()
+
+  # Keep only first occurrence of each parcel and remove unmatched records
+  joined <- joined |>
+    distinct(parcel_index, .keep_all = TRUE) |>
+    filter(!is.na(.data[[cl_key]]))
+
+  # Calculate match statistics
+  n_matched <- nrow(joined)
+  pct_matched <- if (total_before_merge > 0) (n_matched / total_before_merge) * 100 else 0
+
+  # Return summary statistics and matched data
+  list(
+    stats = tibble(
+      FIPS = fips,
+      total_before_merge = total_before_merge,
+      matched = n_matched,
+      pct_matched = pct_matched,
+      duplicates = n_duplicates
+    ),
+    data = joined
+  )
+}
+```
+
+```{r county-lists}
+# County configurations: list of lists with fips, nc_key, cl_key, and optional transforms
+county_configs <- list(
+  # 28 common FIPS: parno vs APN (PARCEL NUMBER UNFORMATTED)
+  list(fips = "37005"), list(fips = "37133"), list(fips = "37093"), list(fips = "37097"),
+  list(fips = "37025"), list(fips = "37167"), list(fips = "37117"), list(fips = "37041"),
+  list(fips = "37053"), list(fips = "37029"), list(fips = "37139"), list(fips = "37015"),
+  list(fips = "37195"), list(fips = "37181"), list(fips = "37191"), list(fips = "37105"),
+  list(fips = "37033"), list(fips = "37123"), list(fips = "37031"), list(fips = "37153"),
+  list(fips = "37037"), list(fips = "37009"), list(fips = "37135"), list(fips = "37019"),
+  list(fips = "37179"), list(fips = "37049"), list(fips = "37017"), list(fips = "37151"),
+  # Unique cases
+  list(fips = "37177", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37059", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37127", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37073", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37131", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37083", nc_key = "altparno",  cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37069", nc_key = "altparno",  cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37091", nc_key = "altparno",  cl_key = "ONLINE FORMATTED PARCEL ID"),
+  list(fips = "37143", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37145", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37155", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37187", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37027", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37157", nc_key = "altparno",  cl_key = "ORIGINAL APN"),
+  list(fips = "37197", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37129", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37067", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37057", nc_key = "altparno",  cl_key = "ONLINE FORMATTED PARCEL ID"),
+  list(fips = "37003", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
+  list(fips = "37189", nc_key = "parno",     cl_key = "ONLINE FORMATTED PARCEL ID"),
+  list(fips = "37047", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37101", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37193", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37183", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37063", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37071", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37109", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37137", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37013", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37001", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37103", nc_key = "parno",     cl_key = "ORIGINAL APN"),
+  list(fips = "37159", nc_key = "parno",     cl_key = "ORIGINAL APN"),
+  list(fips = "37141", nc_key = "parno",     cl_key = "ONLINE FORMATTED PARCEL ID"),
+  list(fips = "37165", nc_key = "parno",     cl_key = "APN (PARCEL NUMBER UNFORMATTED)",
+       cl_transform = function(df) mutate(df, `APN (PARCEL NUMBER UNFORMATTED)` = str_pad(`APN (PARCEL NUMBER UNFORMATTED)`, 11, pad = "0"))),
+  list(fips = "37035", nc_key = "parno",     cl_key = "APN (PARCEL NUMBER UNFORMATTED)",
+       cl_transform = function(df) mutate(df, `APN (PARCEL NUMBER UNFORMATTED)` = str_sub(`APN (PARCEL NUMBER UNFORMATTED)`, 1, -5))),
+  list(fips = "37081", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID",
+       nc_transform = function(df) mutate(df, parno = str_sub(parno, 1, -4))),
+  list(fips = "37085", nc_key = "parno",     cl_key = "ORIGINAL APN",
+       nc_transform = function(df) mutate(df, parno = str_sub(parno, 1, -4))),
+  list(fips = "37147", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID",
+       cl_transform = function(df) mutate(df,
+         `ALTERNATE PARCEL ID` = str_sub(`ALTERNATE PARCEL ID`, 1, 5),
+         `APN (PARCEL NUMBER UNFORMATTED)` = str_pad(`APN (PARCEL NUMBER UNFORMATTED)`, 5, pad = "0"),
+         `ALTERNATE PARCEL ID` = paste0(`ALTERNATE PARCEL ID`, `APN (PARCEL NUMBER UNFORMATTED)`))),
+  list(fips = "37065", nc_key = "parno",     cl_key = "ONLINE FORMATTED PARCEL ID",
+       cl_transform = function(df) mutate(df, `ONLINE FORMATTED PARCEL ID` = str_sub(`ONLINE FORMATTED PARCEL ID`, 1, -3))),
+  list(fips = "37011", nc_key = "parno",     cl_key = "ONLINE FORMATTED PARCEL ID",
+       cl_transform = function(df) mutate(df, `ONLINE FORMATTED PARCEL ID` = str_sub(`ONLINE FORMATTED PARCEL ID`, 2, -6))),
+  # nparno cases (strip leading 5 chars after alnum clean)
+  list(fips = "37077", nc_key = "nparno",    cl_key = "ALTERNATE PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6))),
+  list(fips = "37007", nc_key = "nparno",    cl_key = "ONLINE FORMATTED PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6)),
+       cl_transform = function(df) mutate(df, `ONLINE FORMATTED PARCEL ID` = str_sub(`ONLINE FORMATTED PARCEL ID`, 1, -3))),
+  list(fips = "37023", nc_key = "nparno",    cl_key = "ALTERNATE PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6))),
+  list(fips = "37125", nc_key = "nparno",    cl_key = "ONLINE FORMATTED PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6))),
+  list(fips = "37169", nc_key = "nparno",    cl_key = "ONLINE FORMATTED PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6))),
+  list(fips = "37171", nc_key = "nparno",    cl_key = "ONLINE FORMATTED PARCEL ID",
+       nc_transform = function(df) mutate(df, nparno = str_sub(nparno, 6)))
+)
+
+# Fill defaults for common cases
+county_configs <- map(county_configs, function(cfg) {
+  cfg$nc_key        <- cfg$nc_key        %||% "parno"
+  cfg$cl_key        <- cfg$cl_key        %||% "APN (PARCEL NUMBER UNFORMATTED)"
+  cfg$nc_transform  <- cfg$nc_transform  %||% NULL
+  cfg$cl_transform  <- cfg$cl_transform  %||% NULL
+  cfg
+})
+```
+
+```{r run-matching}
+stats_list <- vector("list", length(county_configs))
+out_file <- "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_stringmatch.csv"
+
+# Remove output file if it exists so we can append fresh
+if (file.exists(out_file)) file.remove(out_file)
+
+for (i in seq_along(county_configs)) {
+  cfg <- county_configs[[i]]
+  result <- match_county(cfg$fips, nc1, cl, cfg$nc_key, cfg$cl_key,
+                         cfg$nc_transform, cfg$cl_transform)
+  
+  # Append data to CSV incrementally (write header only on first iteration)
+  write_csv(result$data, out_file, append = (i > 1))
+  
+  # Store stats
+  stats_list[[i]] <- result$stats
+  
+  gc()  # release memory after each county
+  message("Done: ", cfg$fips, " (", i, "/", length(county_configs), ")")
+}
+
+stats_df <- list_rbind(stats_list)
+write_csv(stats_df, "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_str_stats.csv")
+```
+
+```{r read-stats}
+stats_df <- readr::read_csv(
+  "/proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cl_str_stats.csv",
+  col_types = cols(.default = col_character())
+) |>
+  mutate(
+    total_before_merge = as.integer(total_before_merge),
+    matched            = as.integer(matched),
+    pct_matched        = as.numeric(pct_matched),
+    duplicates         = as.integer(duplicates)
+  )
+
+total_matched   <- sum(stats_df$matched, na.rm = TRUE)
+total_parcels   <- sum(stats_df$total_before_merge, na.rm = TRUE)
+total_unmatched <- total_parcels - total_matched
+pct_unmatched   <- (total_unmatched / total_parcels) * 100
+prior_benchmark <- 3237387L
+diff_from_prior <- total_matched - prior_benchmark
+zero_parcel     <- stats_df |> filter(total_before_merge == 0)
+```
+
+## Summary of Matching Results
+
+This code follows the same county-by-county strategy across all `r length(county_configs)` counties in the study area, joining on the best available parcel ID field for each county (`parno`, `altparno`, or `nparno` on the parcel side; `APN (PARCEL NUMBER UNFORMATTED)`, `ALTERNATE PARCEL ID`, `ORIGINAL APN`, or `ONLINE FORMATTED PARCEL ID` on the CoreLogic side).
+
+This run produced **`r scales::comma(total_matched)`** matched records, compared to the prior benchmark of **3,237,387** (difference: `r scales::comma(diff_from_prior)`).
+
+`r nrow(zero_parcel)` counties (`r paste(zero_parcel$FIPS, collapse = ", ")`) had no parcels in the OneMap data and therefore produced no matches. This reflects a data gap in the parcel source rather than a matching failure, and these counties are carried forward in `remaining_all` for follow-up.
+
+```{r table-results}
+library(gt)
+
+tibble::tibble(
+  Group = c(rep("This Run", 4), rep("Comparison to Prior Analysis", 2)),
+  Metric = c(
+    "Total Parcels", "Matched", "Unmatched", "% Unmatched",
+    "Prior Benchmark", "Difference from Prior"
+  ),
+  Value = c(
+    scales::comma(total_parcels),
+    scales::comma(total_matched),
+    scales::comma(total_unmatched),
+    paste0(round(pct_unmatched, 2), "%"),
+    scales::comma(prior_benchmark),
+    scales::comma(diff_from_prior)
+  )
+) |>
+  gt::gt(groupname_col = "Group") |>
+  gt::tab_header(title = "Match Summary") |>
+  gt::cols_label(Metric = "", Value = "")
+```

@@ -3,6 +3,13 @@ project:
   resources:
     - bibliography.bib
     - notebooks/*.qmd
+  render:
+    - index.qmd
+    - notebooks/01_parcel_ETL.qmd
+    - notebooks/02_corelogic.qmd
+    - notebooks/03_cl_nc1map_id_match.qmd
+    - notebooks/04_spatial_join.qmd
+    - notebooks/05_spatial_match_app_mit.qmd
 
 manuscript:
   article: index.qmd
