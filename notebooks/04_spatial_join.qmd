@@ -252,15 +252,32 @@ cl_dist_sorted <- read_csv(
 ```{r combine-all}
 #| eval: true
 
+# Step 3 writes CL attributes with spaced names (`PROPERTY INDICATOR CODE`),
+# while Step 4 writes them with dotted names because the CL attributes
+# round-tripped through GeoPackage (GDAL replaces spaces with dots). Without
+# normalizing, bind_rows() would create paired columns ("X Y" and "X.Y"), each
+# half-populated. Force everything to the dotted form before stacking.
+to_dotted <- function(df) {
+  rename_with(df, ~ gsub(" ", ".", .x, fixed = TRUE))
+}
+
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
 pcl_comb <- bind_rows(
-    cl_string      |> mutate(across(everything(), as.character)),
-    cl_dist_nosort |> mutate(across(everything(), as.character)),
-    cl_dist_sorted |> mutate(across(everything(), as.character))
+    cl_string      |> to_dotted() |> mutate(across(everything(), as.character)),
+    cl_dist_nosort |> to_dotted() |> mutate(across(everything(), as.character)),
+    cl_dist_sorted |> to_dotted() |> mutate(across(everything(), as.character))
   ) |>
   mutate(geometry_id = ifelse(is.na(geometry_id), "", as.character(geometry_id))) |>
   arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
+
+# Sanity check: no spaced/dotted column duplication slipped through
+stopifnot(
+  length(intersect(
+    gsub(" ", ".", names(pcl_comb)),
+    names(pcl_comb)
+  )) == ncol(pcl_comb)
+)
 
 write_csv(pcl_comb, file.path(out_dir, "nc1_cl_merge.csv"))
 ```
