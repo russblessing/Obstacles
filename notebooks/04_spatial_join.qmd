@@ -184,7 +184,7 @@ write_csv(cl_dist_nosort,  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv")
 ```
 
 ```{r resolve-ties}
-#| eval: false
+#| eval: true
 
 # CL attribute table (no geometry) for address lookup
 cl_attr <- cl_unmatched |> st_drop_geometry()
@@ -204,12 +204,12 @@ find_best_cl_match <- function(pc_row) {
 
   # Choose address field: situs preferred, mailing as fallback
   if (!is.na(pc$siteadd) && pc$siteadd != "") {
-    candidate_addresses <- paste(cl_pcls$`SITUS HOUSE NUMBER`,
-                                 cl_pcls$`SITUS STREET NAME`)
+    candidate_addresses <- paste(cl_pcls$`SITUS.HOUSE.NUMBER`,
+                                 cl_pcls$`SITUS.STREET.NAME`)
     query_address       <- pc$siteadd
   } else {
-    candidate_addresses <- paste(cl_pcls$`MAILING HOUSE NUMBER`,
-                                 cl_pcls$`MAILING STREET NAME`)
+    candidate_addresses <- paste(cl_pcls$`MAILING.HOUSE.NUMBER`,
+                                 cl_pcls$`MAILING.STREET.NAME`)
     query_address       <- pc$mailadd
   }
 
@@ -341,9 +341,9 @@ cl_dist_nosort |>
     cl_match_counts |> filter(n_parcels > 1),
     by = "geometry_id1"
   ) |>
-  distinct(geometry_id1, n_parcels, `PROPERTY INDICATOR CODE`,
-           `LAND USE CODE`, `COUNTY USE DESCRIPTION`) |>
-  count(`PROPERTY INDICATOR CODE`, `LAND USE CODE`, `COUNTY USE DESCRIPTION`,
+  distinct(geometry_id1, n_parcels, `PROPERTY.INDICATOR.CODE`,
+           `LAND.USE.CODE`, `COUNTY.USE.DESCRIPTION`) |>
+  count(`PROPERTY.INDICATOR.CODE`, `LAND.USE.CODE`, `COUNTY.USE.DESCRIPTION`,
         wt = n_parcels, name = "n_parcels_affected") |>
   arrange(desc(n_parcels_affected)) |>
   slice_head(n = 20) |>
@@ -354,9 +354,9 @@ cl_dist_nosort |>
   ) |>
   fmt_integer(columns = n_parcels_affected) |>
   cols_label(
-    `PROPERTY INDICATOR CODE` = "Property Indicator",
-    `LAND USE CODE`            = "Land Use Code",
-    `COUNTY USE DESCRIPTION`   = "County Use Description",
+    `PROPERTY.INDICATOR.CODE` = "Property Indicator",
+    `LAND.USE.CODE`            = "Land Use Code",
+    `COUNTY.USE.DESCRIPTION`   = "County Use Description",
     n_parcels_affected         = "Parcels Affected"
   )
 ```
@@ -369,14 +369,14 @@ cl_dist_nosort |>
 - **`r scales::comma(sum(cl_match_counts$n_parcels[cl_match_counts$n_parcels > 1]))`**
   parcels share a CL record with at least one other parcel.
 - Multi-match cases fall into three broad categories:
-  - **Condominiums** (`PROPERTY INDICATOR CODE = 11`, `LAND USE CODE = 112`): One
+  - **Condominiums** (`PROPERTY.INDICATOR.CODE = 11`, `LAND.USE.CODE = 112`): One
     building polygon in OneMap is the nearest neighbor for many individual CL unit
     records. This is expected behavior.
-  - **Single-family residential** (`PROPERTY INDICATOR CODE = 10`, `LAND USE CODE = 163`):
+  - **Single-family residential** (`PROPERTY.INDICATOR.CODE = 10`, `LAND.USE.CODE = 163`):
     A CL residential point is the nearest neighbor to multiple surrounding OneMap
     parcels (e.g., adjacent vacant lots, subdivided tracts with no site addresses).
     This is the primary risk for downstream application duplication.
-  - **Vacant land** (`PROPERTY INDICATOR CODE = 80` or `10`, `LAND USE CODE = 400`
+  - **Vacant land** (`PROPERTY.INDICATOR.CODE = 80` or `10`, `LAND.USE.CODE = 400`
     or `100`): Similar to the residential case — many parcels cluster around a
     single CL vacant land point.
 - A `n_cl_matches` flag column should be added in downstream joins to allow
