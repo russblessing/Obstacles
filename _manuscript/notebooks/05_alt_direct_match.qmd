@@ -83,9 +83,9 @@ parcels <- st_read(parcels_path, quiet = TRUE) |>
   select(
     parcel_index, geometry_id, cntyfips, parno, altparno,
     siteadd, scity, szip, mailadd, ownname, parusedesc,
-    `LAND.USE.CODE`, luc_tier,
-    `SITUS.HOUSE.NUMBER`, `SITUS.STREET.NAME`,
-    `OWNER.1.FULL.NAME`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`
+    `LAND USE CODE`, luc_tier,
+    `SITUS HOUSE NUMBER`, `SITUS STREET NAME`,
+    `OWNER 1 FULL NAME`, `YEAR BUILT`, `ASSESSED TOTAL VALUE`
   ) |>
   st_transform(32119)
 
@@ -305,7 +305,7 @@ Each row of `alt_mits_direct.gpkg` / `alt_apps_direct.gpkg`:
 | Column | Source | Notes |
 |---|---|---|
 | *(all original mit/app columns)* | input | unchanged |
-| `parcel_index` … `ASSESSED.TOTAL.VALUE` | parcels | NA when `no_parcel_hit` |
+| `parcel_index` … `ASSESSED TOTAL VALUE` | parcels | NA when `no_parcel_hit` |
 | `luc_tier_num` | derived | `as.integer(luc_tier)` |
 | `match_status` | derived | `matched_high` / `matched_low` / `no_parcel_hit` |
 | `nearest_high_parcel_index` | derived | `parcel_index` of closest high-priority parcel |
