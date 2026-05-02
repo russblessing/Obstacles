@@ -34,7 +34,7 @@ library(tidyr)
 ```
 
 ```{r setup}
-#| eval: false
+#| eval: true
 out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 
 # CoreLogic (all character)
@@ -88,6 +88,7 @@ county_list <- unique(unmatched_nc1$cntyfips)
 # Build sf object for CL records in counties that have unmatched parcels
 cl_unmatched <- cl |>
   filter(`FIPS CODE` %in% county_list) |>
+  rename(fips_code = `FIPS CODE`) |> 
   filter(!is.na(`PARCEL LEVEL LATITUDE`) & !is.na(`PARCEL LEVEL LONGITUDE`)) |>
   st_as_sf(
     coords = c("PARCEL LEVEL LONGITUDE", "PARCEL LEVEL LATITUDE"),
@@ -97,7 +98,7 @@ cl_unmatched <- cl |>
 
 
 ```{r reproject}
-#| eval: false
+#| eval: true
 # Reproject to NC State Plane (meters) for distance calculations
 unmatched_nc1  <- st_transform(unmatched_nc1,  crs = 32119)
 cl_unmatched   <- st_transform(cl_unmatched,   crs = st_crs(unmatched_nc1))
@@ -111,7 +112,7 @@ cl_unmatched <- cl_unmatched |>
 ```
 
 ```{r save-intermediates}
-#| eval: false
+#| eval: true
 # Save intermediate geopackages
 st_write(unmatched_nc1, file.path(out_dir, "nc1geoms_distmatch.gpkg"),
          delete_dsn = TRUE, quiet = TRUE)
@@ -132,31 +133,31 @@ county_list <- unique(unmatched_nc1$cntyfips)
 ```
 
 ```{r nearest-neighbor-join}
-#| eval: false
+#| eval: true
 # Drop to unique CL geometries before joining (avoids redundant distance calcs)
 cl_unique <- cl_unmatched |>
   distinct(geometry_id1, .keep_all = TRUE)
 
 # County-by-county nearest-neighbor join
 nn_results <- map(county_list, function(fips) {
-  cl_fips      <- cl_unique      |> filter(`FIPS CODE` == fips)
+  cl_fips      <- cl_unique      |> filter(`fips_code` == fips)
   parcels_fips <- unmatched_nc1  |> filter(cntyfips    == fips)
 
   if (nrow(cl_fips) == 0 || nrow(parcels_fips) == 0) return(NULL)
 
-  # Nearest neighbour join (st_join with st_nearest_feature gives distances
-  # via st_distance; use nngeo for the distance column directly)
-  nn <- st_join(parcels_fips, cl_fips, join = st_nearest_feature)
+  # Nearest-neighbour join (assigns each parcel its nearest CL row)
+  nn <- st_join(parcels_fips, cl_fips, join = st_nearest_feature) |>
+    filter(!is.na(geometry_id1))
 
-  # Compute actual distance to the matched point
-  nn_geom <- st_geometry(nn)
+  if (nrow(nn) == 0) return(NULL)
+
+  # Get CL point geometries for matched rows
+  idx           <- match(nn$geometry_id1, cl_fips$geometry_id1)
+  matched_geoms <- st_geometry(cl_fips)[idx]
+
   nn <- nn |>
     mutate(distance = as.numeric(
-      st_distance(
-        nn_geom,
-        cl_fips$geometry[match(geometry_id1, cl_fips$geometry_id1)],
-        by_element = TRUE
-      )
+      st_distance(st_geometry(nn), matched_geoms, by_element = TRUE)
     ))
 
   # For each parcel, keep only the minimum-distance match(es)
@@ -170,7 +171,7 @@ nn_results <- map(county_list, function(fips) {
 ```
 
 ```{r identify-ties}
-#| eval: false
+#| eval: true
 # Parcels that matched multiple CL geometries at equal minimum distance
 tie_counts      <- count(nn_results, parcel_index)
 tie_parcelids   <- tie_counts$parcel_index[tie_counts$n > 1]
@@ -183,7 +184,7 @@ write_csv(cl_dist_nosort,  file.path(out_dir, "parcel_cl_dist_joins_nosort.csv")
 ```
 
 ```{r resolve-ties}
-#| eval: false
+#| eval: true
 
 # CL attribute table (no geometry) for address lookup
 cl_attr <- cl_unmatched |> st_drop_geometry()
@@ -203,12 +204,12 @@ find_best_cl_match <- function(pc_row) {
 
   # Choose address field: situs preferred, mailing as fallback
   if (!is.na(pc$siteadd) && pc$siteadd != "") {
-    candidate_addresses <- paste(cl_pcls$`SITUS HOUSE NUMBER`,
-                                 cl_pcls$`SITUS STREET NAME`)
+    candidate_addresses <- paste(cl_pcls$`SITUS.HOUSE.NUMBER`,
+                                 cl_pcls$`SITUS.STREET.NAME`)
     query_address       <- pc$siteadd
   } else {
-    candidate_addresses <- paste(cl_pcls$`MAILING HOUSE NUMBER`,
-                                 cl_pcls$`MAILING STREET NAME`)
+    candidate_addresses <- paste(cl_pcls$`MAILING.HOUSE.NUMBER`,
+                                 cl_pcls$`MAILING.STREET.NAME`)
     query_address       <- pc$mailadd
   }
 
@@ -249,17 +250,34 @@ cl_dist_sorted <- read_csv(
 ```
 
 ```{r combine-all}
-#| eval: false
+#| eval: true
+
+# Step 3 writes CL attributes with spaced names (`PROPERTY INDICATOR CODE`),
+# while Step 4 writes them with dotted names because the CL attributes
+# round-tripped through GeoPackage (GDAL replaces spaces with dots). Without
+# normalizing, bind_rows() would create paired columns ("X Y" and "X.Y"), each
+# half-populated. Force everything to the dotted form before stacking.
+to_dotted <- function(df) {
+  rename_with(df, ~ gsub(" ", ".", .x, fixed = TRUE))
+}
 
 # Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)
 pcl_comb <- bind_rows(
-    cl_string      |> mutate(across(everything(), as.character)),
-    cl_dist_nosort |> mutate(across(everything(), as.character)),
-    cl_dist_sorted |> mutate(across(everything(), as.character))
+    cl_string      |> to_dotted() |> mutate(across(everything(), as.character)),
+    cl_dist_nosort |> to_dotted() |> mutate(across(everything(), as.character)),
+    cl_dist_sorted |> to_dotted() |> mutate(across(everything(), as.character))
   ) |>
   mutate(geometry_id = ifelse(is.na(geometry_id), "", as.character(geometry_id))) |>
   arrange(parcel_index, geometry_id) |>                # blank geometry_id sorts first
   distinct(parcel_index, .keep_all = TRUE)             # prefer string match
+
+# Sanity check: no spaced/dotted column duplication slipped through
+stopifnot(
+  length(intersect(
+    gsub(" ", ".", names(pcl_comb)),
+    names(pcl_comb)
+  )) == ncol(pcl_comb)
+)
 
 write_csv(pcl_comb, file.path(out_dir, "nc1_cl_merge.csv"))
 ```
@@ -340,9 +358,9 @@ cl_dist_nosort |>
     cl_match_counts |> filter(n_parcels > 1),
     by = "geometry_id1"
   ) |>
-  distinct(geometry_id1, n_parcels, `PROPERTY INDICATOR CODE`,
-           `LAND USE CODE`, `COUNTY USE DESCRIPTION`) |>
-  count(`PROPERTY INDICATOR CODE`, `LAND USE CODE`, `COUNTY USE DESCRIPTION`,
+  distinct(geometry_id1, n_parcels, `PROPERTY.INDICATOR.CODE`,
+           `LAND.USE.CODE`, `COUNTY.USE.DESCRIPTION`) |>
+  count(`PROPERTY.INDICATOR.CODE`, `LAND.USE.CODE`, `COUNTY.USE.DESCRIPTION`,
         wt = n_parcels, name = "n_parcels_affected") |>
   arrange(desc(n_parcels_affected)) |>
   slice_head(n = 20) |>
@@ -353,9 +371,9 @@ cl_dist_nosort |>
   ) |>
   fmt_integer(columns = n_parcels_affected) |>
   cols_label(
-    `PROPERTY INDICATOR CODE` = "Property Indicator",
-    `LAND USE CODE`            = "Land Use Code",
-    `COUNTY USE DESCRIPTION`   = "County Use Description",
+    `PROPERTY.INDICATOR.CODE` = "Property Indicator",
+    `LAND.USE.CODE`            = "Land Use Code",
+    `COUNTY.USE.DESCRIPTION`   = "County Use Description",
     n_parcels_affected         = "Parcels Affected"
   )
 ```
@@ -368,14 +386,14 @@ cl_dist_nosort |>
 - **`r scales::comma(sum(cl_match_counts$n_parcels[cl_match_counts$n_parcels > 1]))`**
   parcels share a CL record with at least one other parcel.
 - Multi-match cases fall into three broad categories:
-  - **Condominiums** (`PROPERTY INDICATOR CODE = 11`, `LAND USE CODE = 112`): One
+  - **Condominiums** (`PROPERTY.INDICATOR.CODE = 11`, `LAND.USE.CODE = 112`): One
     building polygon in OneMap is the nearest neighbor for many individual CL unit
     records. This is expected behavior.
-  - **Single-family residential** (`PROPERTY INDICATOR CODE = 10`, `LAND USE CODE = 163`):
+  - **Single-family residential** (`PROPERTY.INDICATOR.CODE = 10`, `LAND.USE.CODE = 163`):
     A CL residential point is the nearest neighbor to multiple surrounding OneMap
     parcels (e.g., adjacent vacant lots, subdivided tracts with no site addresses).
     This is the primary risk for downstream application duplication.
-  - **Vacant land** (`PROPERTY INDICATOR CODE = 80` or `10`, `LAND USE CODE = 400`
+  - **Vacant land** (`PROPERTY.INDICATOR.CODE = 80` or `10`, `LAND.USE.CODE = 400`
     or `100`): Similar to the residential case — many parcels cluster around a
     single CL vacant land point.
 - A `n_cl_matches` flag column should be added in downstream joins to allow

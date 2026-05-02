@@ -1,0 +1,326 @@
+---
+title: "Step 5.1 (Alt): Direct Intersection — Mits & Apps to Parcels"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+A transparent, no-heuristic spatial join of mitigation and application records
+to parcels. Every input record is kept (no deduplication). A single point
+representing, say, six mitigations on a condo building stays as six rows in
+the output. Shared-footprint parcels fan out naturally: one input record that
+intersects *N* parcel polygons produces *N* output rows.
+
+This file is **complementary** to `05_spatial_match_app_mit.qmd`, which runs
+the tiered priority cascade and produces the canonical matched output. Nothing
+here changes that output.
+
+**What this file does NOT do:**
+
+- No tier cascade (high → med → low → fallback NN).
+- No distance-based matching or buffering in the join itself.
+- No dedup of mit/app records.
+- No winner selection when a point hits multiple shared-footprint parcels.
+
+**Inputs:**
+
+- `parcels_pri.gpkg` — parcels with `luc_tier` column (from `out_dir`)
+- `mit_newgeo.gpkg` — raw mitigations (`CRC_May_2025/Raw Data Inputs/raw_app_ncb/`)
+- `applications_final.gpkg` — raw applications (same directory)
+
+**Outputs (written to `out_dir`):**
+
+- `alt_mits_direct.gpkg`, `alt_apps_direct.gpkg` — full fan-out spatial join
+- `alt_mits_direct_review.csv`, `alt_apps_direct_review.csv` — same, no geometry
+
+---
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(purrr)
+library(knitr)
+library(DT)
+```
+
+```{r setup}
+out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+
+parcels_path <- file.path(out_dir, "parcels_pri.gpkg")
+mits_path    <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_newgeo.gpkg"
+apps_path    <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/applications_final.gpkg"
+
+# luc_tier >= HIGH_TIER_MIN is considered "high priority" for tagging and
+# proximity review. Tiers 3 and 4 = vacant/gov/residential + 1-4 family.
+# Flip to 4L if supervisors want tier-4-only (1-4 family + site address only).
+HIGH_TIER_MIN <- 3L
+
+# Primary-key columns on the mit/app sides.
+# Both are set to "unique_id" which is assigned in the canonical Step 5.
+# Adjust if the raw inputs use a different HMA/IHP key.
+mit_id_col <- "unique_id"
+app_id_col <- "unique_id"
+```
+
+---
+
+## 1  Load inputs
+
+```{r load-inputs}
+parcels <- st_read(parcels_path, quiet = TRUE) |>
+  select(
+    parcel_index, geometry_id, cntyfips, parno, altparno,
+    siteadd, scity, szip, mailadd, ownname, parusedesc,
+    `LAND.USE.CODE`, luc_tier,
+    `SITUS.HOUSE.NUMBER`, `SITUS.STREET.NAME`,
+    `OWNER.1.FULL.NAME`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`
+  ) |>
+  st_transform(32119)
+
+# Do NOT dedup — every HMA / IHP record is preserved, coordinate duplicates
+# included. A point shared by six mitigations stays as six rows.
+mits <- st_read(mits_path, quiet = TRUE) |> st_transform(st_crs(parcels))
+apps <- st_read(apps_path, quiet = TRUE) |> st_transform(st_crs(parcels))
+```
+
+---
+
+## 2  Direct intersection join
+
+One row per (input record × intersecting parcel). Records that fall outside
+every parcel produce one row with NA parcel columns (`left = TRUE`).
+
+```{r direct-join}
+mits_direct <- st_join(mits, parcels, join = st_intersects, left = TRUE)
+apps_direct <- st_join(apps, parcels, join = st_intersects, left = TRUE)
+```
+
+---
+
+## 3  Tag match status
+
+```{r tag-status}
+tag_status <- function(df, high_tier_min = HIGH_TIER_MIN) {
+  df |>
+    mutate(
+      luc_tier_num = suppressWarnings(as.integer(luc_tier)),
+      match_status = case_when(
+        is.na(parcel_index)           ~ "no_parcel_hit",
+        luc_tier_num >= high_tier_min ~ "matched_high",
+        TRUE                          ~ "matched_low"
+      )
+    )
+}
+
+mits_direct <- tag_status(mits_direct)
+apps_direct <- tag_status(apps_direct)
+```
+
+---
+
+## 4  Proximity to nearest high-priority parcel
+
+For every input point, compute distance to the nearest high-priority parcel.
+This is for **review only** — it does not change any match result.
+
+```{r proximity-to-high}
+high_parcels <- parcels |> filter(as.integer(luc_tier) >= HIGH_TIER_MIN)
+
+nearest_high <- function(pts, id_col, high) {
+  if (nrow(pts) == 0 || nrow(high) == 0) {
+    return(tibble(
+      !!id_col := character(),
+      nearest_high_parcel_index = integer(),
+      dist_to_nearest_high_m    = numeric()
+    ))
+  }
+  nn_idx <- st_nearest_feature(pts, high)
+  tibble(
+    !!id_col := pts[[id_col]],
+    nearest_high_parcel_index = high$parcel_index[nn_idx],
+    dist_to_nearest_high_m    = as.numeric(
+      st_distance(pts, high[nn_idx, ], by_element = TRUE)
+    )
+  )
+}
+
+mits_nearhigh <- nearest_high(mits, mit_id_col, high_parcels)
+apps_nearhigh <- nearest_high(apps, app_id_col, high_parcels)
+
+mits_direct <- mits_direct |> left_join(mits_nearhigh, by = mit_id_col)
+apps_direct <- apps_direct |> left_join(apps_nearhigh, by = app_id_col)
+```
+
+---
+
+## 5  Write outputs
+
+```{r write-outputs}
+st_write(mits_direct, file.path(out_dir, "alt_mits_direct.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(apps_direct, file.path(out_dir, "alt_apps_direct.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+mits_direct |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "alt_mits_direct_review.csv"))
+apps_direct |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "alt_apps_direct_review.csv"))
+```
+
+---
+
+## Summary
+
+### Match status counts
+
+Row counts reflect the fan-out: a single input record landing on *N* parcel
+polygons contributes *N* rows here.
+
+```{r summary-counts}
+bind_rows(
+  mits_direct |> st_drop_geometry() |> mutate(side = "mitigations"),
+  apps_direct |> st_drop_geometry() |> mutate(side = "applications")
+) |>
+  count(side, match_status) |>
+  pivot_wider(names_from = match_status, values_from = n, values_fill = 0L) |>
+  knitr::kable(
+    format.args = list(big.mark = ","),
+    caption = "Row counts by side and match status (rows = input record × parcel hit)"
+  )
+```
+
+### Shared-footprint fan-out
+
+How often does a single input record intersect multiple parcel polygons?
+Condo complexes and stacked parcels show up as `n_parcels >= 2`.
+
+```{r multihit-diagnostic}
+multihit <- function(df, id_col, label) {
+  df |>
+    st_drop_geometry() |>
+    filter(!is.na(parcel_index)) |>
+    count(.data[[id_col]], name = "n_parcels") |>
+    count(n_parcels, name = "n_records") |>
+    mutate(side = label)
+}
+
+bind_rows(
+  multihit(mits_direct, mit_id_col, "mitigations"),
+  multihit(apps_direct, app_id_col, "applications")
+) |>
+  pivot_wider(names_from = side, values_from = n_records, values_fill = 0L) |>
+  arrange(n_parcels) |>
+  knitr::kable(
+    format.args = list(big.mark = ","),
+    caption = "Distribution of parcel-hit counts per input record (n_parcels > 1 = shared-footprint)"
+  )
+```
+
+### Distance to nearest high-priority parcel (low-priority / off-parcel only)
+
+If most low-hit records are within ~30 m of a high-priority parcel the low
+classification is likely a geocode artefact, not a meaningful difference in
+parcel type.
+
+```{r proximity-distribution}
+bind_rows(
+  mits_direct |> st_drop_geometry() |> mutate(side = "mitigations"),
+  apps_direct |> st_drop_geometry() |> mutate(side = "applications")
+) |>
+  filter(match_status %in% c("matched_low", "no_parcel_hit")) |>
+  group_by(side, match_status) |>
+  summarise(
+    n      = n(),
+    p10    = round(quantile(dist_to_nearest_high_m, 0.10, na.rm = TRUE), 1),
+    median = round(median(dist_to_nearest_high_m,          na.rm = TRUE), 1),
+    p90    = round(quantile(dist_to_nearest_high_m, 0.90, na.rm = TRUE), 1),
+    max    = round(max(dist_to_nearest_high_m,             na.rm = TRUE), 1),
+    .groups = "drop"
+  ) |>
+  knitr::kable(
+    caption = "Distance (m) from low-priority / no-hit records to nearest high-priority parcel"
+  )
+```
+
+---
+
+## Review browsers
+
+Records that landed on a low-priority LUC or off-parcel entirely, sorted
+ascending by distance to the nearest high-priority parcel. Rows near the top
+are the most suspicious (close to a high-priority parcel but not on one).
+
+### Mitigations
+
+```{r review-browser-mits}
+#| column: page
+
+mits_direct |>
+  st_drop_geometry() |>
+  filter(match_status %in% c("matched_low", "no_parcel_hit")) |>
+  arrange(dist_to_nearest_high_m) |>
+  DT::datatable(
+    filter   = "top",
+    rownames = FALSE,
+    options  = list(pageLength = 25, scrollX = TRUE),
+    caption  = "Mitigations on low-priority LUCs or off-parcel, sorted by distance to nearest high-priority parcel."
+  )
+```
+
+### Applications
+
+```{r review-browser-apps}
+#| column: page
+
+apps_direct |>
+  st_drop_geometry() |>
+  filter(match_status %in% c("matched_low", "no_parcel_hit")) |>
+  arrange(dist_to_nearest_high_m) |>
+  DT::datatable(
+    filter   = "top",
+    rownames = FALSE,
+    options  = list(pageLength = 25, scrollX = TRUE),
+    caption  = "Applications on low-priority LUCs or off-parcel, sorted by distance to nearest high-priority parcel."
+  )
+```
+
+---
+
+## Output schema
+
+Each row of `alt_mits_direct.gpkg` / `alt_apps_direct.gpkg`:
+
+| Column | Source | Notes |
+|---|---|---|
+| *(all original mit/app columns)* | input | unchanged |
+| `parcel_index` … `ASSESSED.TOTAL.VALUE` | parcels | NA when `no_parcel_hit` |
+| `luc_tier_num` | derived | `as.integer(luc_tier)` |
+| `match_status` | derived | `matched_high` / `matched_low` / `no_parcel_hit` |
+| `nearest_high_parcel_index` | derived | `parcel_index` of closest high-priority parcel |
+| `dist_to_nearest_high_m` | derived | metres; review only, not used for matching |
+
+Same columns in the CSVs, without geometry.
+
+---
+
+## Unresolved — confirm before using outputs
+
+- **`HIGH_TIER_MIN`** is set to `3L` (tiers 3–4: vacant, gov, all residential).
+  Change to `4L` for tier-4-only (1–4 family + site address).
+- **Input paths** default to `mit_sa_full_noqa.gpkg` / `app_sa_full_noqa.gpkg`
+  (the pre-QA intermediates written by the canonical Step 5). Confirm these are
+  the right inputs, or swap in the raw study-area files before QA is applied.
+- **`mit_id_col` / `app_id_col`** default to `"unique_id"`. If the input files
+  don't carry that column, substitute the appropriate HMA/IHP primary key.

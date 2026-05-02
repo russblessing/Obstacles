@@ -295,36 +295,40 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  total_before_merge <span class="ot">&lt;-</span> <span class="fu">nrow</span>(nc_fips)</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Join datasets on specified keys, allowing many-to-many relationships</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="fu">left_join</span>(nc_fips, cl_fips, <span class="at">by =</span> <span class="fu">setNames</span>(cl_key, nc_key),</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                      <span class="at">relationship =</span> <span class="st">"many-to-many"</span>)</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count parcels with duplicate matches</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  n_duplicates <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">duplicated</span>(.data[[nc_key]]) <span class="sc">|</span> <span class="fu">duplicated</span>(.data[[nc_key]], <span class="at">fromLast =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(.data[[nc_key]]) <span class="sc">|&gt;</span></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>()</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep only first occurrence of each parcel and remove unmatched records</span></span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(.data[[nc_key]], <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(.data[[nc_key]]))</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate match statistics</span></span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  n_matched <span class="ot">&lt;-</span> <span class="fu">nrow</span>(joined)</span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  pct_matched <span class="ot">&lt;-</span> <span class="cf">if</span> (total_before_merge <span class="sc">&gt;</span> <span class="dv">0</span>) (n_matched <span class="sc">/</span> total_before_merge) <span class="sc">*</span> <span class="dv">100</span> <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> <span class="fu">left_join</span>(</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    nc_fips, cl_fips,</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">setNames</span>(cl_key, nc_key),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">keep =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">relationship =</span> <span class="st">"many-to-many"</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count parcels with duplicate matches</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  n_duplicates <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">duplicated</span>(parcel_index) <span class="sc">|</span> <span class="fu">duplicated</span>(parcel_index, <span class="at">fromLast =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(parcel_index) <span class="sc">|&gt;</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>()</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep only first occurrence of each parcel and remove unmatched records</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  joined <span class="ot">&lt;-</span> joined <span class="sc">|&gt;</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(parcel_index, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(.data[[cl_key]]))</span>
 <span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return summary statistics and matched data</span></span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">stats =</span> <span class="fu">tibble</span>(</span>
-<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">FIPS =</span> fips,</span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">total_before_merge =</span> total_before_merge,</span>
-<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">matched =</span> n_matched,</span>
-<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">pct_matched =</span> pct_matched,</span>
-<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">duplicates =</span> n_duplicates</span>
-<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> joined</span>
-<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate match statistics</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  n_matched <span class="ot">&lt;-</span> <span class="fu">nrow</span>(joined)</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  pct_matched <span class="ot">&lt;-</span> <span class="cf">if</span> (total_before_merge <span class="sc">&gt;</span> <span class="dv">0</span>) (n_matched <span class="sc">/</span> total_before_merge) <span class="sc">*</span> <span class="dv">100</span> <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return summary statistics and matched data</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">stats =</span> <span class="fu">tibble</span>(</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">FIPS =</span> fips,</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>      <span class="at">total_before_merge =</span> total_before_merge,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>      <span class="at">matched =</span> n_matched,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>      <span class="at">pct_matched =</span> pct_matched,</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>      <span class="at">duplicates =</span> n_duplicates</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> joined</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
@@ -701,7 +705,7 @@ Attaching package: 'dplyr'</code></pre>
 <section id="summary-of-matching-results" class="level2">
 <h2 class="anchored" data-anchor-id="summary-of-matching-results">Summary of Matching Results</h2>
 <p>This code follows the same county-by-county strategy across all 74 counties in the study area, joining on the best available parcel ID field for each county (<code>parno</code>, <code>altparno</code>, or <code>nparno</code> on the parcel side; <code>APN (PARCEL NUMBER UNFORMATTED)</code>, <code>ALTERNATE PARCEL ID</code>, <code>ORIGINAL APN</code>, or <code>ONLINE FORMATTED PARCEL ID</code> on the CoreLogic side).</p>
-<p>This run produced <strong>3,738,359</strong> matched records, compared to the prior benchmark of <strong>3,237,387</strong> (difference: 500,972).</p>
+<p>This run produced <strong>3,127,462</strong> matched records, compared to the prior benchmark of <strong>3,237,387</strong> (difference: -109,925).</p>
 <p>5 counties (37071, 37109, 37035, 37011, 37023) had no parcels in the OneMap data and therefore produced no matches. This reflects a data gap in the parcel source rather than a matching failure, and these counties are carried forward in <code>remaining_all</code> for follow-up.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
 <details class="code-fold">
@@ -728,23 +732,23 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb90-20"><a href="#cb90-20" aria-hidden="true" tabindex="-1"></a>  gt<span class="sc">::</span><span class="fu">cols_label</span>(<span class="at">Metric =</span> <span class="st">""</span>, <span class="at">Value =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="ijkcicsccy" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ijkcicsccy table {
+<div id="svmnwcrrty" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#svmnwcrrty table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#ijkcicsccy thead, #ijkcicsccy tbody, #ijkcicsccy tfoot, #ijkcicsccy tr, #ijkcicsccy td, #ijkcicsccy th {
+#svmnwcrrty thead, #svmnwcrrty tbody, #svmnwcrrty tfoot, #svmnwcrrty tr, #svmnwcrrty td, #svmnwcrrty th {
   border-style: none;
 }
 
-#ijkcicsccy p {
+#svmnwcrrty p {
   margin: 0;
   padding: 0;
 }
 
-#ijkcicsccy .gt_table {
+#svmnwcrrty .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -770,12 +774,12 @@ Attaching package: 'dplyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_caption {
+#svmnwcrrty .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#ijkcicsccy .gt_title {
+#svmnwcrrty .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -787,7 +791,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#ijkcicsccy .gt_subtitle {
+#svmnwcrrty .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -799,7 +803,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-width: 0;
 }
 
-#ijkcicsccy .gt_heading {
+#svmnwcrrty .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -811,13 +815,13 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_bottom_border {
+#svmnwcrrty .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_col_headings {
+#svmnwcrrty .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -832,7 +836,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_col_heading {
+#svmnwcrrty .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -852,7 +856,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#ijkcicsccy .gt_column_spanner_outer {
+#svmnwcrrty .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -864,15 +868,15 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 4px;
 }
 
-#ijkcicsccy .gt_column_spanner_outer:first-child {
+#svmnwcrrty .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ijkcicsccy .gt_column_spanner_outer:last-child {
+#svmnwcrrty .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ijkcicsccy .gt_column_spanner {
+#svmnwcrrty .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -884,11 +888,11 @@ Attaching package: 'dplyr'</code></pre>
   width: 100%;
 }
 
-#ijkcicsccy .gt_spanner_row {
+#svmnwcrrty .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#ijkcicsccy .gt_group_heading {
+#svmnwcrrty .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -914,7 +918,7 @@ Attaching package: 'dplyr'</code></pre>
   text-align: left;
 }
 
-#ijkcicsccy .gt_empty_group_heading {
+#svmnwcrrty .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -929,15 +933,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: middle;
 }
 
-#ijkcicsccy .gt_from_md > :first-child {
+#svmnwcrrty .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ijkcicsccy .gt_from_md > :last-child {
+#svmnwcrrty .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ijkcicsccy .gt_row {
+#svmnwcrrty .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -956,7 +960,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#ijkcicsccy .gt_stub {
+#svmnwcrrty .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -969,7 +973,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ijkcicsccy .gt_stub_row_group {
+#svmnwcrrty .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -983,15 +987,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: top;
 }
 
-#ijkcicsccy .gt_row_group_first td {
+#svmnwcrrty .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#ijkcicsccy .gt_row_group_first th {
+#svmnwcrrty .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#ijkcicsccy .gt_summary_row {
+#svmnwcrrty .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1001,16 +1005,16 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ijkcicsccy .gt_first_summary_row {
+#svmnwcrrty .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_first_summary_row.thick {
+#svmnwcrrty .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#ijkcicsccy .gt_last_summary_row {
+#svmnwcrrty .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1020,7 +1024,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_grand_summary_row {
+#svmnwcrrty .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1030,7 +1034,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ijkcicsccy .gt_first_grand_summary_row {
+#svmnwcrrty .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1040,7 +1044,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_last_grand_summary_row_top {
+#svmnwcrrty .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1050,11 +1054,11 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_striped {
+#svmnwcrrty .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ijkcicsccy .gt_table_body {
+#svmnwcrrty .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1063,7 +1067,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_footnotes {
+#svmnwcrrty .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1077,7 +1081,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_footnote {
+#svmnwcrrty .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1086,7 +1090,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ijkcicsccy .gt_sourcenotes {
+#svmnwcrrty .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1100,7 +1104,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#ijkcicsccy .gt_sourcenote {
+#svmnwcrrty .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1108,72 +1112,72 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#ijkcicsccy .gt_left {
+#svmnwcrrty .gt_left {
   text-align: left;
 }
 
-#ijkcicsccy .gt_center {
+#svmnwcrrty .gt_center {
   text-align: center;
 }
 
-#ijkcicsccy .gt_right {
+#svmnwcrrty .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ijkcicsccy .gt_font_normal {
+#svmnwcrrty .gt_font_normal {
   font-weight: normal;
 }
 
-#ijkcicsccy .gt_font_bold {
+#svmnwcrrty .gt_font_bold {
   font-weight: bold;
 }
 
-#ijkcicsccy .gt_font_italic {
+#svmnwcrrty .gt_font_italic {
   font-style: italic;
 }
 
-#ijkcicsccy .gt_super {
+#svmnwcrrty .gt_super {
   font-size: 65%;
 }
 
-#ijkcicsccy .gt_footnote_marks {
+#svmnwcrrty .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#ijkcicsccy .gt_asterisk {
+#svmnwcrrty .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#ijkcicsccy .gt_indent_1 {
+#svmnwcrrty .gt_indent_1 {
   text-indent: 5px;
 }
 
-#ijkcicsccy .gt_indent_2 {
+#svmnwcrrty .gt_indent_2 {
   text-indent: 10px;
 }
 
-#ijkcicsccy .gt_indent_3 {
+#svmnwcrrty .gt_indent_3 {
   text-indent: 15px;
 }
 
-#ijkcicsccy .gt_indent_4 {
+#svmnwcrrty .gt_indent_4 {
   text-indent: 20px;
 }
 
-#ijkcicsccy .gt_indent_5 {
+#svmnwcrrty .gt_indent_5 {
   text-indent: 25px;
 }
 
-#ijkcicsccy .katex-display {
+#svmnwcrrty .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#ijkcicsccy div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#svmnwcrrty div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1198,15 +1202,15 @@ Attaching package: 'dplyr'</code></pre>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="This Run  Metric">Matched</td>
-<td class="gt_row gt_right" headers="This Run  Value">3,738,359</td>
+<td class="gt_row gt_right" headers="This Run  Value">3,127,462</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="This Run  Metric">Unmatched</td>
-<td class="gt_row gt_right" headers="This Run  Value">82,465</td>
+<td class="gt_row gt_right" headers="This Run  Value">693,362</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="This Run  Metric">% Unmatched</td>
-<td class="gt_row gt_right" headers="This Run  Value">2.16%</td>
+<td class="gt_row gt_right" headers="This Run  Value">18.15%</td>
 </tr>
 <tr class="gt_group_heading_row even">
 <th colspan="2" id="Comparison to Prior Analysis" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Comparison to Prior Analysis</th>
@@ -1217,7 +1221,7 @@ Attaching package: 'dplyr'</code></pre>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Comparison to Prior Analysis  Metric">Difference from Prior</td>
-<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">500,972</td>
+<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">-109,925</td>
 </tr>
 </tbody>
 </table>

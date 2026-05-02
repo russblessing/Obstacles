@@ -359,11 +359,11 @@ Attaching package: 'tidyr'</code></pre>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">invalidparcels =</span> <span class="fu">case_when</span>(</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="co"># No identifying info at all</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> mailadd <span class="sc">==</span> <span class="st">""</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> mailadd <span class="sc">==</span> <span class="st">""</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
 <span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Carteret: no land use code, blank parno → likely right-of-way</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"031"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"031"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
 <span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Brunswick: no parno or altparno → right-of-way</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> altparno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"019"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>) <span class="sc">&amp;</span> parno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> altparno <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> cntyfips <span class="sc">==</span> <span class="st">"019"</span> <span class="sc">~</span> <span class="dv">1</span>L,</span>
 <span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Explicit ROW tags (excluding "ROWAN COUNTY")</span></span>
 <span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>      (<span class="fu">str_detect</span>(parno,    <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)) <span class="sc">|</span></span>
 <span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>       <span class="fu">str_detect</span>(altparno, <span class="fu">regex</span>(<span class="st">"row"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">&amp;</span></span>
@@ -461,13 +461,13 @@ Attaching package: 'tidyr'</code></pre>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>parcels <span class="ot">&lt;-</span> parcels <span class="sc">|&gt;</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">as.character</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">as.character</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>),</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Land use flags (kept for downstream use)</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Address quality: site address weighted 2x, mail address 1x</span></span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_siteadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> siteadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">2</span>L, <span class="dv">0</span>L),</span>
@@ -475,11 +475,11 @@ Attaching package: 'tidyr'</code></pre>
 <span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tiered LUC score (0–4)</span></span>
 <span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">luc_tier =</span> <span class="fu">case_when</span>(</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
 <span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                                     <span class="sc">~</span> <span class="dv">1</span>L</span>
 <span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
 <span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
@@ -604,8 +604,8 @@ Attaching package: 'tidyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  31758376 1696.1   74741182 3991.7  53942287 2880.9
-Vcells 257741000 1966.5  577942052 4409.4 481551674 3674.0</code></pre>
+Ncells  31760026 1696.2   59271838 3165.5  59271838 3165.5
+Vcells 257744081 1966.5  438899436 3348.6 438899399 3348.6</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
@@ -818,8 +818,8 @@ Vcells 257741000 1966.5  577942052 4409.4 481551674 3674.0</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>           used (Mb) gc trigger   (Mb)  max used   (Mb)
-Ncells  1752220 93.6   78207348 4176.8  97759184 5221.0
-Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
+Ncells  1753779 93.7   84904574 4534.4 106130717 5668.0
+Vcells 10258742 78.3  728425047 5557.5 910531307 6946.9</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
@@ -991,13 +991,13 @@ Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
-<col style="width: 17%">
+<col style="width: 18%">
 <col style="width: 9%">
 <col style="width: 8%">
 <col style="width: 8%">
-<col style="width: 8%">
+<col style="width: 5%">
 <col style="width: 16%">
-<col style="width: 18%">
+<col style="width: 19%">
 <col style="width: 13%">
 </colgroup>
 <thead>
@@ -1016,9 +1016,9 @@ Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
 <tr class="odd">
 <td style="text-align: left;">Mitigations</td>
 <td style="text-align: right;">8,801</td>
-<td style="text-align: right;">5,353</td>
-<td style="text-align: right;">951</td>
-<td style="text-align: right;">1,046</td>
+<td style="text-align: right;">6,098</td>
+<td style="text-align: right;">969</td>
+<td style="text-align: right;">283</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">7,355</td>
 <td style="text-align: right;">5</td>
@@ -1026,9 +1026,9 @@ Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
 <tr class="even">
 <td style="text-align: left;">Applications</td>
 <td style="text-align: right;">23,232</td>
-<td style="text-align: right;">7,626</td>
-<td style="text-align: right;">1,229</td>
-<td style="text-align: right;">1,426</td>
+<td style="text-align: right;">8,546</td>
+<td style="text-align: right;">1,250</td>
+<td style="text-align: right;">485</td>
 <td style="text-align: right;">15</td>
 <td style="text-align: right;">10,296</td>
 <td style="text-align: right;">15</td>
@@ -1091,23 +1091,23 @@ Vcells 10255830 78.3  665930044 5080.7 832412527 6350.9</code></pre>
 <tr class="even">
 <td style="text-align: left;">Parcels with an application</td>
 <td style="text-align: right;">8,782</td>
-<td style="text-align: right;">8,458</td>
+<td style="text-align: right;">8,450</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Parcels with both (mit ∩ app)</td>
 <td style="text-align: right;">4,292</td>
-<td style="text-align: right;">4,084</td>
+<td style="text-align: right;">4,077</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Share of app parcels with a mit</td>
 <td style="text-align: right;">48.9%</td>
-<td style="text-align: right;">48.3%</td>
+<td style="text-align: right;">48.2%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div></div>
-<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.3%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
+<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.2%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">

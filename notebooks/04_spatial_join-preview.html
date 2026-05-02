@@ -321,205 +321,410 @@ Attaching package: 'tidyr'</code></pre>
 <span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">cntyfips     =</span> <span class="fu">paste0</span>(<span class="st">"37"</span>, cntyfips)</span>
 <span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(nc1_attr); <span class="fu">gc</span>()</span>
-<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>county_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(unmatched_nc1<span class="sc">$</span>cntyfips)</span>
-<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Build sf object for CL records in counties that have unmatched parcels</span></span>
-<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> cl <span class="sc">|&gt;</span></span>
-<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="st">`</span><span class="at">FIPS CODE</span><span class="st">`</span> <span class="sc">%in%</span> county_list) <span class="sc">|&gt;</span></span>
-<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">PARCEL LEVEL LATITUDE</span><span class="st">`</span>) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">PARCEL LEVEL LONGITUDE</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(</span>
-<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"PARCEL LEVEL LONGITUDE"</span>, <span class="st">"PARCEL LEVEL LATITUDE"</span>),</span>
-<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">crs =</span> <span class="dv">4326</span></span>
-<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(nc1_attr); <span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>            used   (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells  52216355 2788.7  102545151 5476.6  66330328 3542.5
+Vcells 589736755 4499.4  913238810 6967.5 704645302 5376.1</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>county_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(unmatched_nc1<span class="sc">$</span>cntyfips)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Build sf object for CL records in counties that have unmatched parcels</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> cl <span class="sc">|&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="st">`</span><span class="at">FIPS CODE</span><span class="st">`</span> <span class="sc">%in%</span> county_list) <span class="sc">|&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">fips_code =</span> <span class="st">`</span><span class="at">FIPS CODE</span><span class="st">`</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">PARCEL LEVEL LATITUDE</span><span class="st">`</span>) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(<span class="st">`</span><span class="at">PARCEL LEVEL LONGITUDE</span><span class="st">`</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"PARCEL LEVEL LONGITUDE"</span>, <span class="st">"PARCEL LEVEL LATITUDE"</span>),</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">crs =</span> <span class="dv">4326</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [3]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproject to NC State Plane (meters) for distance calculations</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>unmatched_nc1  <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(unmatched_nc1,  <span class="at">crs =</span> <span class="dv">32119</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cl_unmatched   <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(cl_unmatched,   <span class="at">crs =</span> <span class="fu">st_crs</span>(unmatched_nc1))</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign geometry IDs (factorize unique geometries)</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>unmatched_nc1 <span class="ot">&lt;-</span> unmatched_nc1 <span class="sc">|&gt;</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(unmatched_nc1)))))</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id1 =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(cl_unmatched)))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reproject to NC State Plane (meters) for distance calculations</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>unmatched_nc1  <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(unmatched_nc1,  <span class="at">crs =</span> <span class="dv">32119</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>cl_unmatched   <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(cl_unmatched,   <span class="at">crs =</span> <span class="fu">st_crs</span>(unmatched_nc1))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign geometry IDs (factorize unique geometries)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>unmatched_nc1 <span class="ot">&lt;-</span> unmatched_nc1 <span class="sc">|&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(unmatched_nc1)))))</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id1 =</span> <span class="fu">as.integer</span>(<span class="fu">factor</span>(<span class="fu">as.character</span>(<span class="fu">st_geometry</span>(cl_unmatched)))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [4]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save intermediate geopackages</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(unmatched_nc1, <span class="fu">file.path</span>(out_dir, <span class="st">"nc1geoms_distmatch.gpkg"</span>),</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(cl_unmatched, <span class="fu">file.path</span>(out_dir, <span class="st">"cl_wID.gpkg"</span>),</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Save intermediate geopackages</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(unmatched_nc1, <span class="fu">file.path</span>(out_dir, <span class="st">"nc1geoms_distmatch.gpkg"</span>),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(cl_unmatched, <span class="fu">file.path</span>(out_dir, <span class="st">"cl_wID.gpkg"</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [5]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>out_dir <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output"</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>unmatched_nc1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"nc1geoms_distmatch.gpkg"</span>), <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.character</span>(parcel_index))</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"cl_wID.gpkg"</span>), <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>county_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(unmatched_nc1<span class="sc">$</span>cntyfips)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>out_dir <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/users/rbless/data/Obstacles_Output"</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>unmatched_nc1 <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"nc1geoms_distmatch.gpkg"</span>), <span class="at">quiet =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.character</span>(parcel_index))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>cl_unmatched <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"cl_wID.gpkg"</span>), <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>county_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(unmatched_nc1<span class="sc">$</span>cntyfips)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop to unique CL geometries before joining (avoids redundant distance calcs)</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>cl_unique <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(geometry_id1, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># County-by-county nearest-neighbor join</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>nn_results <span class="ot">&lt;-</span> <span class="fu">map</span>(county_list, <span class="cf">function</span>(fips) {</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  cl_fips      <span class="ot">&lt;-</span> cl_unique      <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">FIPS CODE</span><span class="st">`</span> <span class="sc">==</span> fips)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  parcels_fips <span class="ot">&lt;-</span> unmatched_nc1  <span class="sc">|&gt;</span> <span class="fu">filter</span>(cntyfips    <span class="sc">==</span> fips)</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(cl_fips) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">nrow</span>(parcels_fips) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Nearest neighbour join (st_join with st_nearest_feature gives distances</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># via st_distance; use nngeo for the distance column directly)</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  nn <span class="ot">&lt;-</span> <span class="fu">st_join</span>(parcels_fips, cl_fips, <span class="at">join =</span> st_nearest_feature)</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compute actual distance to the matched point</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  nn_geom <span class="ot">&lt;-</span> <span class="fu">st_geometry</span>(nn)</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  nn <span class="ot">&lt;-</span> nn <span class="sc">|&gt;</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_distance</span>(</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        nn_geom,</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        cl_fips<span class="sc">$</span>geometry[<span class="fu">match</span>(geometry_id1, cl_fips<span class="sc">$</span>geometry_id1)],</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        <span class="at">by_element =</span> <span class="cn">TRUE</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    ))</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For each parcel, keep only the minimum-distance match(es)</span></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>  nn <span class="sc">|&gt;</span></span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(parcel_index) <span class="sc">|&gt;</span></span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(distance <span class="sc">==</span> <span class="fu">min</span>(distance)) <span class="sc">|&gt;</span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>}, <span class="at">.progress =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop to unique CL geometries before joining (avoids redundant distance calcs)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>cl_unique <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(geometry_id1, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># County-by-county nearest-neighbor join</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>nn_results <span class="ot">&lt;-</span> <span class="fu">map</span>(county_list, <span class="cf">function</span>(fips) {</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  cl_fips      <span class="ot">&lt;-</span> cl_unique      <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="st">`</span><span class="at">fips_code</span><span class="st">`</span> <span class="sc">==</span> fips)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  parcels_fips <span class="ot">&lt;-</span> unmatched_nc1  <span class="sc">|&gt;</span> <span class="fu">filter</span>(cntyfips    <span class="sc">==</span> fips)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(cl_fips) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">nrow</span>(parcels_fips) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Nearest-neighbour join (assigns each parcel its nearest CL row)</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  nn <span class="ot">&lt;-</span> <span class="fu">st_join</span>(parcels_fips, cl_fips, <span class="at">join =</span> st_nearest_feature) <span class="sc">|&gt;</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(geometry_id1))</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(nn) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get CL point geometries for matched rows</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  idx           <span class="ot">&lt;-</span> <span class="fu">match</span>(nn<span class="sc">$</span>geometry_id1, cl_fips<span class="sc">$</span>geometry_id1)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  matched_geoms <span class="ot">&lt;-</span> <span class="fu">st_geometry</span>(cl_fips)[idx]</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  nn <span class="ot">&lt;-</span> nn <span class="sc">|&gt;</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">distance =</span> <span class="fu">as.numeric</span>(</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">st_distance</span>(<span class="fu">st_geometry</span>(nn), matched_geoms, <span class="at">by_element =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="co"># For each parcel, keep only the minimum-distance match(es)</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  nn <span class="sc">|&gt;</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(parcel_index) <span class="sc">|&gt;</span></span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(distance <span class="sc">==</span> <span class="fu">min</span>(distance)) <span class="sc">|&gt;</span></span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>}, <span class="at">.progress =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■                                  1% |  ETA: 12m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■                                 3% |  ETA: 12m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■                                 4% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■                                8% |  ETA:  6m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■                              10% |  ETA:  5m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■                              12% |  ETA:  7m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■                             13% |  ETA: 10m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■                             14% |  ETA:  9m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■                            17% |  ETA:  9m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■                            18% |  ETA:  9m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■                           19% |  ETA:  9m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■                           21% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■                          22% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■                          23% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■                          24% |  ETA: 19m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■                         27% |  ETA: 19m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■                         28% |  ETA: 24m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■                        29% |  ETA: 23m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■                        31% |  ETA: 24m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■                       32% |  ETA: 29m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■                       35% |  ETA: 27m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■                      36% |  ETA: 26m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■                     40% |  ETA: 22m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■                     41% |  ETA: 22m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■                    42% |  ETA: 20m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■                    44% |  ETA: 22m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■                   46% |  ETA: 20m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■                   47% |  ETA: 19m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■                  49% |  ETA: 19m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■                  50% |  ETA: 18m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■                  51% |  ETA: 17m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■                 53% |  ETA: 16m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■                 54% |  ETA: 16m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■                56% |  ETA: 16m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■               59% |  ETA: 15m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■               60% |  ETA: 14m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■               62% |  ETA: 13m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■              64% |  ETA: 12m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■             65% |  ETA: 11m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■             67% |  ETA: 11m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■            69% |  ETA: 10m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■            71% |  ETA:  9m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■           72% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■           73% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■           74% |  ETA:  8m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■          76% |  ETA:  7m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■          77% |  ETA:  7m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■          78% |  ETA:  7m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■         79% |  ETA:  6m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■         81% |  ETA:  6m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■        82% |  ETA:  5m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% |  ETA:  5m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■        85% |  ETA:  5m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87% |  ETA:  4m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      88% |  ETA:  3m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      91% |  ETA:  3m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     92% |  ETA:  2m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     94% |  ETA:  2m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    96% |  ETA:  1m</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code> ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% |  ETA: 43s</code></pre>
+</div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Parcels that matched multiple CL geometries at equal minimum distance</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>tie_counts      <span class="ot">&lt;-</span> <span class="fu">count</span>(nn_results, parcel_index)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>tie_parcelids   <span class="ot">&lt;-</span> tie_counts<span class="sc">$</span>parcel_index[tie_counts<span class="sc">$</span>n <span class="sc">&gt;</span> <span class="dv">1</span>]</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>duplicated_rows <span class="ot">&lt;-</span> nn_results <span class="sc">|&gt;</span> <span class="fu">filter</span>(parcel_index <span class="sc">%in%</span>  tie_parcelids)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort  <span class="ot">&lt;-</span> nn_results <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>parcel_index <span class="sc">%in%</span> tie_parcelids)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(duplicated_rows, <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_joins_to_sort.csv"</span>))</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(cl_dist_nosort,  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_dist_joins_nosort.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Parcels that matched multiple CL geometries at equal minimum distance</span></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>tie_counts      <span class="ot">&lt;-</span> <span class="fu">count</span>(nn_results, parcel_index)</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>tie_parcelids   <span class="ot">&lt;-</span> tie_counts<span class="sc">$</span>parcel_index[tie_counts<span class="sc">$</span>n <span class="sc">&gt;</span> <span class="dv">1</span>]</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>duplicated_rows <span class="ot">&lt;-</span> nn_results <span class="sc">|&gt;</span> <span class="fu">filter</span>(parcel_index <span class="sc">%in%</span>  tie_parcelids)</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort  <span class="ot">&lt;-</span> nn_results <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span>parcel_index <span class="sc">%in%</span> tie_parcelids)</span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(duplicated_rows, <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_joins_to_sort.csv"</span>))</span>
+<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(cl_dist_nosort,  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_dist_joins_nosort.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [8]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># CL attribute table (no geometry) for address lookup</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>cl_attr <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per tied parcel (the nc1 side)</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>nc1_pcls <span class="ot">&lt;-</span> duplicated_rows <span class="sc">|&gt;</span> <span class="fu">distinct</span>(parcel_index, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">987</span>)</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>find_best_cl_match <span class="ot">&lt;-</span> <span class="cf">function</span>(pc_row) {</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  pc       <span class="ot">&lt;-</span> nc1_pcls[pc_row, ]</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  cl_geoms <span class="ot">&lt;-</span> duplicated_rows <span class="sc">|&gt;</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(parcel_index <span class="sc">==</span> pc<span class="sc">$</span>parcel_index) <span class="sc">|&gt;</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(geometry_id1)</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  cl_pcls <span class="ot">&lt;-</span> cl_attr <span class="sc">|&gt;</span> <span class="fu">filter</span>(geometry_id1 <span class="sc">%in%</span> cl_geoms)</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Choose address field: situs preferred, mailing as fallback</span></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(pc<span class="sc">$</span>siteadd) <span class="sc">&amp;&amp;</span> pc<span class="sc">$</span>siteadd <span class="sc">!=</span> <span class="st">""</span>) {</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    candidate_addresses <span class="ot">&lt;-</span> <span class="fu">paste</span>(cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">SITUS HOUSE NUMBER</span><span class="st">`</span>,</span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>                                 cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">SITUS STREET NAME</span><span class="st">`</span>)</span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    query_address       <span class="ot">&lt;-</span> pc<span class="sc">$</span>siteadd</span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    candidate_addresses <span class="ot">&lt;-</span> <span class="fu">paste</span>(cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">MAILING HOUSE NUMBER</span><span class="st">`</span>,</span>
-<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>                                 cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">MAILING STREET NAME</span><span class="st">`</span>)</span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    query_address       <span class="ot">&lt;-</span> pc<span class="sc">$</span>mailadd</span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  scores    <span class="ot">&lt;-</span> <span class="fu">stringdist</span>(<span class="fu">as.character</span>(query_address), candidate_addresses,</span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>                          <span class="at">method =</span> <span class="st">"lv"</span>)</span>
-<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  best_idx  <span class="ot">&lt;-</span> <span class="fu">which</span>(scores <span class="sc">==</span> <span class="fu">min</span>(scores))</span>
-<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Break remaining ties randomly</span></span>
-<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(best_idx) <span class="sc">&gt;</span> <span class="dv">1</span>) best_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(best_idx, <span class="dv">1</span>)</span>
-<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  cl_pcls[best_idx, ]</span>
-<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>matched_cls  <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(nc1_pcls)), find_best_cl_match)</span>
-<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>cl_dist_sorted <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(</span>
-<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>  nc1_pcls <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">names</span>(cl_attr))),   <span class="co"># nc1 columns only</span></span>
-<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>(matched_cls)                          <span class="co"># winning CL row</span></span>
-<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(cl_dist_sorted, <span class="fu">file.path</span>(out_dir, <span class="st">"cl_dist_sorted.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="co"># CL attribute table (no geometry) for address lookup</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>cl_attr <span class="ot">&lt;-</span> cl_unmatched <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>()</span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per tied parcel (the nc1 side)</span></span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>nc1_pcls <span class="ot">&lt;-</span> duplicated_rows <span class="sc">|&gt;</span> <span class="fu">distinct</span>(parcel_index, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">987</span>)</span>
+<span id="cb78-9"><a href="#cb78-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-10"><a href="#cb78-10" aria-hidden="true" tabindex="-1"></a>find_best_cl_match <span class="ot">&lt;-</span> <span class="cf">function</span>(pc_row) {</span>
+<span id="cb78-11"><a href="#cb78-11" aria-hidden="true" tabindex="-1"></a>  pc       <span class="ot">&lt;-</span> nc1_pcls[pc_row, ]</span>
+<span id="cb78-12"><a href="#cb78-12" aria-hidden="true" tabindex="-1"></a>  cl_geoms <span class="ot">&lt;-</span> duplicated_rows <span class="sc">|&gt;</span></span>
+<span id="cb78-13"><a href="#cb78-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(parcel_index <span class="sc">==</span> pc<span class="sc">$</span>parcel_index) <span class="sc">|&gt;</span></span>
+<span id="cb78-14"><a href="#cb78-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(geometry_id1)</span>
+<span id="cb78-15"><a href="#cb78-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-16"><a href="#cb78-16" aria-hidden="true" tabindex="-1"></a>  cl_pcls <span class="ot">&lt;-</span> cl_attr <span class="sc">|&gt;</span> <span class="fu">filter</span>(geometry_id1 <span class="sc">%in%</span> cl_geoms)</span>
+<span id="cb78-17"><a href="#cb78-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-18"><a href="#cb78-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Choose address field: situs preferred, mailing as fallback</span></span>
+<span id="cb78-19"><a href="#cb78-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(pc<span class="sc">$</span>siteadd) <span class="sc">&amp;&amp;</span> pc<span class="sc">$</span>siteadd <span class="sc">!=</span> <span class="st">""</span>) {</span>
+<span id="cb78-20"><a href="#cb78-20" aria-hidden="true" tabindex="-1"></a>    candidate_addresses <span class="ot">&lt;-</span> <span class="fu">paste</span>(cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">SITUS.HOUSE.NUMBER</span><span class="st">`</span>,</span>
+<span id="cb78-21"><a href="#cb78-21" aria-hidden="true" tabindex="-1"></a>                                 cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">SITUS.STREET.NAME</span><span class="st">`</span>)</span>
+<span id="cb78-22"><a href="#cb78-22" aria-hidden="true" tabindex="-1"></a>    query_address       <span class="ot">&lt;-</span> pc<span class="sc">$</span>siteadd</span>
+<span id="cb78-23"><a href="#cb78-23" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb78-24"><a href="#cb78-24" aria-hidden="true" tabindex="-1"></a>    candidate_addresses <span class="ot">&lt;-</span> <span class="fu">paste</span>(cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">MAILING.HOUSE.NUMBER</span><span class="st">`</span>,</span>
+<span id="cb78-25"><a href="#cb78-25" aria-hidden="true" tabindex="-1"></a>                                 cl_pcls<span class="sc">$</span><span class="st">`</span><span class="at">MAILING.STREET.NAME</span><span class="st">`</span>)</span>
+<span id="cb78-26"><a href="#cb78-26" aria-hidden="true" tabindex="-1"></a>    query_address       <span class="ot">&lt;-</span> pc<span class="sc">$</span>mailadd</span>
+<span id="cb78-27"><a href="#cb78-27" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb78-28"><a href="#cb78-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-29"><a href="#cb78-29" aria-hidden="true" tabindex="-1"></a>  scores    <span class="ot">&lt;-</span> <span class="fu">stringdist</span>(<span class="fu">as.character</span>(query_address), candidate_addresses,</span>
+<span id="cb78-30"><a href="#cb78-30" aria-hidden="true" tabindex="-1"></a>                          <span class="at">method =</span> <span class="st">"lv"</span>)</span>
+<span id="cb78-31"><a href="#cb78-31" aria-hidden="true" tabindex="-1"></a>  best_idx  <span class="ot">&lt;-</span> <span class="fu">which</span>(scores <span class="sc">==</span> <span class="fu">min</span>(scores))</span>
+<span id="cb78-32"><a href="#cb78-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-33"><a href="#cb78-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Break remaining ties randomly</span></span>
+<span id="cb78-34"><a href="#cb78-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(best_idx) <span class="sc">&gt;</span> <span class="dv">1</span>) best_idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(best_idx, <span class="dv">1</span>)</span>
+<span id="cb78-35"><a href="#cb78-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-36"><a href="#cb78-36" aria-hidden="true" tabindex="-1"></a>  cl_pcls[best_idx, ]</span>
+<span id="cb78-37"><a href="#cb78-37" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb78-38"><a href="#cb78-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-39"><a href="#cb78-39" aria-hidden="true" tabindex="-1"></a>matched_cls  <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(nc1_pcls)), find_best_cl_match)</span>
+<span id="cb78-40"><a href="#cb78-40" aria-hidden="true" tabindex="-1"></a>cl_dist_sorted <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(</span>
+<span id="cb78-41"><a href="#cb78-41" aria-hidden="true" tabindex="-1"></a>  nc1_pcls <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">names</span>(cl_attr))),   <span class="co"># nc1 columns only</span></span>
+<span id="cb78-42"><a href="#cb78-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>(matched_cls)                          <span class="co"># winning CL row</span></span>
+<span id="cb78-43"><a href="#cb78-43" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb78-44"><a href="#cb78-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-45"><a href="#cb78-45" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(cl_dist_sorted, <span class="fu">file.path</span>(out_dir, <span class="st">"cl_dist_sorted.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [9]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cl_string <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_stringmatch.csv"</span>),</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_dist_joins_nosort.csv"</span>),</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>cl_dist_sorted <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"cl_dist_sorted.csv"</span>),</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>cl_string <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_stringmatch.csv"</span>),</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_cl_dist_joins_nosort.csv"</span>),</span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a>cl_dist_sorted <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"cl_dist_sorted.csv"</span>),</span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [10]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>pcl_comb <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    cl_string      <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character)),</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    cl_dist_nosort <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character)),</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    cl_dist_sorted <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character))</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(geometry_id), <span class="st">""</span>, <span class="fu">as.character</span>(geometry_id))) <span class="sc">|&gt;</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(parcel_index, geometry_id) <span class="sc">|&gt;</span>                <span class="co"># blank geometry_id sorts first</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(parcel_index, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)             <span class="co"># prefer string match</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(pcl_comb, <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3 writes CL attributes with spaced names (`PROPERTY INDICATOR CODE`),</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="co"># while Step 4 writes them with dotted names because the CL attributes</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="co"># round-tripped through GeoPackage (GDAL replaces spaces with dots). Without</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a><span class="co"># normalizing, bind_rows() would create paired columns ("X Y" and "X.Y"), each</span></span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a><span class="co"># half-populated. Force everything to the dotted form before stacking.</span></span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>to_dotted <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename_with</span>(df, <span class="sc">~</span> <span class="fu">gsub</span>(<span class="st">" "</span>, <span class="st">"."</span>, .x, <span class="at">fixed =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Stack string-matched, distance-matched (no sort needed), distance-matched (sorted)</span></span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>pcl_comb <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>    cl_string      <span class="sc">|&gt;</span> <span class="fu">to_dotted</span>() <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character)),</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>    cl_dist_nosort <span class="sc">|&gt;</span> <span class="fu">to_dotted</span>() <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character)),</span>
+<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a>    cl_dist_sorted <span class="sc">|&gt;</span> <span class="fu">to_dotted</span>() <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.character))</span>
+<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb80-17"><a href="#cb80-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">geometry_id =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(geometry_id), <span class="st">""</span>, <span class="fu">as.character</span>(geometry_id))) <span class="sc">|&gt;</span></span>
+<span id="cb80-18"><a href="#cb80-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(parcel_index, geometry_id) <span class="sc">|&gt;</span>                <span class="co"># blank geometry_id sorts first</span></span>
+<span id="cb80-19"><a href="#cb80-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(parcel_index, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)             <span class="co"># prefer string match</span></span>
+<span id="cb80-20"><a href="#cb80-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-21"><a href="#cb80-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity check: no spaced/dotted column duplication slipped through</span></span>
+<span id="cb80-22"><a href="#cb80-22" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb80-23"><a href="#cb80-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>(<span class="fu">intersect</span>(</span>
+<span id="cb80-24"><a href="#cb80-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gsub</span>(<span class="st">" "</span>, <span class="st">"."</span>, <span class="fu">names</span>(pcl_comb)),</span>
+<span id="cb80-25"><a href="#cb80-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">names</span>(pcl_comb)</span>
+<span id="cb80-26"><a href="#cb80-26" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">==</span> <span class="fu">ncol</span>(pcl_comb)</span>
+<span id="cb80-27"><a href="#cb80-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb80-28"><a href="#cb80-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-29"><a href="#cb80-29" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(pcl_comb, <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [11]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>pcl_comb <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>),</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>pcl_comb <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(out_dir, <span class="st">"nc1_cl_merge.csv"</span>),</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>())</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 </section>
@@ -528,44 +733,44 @@ Attaching package: 'tidyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [12]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>n_string   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_string)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>n_nosort   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_dist_nosort)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>n_sorted   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_dist_sorted)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>n_total    <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pcl_comb)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>n_unmatched_input <span class="ot">&lt;-</span> <span class="fu">nrow</span>(unmatched_nc1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>n_string   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_string)</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>n_nosort   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_dist_nosort)</span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>n_sorted   <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cl_dist_sorted)</span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a>n_total    <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pcl_comb)</span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>n_unmatched_input <span class="ot">&lt;-</span> <span class="fu">nrow</span>(unmatched_nc1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Source  =</span> <span class="fu">c</span>(<span class="st">"String-matched (Step 3)"</span>, <span class="st">"Distance-matched (no ties)"</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Distance-matched (ties resolved)"</span>, <span class="st">"Total unique parcels in merge"</span>),</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Records =</span> <span class="fu">c</span>(n_string, n_nosort, n_sorted, n_total)</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Parcel–CoreLogic Merge Summary"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> Records) <span class="sc">|&gt;</span></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(<span class="at">Source =</span> <span class="st">""</span>, <span class="at">Records =</span> <span class="st">"N"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Source  =</span> <span class="fu">c</span>(<span class="st">"String-matched (Step 3)"</span>, <span class="st">"Distance-matched (no ties)"</span>,</span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>              <span class="st">"Distance-matched (ties resolved)"</span>, <span class="st">"Total unique parcels in merge"</span>),</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Records =</span> <span class="fu">c</span>(n_string, n_nosort, n_sorted, n_total)</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Parcel–CoreLogic Merge Summary"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> Records) <span class="sc">|&gt;</span></span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(<span class="at">Source =</span> <span class="st">""</span>, <span class="at">Records =</span> <span class="st">"N"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="jdldduerar" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#jdldduerar table {
+<div id="oyynwomlrx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#oyynwomlrx table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#jdldduerar thead, #jdldduerar tbody, #jdldduerar tfoot, #jdldduerar tr, #jdldduerar td, #jdldduerar th {
+#oyynwomlrx thead, #oyynwomlrx tbody, #oyynwomlrx tfoot, #oyynwomlrx tr, #oyynwomlrx td, #oyynwomlrx th {
   border-style: none;
 }
 
-#jdldduerar p {
+#oyynwomlrx p {
   margin: 0;
   padding: 0;
 }
 
-#jdldduerar .gt_table {
+#oyynwomlrx .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -591,12 +796,12 @@ Attaching package: 'tidyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#jdldduerar .gt_caption {
+#oyynwomlrx .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#jdldduerar .gt_title {
+#oyynwomlrx .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -608,7 +813,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#jdldduerar .gt_subtitle {
+#oyynwomlrx .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -620,7 +825,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-width: 0;
 }
 
-#jdldduerar .gt_heading {
+#oyynwomlrx .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -632,13 +837,13 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jdldduerar .gt_bottom_border {
+#oyynwomlrx .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#jdldduerar .gt_col_headings {
+#oyynwomlrx .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -653,7 +858,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jdldduerar .gt_col_heading {
+#oyynwomlrx .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -673,7 +878,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#jdldduerar .gt_column_spanner_outer {
+#oyynwomlrx .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -685,15 +890,15 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 4px;
 }
 
-#jdldduerar .gt_column_spanner_outer:first-child {
+#oyynwomlrx .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#jdldduerar .gt_column_spanner_outer:last-child {
+#oyynwomlrx .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#jdldduerar .gt_column_spanner {
+#oyynwomlrx .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -705,11 +910,11 @@ Attaching package: 'tidyr'</code></pre>
   width: 100%;
 }
 
-#jdldduerar .gt_spanner_row {
+#oyynwomlrx .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#jdldduerar .gt_group_heading {
+#oyynwomlrx .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -735,7 +940,7 @@ Attaching package: 'tidyr'</code></pre>
   text-align: left;
 }
 
-#jdldduerar .gt_empty_group_heading {
+#oyynwomlrx .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -750,15 +955,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: middle;
 }
 
-#jdldduerar .gt_from_md > :first-child {
+#oyynwomlrx .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#jdldduerar .gt_from_md > :last-child {
+#oyynwomlrx .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#jdldduerar .gt_row {
+#oyynwomlrx .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -777,7 +982,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#jdldduerar .gt_stub {
+#oyynwomlrx .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -790,7 +995,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jdldduerar .gt_stub_row_group {
+#oyynwomlrx .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -804,15 +1009,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: top;
 }
 
-#jdldduerar .gt_row_group_first td {
+#oyynwomlrx .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#jdldduerar .gt_row_group_first th {
+#oyynwomlrx .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#jdldduerar .gt_summary_row {
+#oyynwomlrx .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -822,16 +1027,16 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jdldduerar .gt_first_summary_row {
+#oyynwomlrx .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#jdldduerar .gt_first_summary_row.thick {
+#oyynwomlrx .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#jdldduerar .gt_last_summary_row {
+#oyynwomlrx .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -841,7 +1046,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jdldduerar .gt_grand_summary_row {
+#oyynwomlrx .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -851,7 +1056,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jdldduerar .gt_first_grand_summary_row {
+#oyynwomlrx .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -861,7 +1066,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#jdldduerar .gt_last_grand_summary_row_top {
+#oyynwomlrx .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -871,11 +1076,11 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jdldduerar .gt_striped {
+#oyynwomlrx .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#jdldduerar .gt_table_body {
+#oyynwomlrx .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -884,7 +1089,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jdldduerar .gt_footnotes {
+#oyynwomlrx .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -898,7 +1103,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jdldduerar .gt_footnote {
+#oyynwomlrx .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -907,7 +1112,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jdldduerar .gt_sourcenotes {
+#oyynwomlrx .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -921,7 +1126,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jdldduerar .gt_sourcenote {
+#oyynwomlrx .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -929,72 +1134,72 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jdldduerar .gt_left {
+#oyynwomlrx .gt_left {
   text-align: left;
 }
 
-#jdldduerar .gt_center {
+#oyynwomlrx .gt_center {
   text-align: center;
 }
 
-#jdldduerar .gt_right {
+#oyynwomlrx .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#jdldduerar .gt_font_normal {
+#oyynwomlrx .gt_font_normal {
   font-weight: normal;
 }
 
-#jdldduerar .gt_font_bold {
+#oyynwomlrx .gt_font_bold {
   font-weight: bold;
 }
 
-#jdldduerar .gt_font_italic {
+#oyynwomlrx .gt_font_italic {
   font-style: italic;
 }
 
-#jdldduerar .gt_super {
+#oyynwomlrx .gt_super {
   font-size: 65%;
 }
 
-#jdldduerar .gt_footnote_marks {
+#oyynwomlrx .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#jdldduerar .gt_asterisk {
+#oyynwomlrx .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#jdldduerar .gt_indent_1 {
+#oyynwomlrx .gt_indent_1 {
   text-indent: 5px;
 }
 
-#jdldduerar .gt_indent_2 {
+#oyynwomlrx .gt_indent_2 {
   text-indent: 10px;
 }
 
-#jdldduerar .gt_indent_3 {
+#oyynwomlrx .gt_indent_3 {
   text-indent: 15px;
 }
 
-#jdldduerar .gt_indent_4 {
+#oyynwomlrx .gt_indent_4 {
   text-indent: 20px;
 }
 
-#jdldduerar .gt_indent_5 {
+#oyynwomlrx .gt_indent_5 {
   text-indent: 25px;
 }
 
-#jdldduerar .katex-display {
+#oyynwomlrx .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#jdldduerar div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#oyynwomlrx div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1012,11 +1217,11 @@ Attaching package: 'tidyr'</code></pre>
 <tbody class="gt_table_body">
 <tr class="odd">
 <td class="gt_row gt_left" headers="Source">String-matched (Step 3)</td>
-<td class="gt_row gt_right" headers="Records">3,738,359</td>
+<td class="gt_row gt_right" headers="Records">3,127,462</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Source">Distance-matched (no ties)</td>
-<td class="gt_row gt_right" headers="Records">534,946</td>
+<td class="gt_row gt_right" headers="Records">1,145,843</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Source">Distance-matched (ties resolved)</td>
@@ -1033,8 +1238,8 @@ Attaching package: 'tidyr'</code></pre>
 </div>
 </div></div>
 <ul>
-<li><strong>534,946</strong> parcels entered the spatial join (no string match found in Step 3).</li>
-<li><strong>534,946</strong> were unambiguously distance-matched.</li>
+<li><strong>1,145,843</strong> parcels entered the spatial join (no string match found in Step 3).</li>
+<li><strong>1,145,843</strong> were unambiguously distance-matched.</li>
 <li><strong>0</strong> had tied distances and were resolved by Levenshtein address similarity.</li>
 <li>The combined file <code>nc1_cl_merge.csv</code> contains <strong>4,273,305</strong> unique parcel records.</li>
 </ul>
@@ -1046,46 +1251,46 @@ Attaching package: 'tidyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [14]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many OneMap parcels share each CL geometry_id1</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>cl_match_counts <span class="ot">&lt;-</span> cl_dist_nosort <span class="sc">|&gt;</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(geometry_id1, <span class="at">name =</span> <span class="st">"n_parcels"</span>)</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>one_to_many_summary <span class="ot">&lt;-</span> cl_match_counts <span class="sc">|&gt;</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Total CL records matched</span><span class="st">`</span>          <span class="ot">=</span> <span class="fu">n</span>(),</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to exactly 1 parcel</span><span class="st">`</span>       <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">==</span> <span class="dv">1</span>),</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to 2–5 parcels</span><span class="st">`</span>            <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> n_parcels <span class="sc">&lt;=</span> <span class="dv">5</span>),</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to 6–20 parcels</span><span class="st">`</span>           <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">5</span> <span class="sc">&amp;</span> n_parcels <span class="sc">&lt;=</span> <span class="dv">20</span>),</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to &gt;20 parcels</span><span class="st">`</span>            <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">20</span>),</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Max parcels sharing one CL record</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">max</span>(n_parcels),</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Parcels affected (n_parcels &gt; 1)</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">sum</span>(n_parcels[n_parcels <span class="sc">&gt;</span> <span class="dv">1</span>])</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">"Metric"</span>, <span class="at">values_to =</span> <span class="st">"Value"</span>)</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>one_to_many_summary <span class="sc">|&gt;</span></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Distance-Matched: One-to-Many CL Record Summary"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> Value) <span class="sc">|&gt;</span></span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(<span class="at">Metric =</span> <span class="st">""</span>, <span class="at">Value =</span> <span class="st">"N"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Count how many OneMap parcels share each CL geometry_id1</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>cl_match_counts <span class="ot">&lt;-</span> cl_dist_nosort <span class="sc">|&gt;</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(geometry_id1, <span class="at">name =</span> <span class="st">"n_parcels"</span>)</span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>one_to_many_summary <span class="ot">&lt;-</span> cl_match_counts <span class="sc">|&gt;</span></span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Total CL records matched</span><span class="st">`</span>          <span class="ot">=</span> <span class="fu">n</span>(),</span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to exactly 1 parcel</span><span class="st">`</span>       <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to 2–5 parcels</span><span class="st">`</span>            <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> n_parcels <span class="sc">&lt;=</span> <span class="dv">5</span>),</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to 6–20 parcels</span><span class="st">`</span>           <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">5</span> <span class="sc">&amp;</span> n_parcels <span class="sc">&lt;=</span> <span class="dv">20</span>),</span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Matched to &gt;20 parcels</span><span class="st">`</span>            <span class="ot">=</span> <span class="fu">sum</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">20</span>),</span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Max parcels sharing one CL record</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">max</span>(n_parcels),</span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Parcels affected (n_parcels &gt; 1)</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">sum</span>(n_parcels[n_parcels <span class="sc">&gt;</span> <span class="dv">1</span>])</span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">"Metric"</span>, <span class="at">values_to =</span> <span class="st">"Value"</span>)</span>
+<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a>one_to_many_summary <span class="sc">|&gt;</span></span>
+<span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
+<span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(<span class="at">title =</span> <span class="st">"Distance-Matched: One-to-Many CL Record Summary"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb84-20"><a href="#cb84-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> Value) <span class="sc">|&gt;</span></span>
+<span id="cb84-21"><a href="#cb84-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(<span class="at">Metric =</span> <span class="st">""</span>, <span class="at">Value =</span> <span class="st">"N"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="sxpqxzmnqu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#sxpqxzmnqu table {
+<div id="apqcrhtrbu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#apqcrhtrbu table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#sxpqxzmnqu thead, #sxpqxzmnqu tbody, #sxpqxzmnqu tfoot, #sxpqxzmnqu tr, #sxpqxzmnqu td, #sxpqxzmnqu th {
+#apqcrhtrbu thead, #apqcrhtrbu tbody, #apqcrhtrbu tfoot, #apqcrhtrbu tr, #apqcrhtrbu td, #apqcrhtrbu th {
   border-style: none;
 }
 
-#sxpqxzmnqu p {
+#apqcrhtrbu p {
   margin: 0;
   padding: 0;
 }
 
-#sxpqxzmnqu .gt_table {
+#apqcrhtrbu .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1111,12 +1316,12 @@ Attaching package: 'tidyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_caption {
+#apqcrhtrbu .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#sxpqxzmnqu .gt_title {
+#apqcrhtrbu .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1128,7 +1333,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#sxpqxzmnqu .gt_subtitle {
+#apqcrhtrbu .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1140,7 +1345,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-width: 0;
 }
 
-#sxpqxzmnqu .gt_heading {
+#apqcrhtrbu .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1152,13 +1357,13 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_bottom_border {
+#apqcrhtrbu .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_col_headings {
+#apqcrhtrbu .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1173,7 +1378,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_col_heading {
+#apqcrhtrbu .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1193,7 +1398,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#sxpqxzmnqu .gt_column_spanner_outer {
+#apqcrhtrbu .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1205,15 +1410,15 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 4px;
 }
 
-#sxpqxzmnqu .gt_column_spanner_outer:first-child {
+#apqcrhtrbu .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#sxpqxzmnqu .gt_column_spanner_outer:last-child {
+#apqcrhtrbu .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#sxpqxzmnqu .gt_column_spanner {
+#apqcrhtrbu .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1225,11 +1430,11 @@ Attaching package: 'tidyr'</code></pre>
   width: 100%;
 }
 
-#sxpqxzmnqu .gt_spanner_row {
+#apqcrhtrbu .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#sxpqxzmnqu .gt_group_heading {
+#apqcrhtrbu .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1255,7 +1460,7 @@ Attaching package: 'tidyr'</code></pre>
   text-align: left;
 }
 
-#sxpqxzmnqu .gt_empty_group_heading {
+#apqcrhtrbu .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1270,15 +1475,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: middle;
 }
 
-#sxpqxzmnqu .gt_from_md > :first-child {
+#apqcrhtrbu .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#sxpqxzmnqu .gt_from_md > :last-child {
+#apqcrhtrbu .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#sxpqxzmnqu .gt_row {
+#apqcrhtrbu .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1297,7 +1502,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#sxpqxzmnqu .gt_stub {
+#apqcrhtrbu .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1310,7 +1515,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#sxpqxzmnqu .gt_stub_row_group {
+#apqcrhtrbu .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1324,15 +1529,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: top;
 }
 
-#sxpqxzmnqu .gt_row_group_first td {
+#apqcrhtrbu .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#sxpqxzmnqu .gt_row_group_first th {
+#apqcrhtrbu .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#sxpqxzmnqu .gt_summary_row {
+#apqcrhtrbu .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1342,16 +1547,16 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#sxpqxzmnqu .gt_first_summary_row {
+#apqcrhtrbu .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_first_summary_row.thick {
+#apqcrhtrbu .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#sxpqxzmnqu .gt_last_summary_row {
+#apqcrhtrbu .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1361,7 +1566,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_grand_summary_row {
+#apqcrhtrbu .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1371,7 +1576,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#sxpqxzmnqu .gt_first_grand_summary_row {
+#apqcrhtrbu .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1381,7 +1586,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_last_grand_summary_row_top {
+#apqcrhtrbu .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1391,11 +1596,11 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_striped {
+#apqcrhtrbu .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#sxpqxzmnqu .gt_table_body {
+#apqcrhtrbu .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1404,7 +1609,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_footnotes {
+#apqcrhtrbu .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1418,7 +1623,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_footnote {
+#apqcrhtrbu .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1427,7 +1632,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#sxpqxzmnqu .gt_sourcenotes {
+#apqcrhtrbu .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1441,7 +1646,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#sxpqxzmnqu .gt_sourcenote {
+#apqcrhtrbu .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1449,72 +1654,72 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#sxpqxzmnqu .gt_left {
+#apqcrhtrbu .gt_left {
   text-align: left;
 }
 
-#sxpqxzmnqu .gt_center {
+#apqcrhtrbu .gt_center {
   text-align: center;
 }
 
-#sxpqxzmnqu .gt_right {
+#apqcrhtrbu .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#sxpqxzmnqu .gt_font_normal {
+#apqcrhtrbu .gt_font_normal {
   font-weight: normal;
 }
 
-#sxpqxzmnqu .gt_font_bold {
+#apqcrhtrbu .gt_font_bold {
   font-weight: bold;
 }
 
-#sxpqxzmnqu .gt_font_italic {
+#apqcrhtrbu .gt_font_italic {
   font-style: italic;
 }
 
-#sxpqxzmnqu .gt_super {
+#apqcrhtrbu .gt_super {
   font-size: 65%;
 }
 
-#sxpqxzmnqu .gt_footnote_marks {
+#apqcrhtrbu .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#sxpqxzmnqu .gt_asterisk {
+#apqcrhtrbu .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#sxpqxzmnqu .gt_indent_1 {
+#apqcrhtrbu .gt_indent_1 {
   text-indent: 5px;
 }
 
-#sxpqxzmnqu .gt_indent_2 {
+#apqcrhtrbu .gt_indent_2 {
   text-indent: 10px;
 }
 
-#sxpqxzmnqu .gt_indent_3 {
+#apqcrhtrbu .gt_indent_3 {
   text-indent: 15px;
 }
 
-#sxpqxzmnqu .gt_indent_4 {
+#apqcrhtrbu .gt_indent_4 {
   text-indent: 20px;
 }
 
-#sxpqxzmnqu .gt_indent_5 {
+#apqcrhtrbu .gt_indent_5 {
   text-indent: 25px;
 }
 
-#sxpqxzmnqu .katex-display {
+#apqcrhtrbu .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#sxpqxzmnqu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#apqcrhtrbu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1532,31 +1737,31 @@ Attaching package: 'tidyr'</code></pre>
 <tbody class="gt_table_body">
 <tr class="odd">
 <td class="gt_row gt_left" headers="Metric">Total CL records matched</td>
-<td class="gt_row gt_right" headers="Value">458,575</td>
+<td class="gt_row gt_right" headers="Value">900,934</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Metric">Matched to exactly 1 parcel</td>
-<td class="gt_row gt_right" headers="Value">429,800</td>
+<td class="gt_row gt_right" headers="Value">836,229</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Metric">Matched to 2–5 parcels</td>
-<td class="gt_row gt_right" headers="Value">26,278</td>
+<td class="gt_row gt_right" headers="Value">55,639</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Metric">Matched to 6–20 parcels</td>
-<td class="gt_row gt_right" headers="Value">2,010</td>
+<td class="gt_row gt_right" headers="Value">6,846</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Metric">Matched to &gt;20 parcels</td>
-<td class="gt_row gt_right" headers="Value">487</td>
+<td class="gt_row gt_right" headers="Value">2,220</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Metric">Max parcels sharing one CL record</td>
-<td class="gt_row gt_right" headers="Value">569</td>
+<td class="gt_row gt_right" headers="Value">968</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Metric">Parcels affected (n_parcels &gt; 1)</td>
-<td class="gt_row gt_right" headers="Value">105,146</td>
+<td class="gt_row gt_right" headers="Value">309,614</td>
 </tr>
 </tbody>
 </table>
@@ -1567,49 +1772,49 @@ Attaching package: 'tidyr'</code></pre>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [15]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Break down multi-matched parcels by CL property type</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort <span class="sc">|&gt;</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    cl_match_counts <span class="sc">|&gt;</span> <span class="fu">filter</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">1</span>),</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"geometry_id1"</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(geometry_id1, n_parcels, <span class="st">`</span><span class="at">PROPERTY INDICATOR CODE</span><span class="st">`</span>,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">COUNTY USE DESCRIPTION</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="st">`</span><span class="at">PROPERTY INDICATOR CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">COUNTY USE DESCRIPTION</span><span class="st">`</span>,</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">wt =</span> n_parcels, <span class="at">name =</span> <span class="st">"n_parcels_affected"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_parcels_affected)) <span class="sc">|&gt;</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Top 20 CoreLogic Property Types with Multi-Parcel Matches"</span>,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Weighted by number of OneMap parcels affected"</span></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> n_parcels_affected) <span class="sc">|&gt;</span></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">PROPERTY INDICATOR CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"Property Indicator"</span>,</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND USE CODE</span><span class="st">`</span>            <span class="ot">=</span> <span class="st">"Land Use Code"</span>,</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">COUNTY USE DESCRIPTION</span><span class="st">`</span>   <span class="ot">=</span> <span class="st">"County Use Description"</span>,</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_parcels_affected         =</span> <span class="st">"Parcels Affected"</span></span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb85"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Break down multi-matched parcels by CL property type</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>cl_dist_nosort <span class="sc">|&gt;</span></span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(</span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>    cl_match_counts <span class="sc">|&gt;</span> <span class="fu">filter</span>(n_parcels <span class="sc">&gt;</span> <span class="dv">1</span>),</span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"geometry_id1"</span></span>
+<span id="cb85-6"><a href="#cb85-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb85-7"><a href="#cb85-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(geometry_id1, n_parcels, <span class="st">`</span><span class="at">PROPERTY.INDICATOR.CODE</span><span class="st">`</span>,</span>
+<span id="cb85-8"><a href="#cb85-8" aria-hidden="true" tabindex="-1"></a>           <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">COUNTY.USE.DESCRIPTION</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb85-9"><a href="#cb85-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(<span class="st">`</span><span class="at">PROPERTY.INDICATOR.CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>, <span class="st">`</span><span class="at">COUNTY.USE.DESCRIPTION</span><span class="st">`</span>,</span>
+<span id="cb85-10"><a href="#cb85-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">wt =</span> n_parcels, <span class="at">name =</span> <span class="st">"n_parcels_affected"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb85-11"><a href="#cb85-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_parcels_affected)) <span class="sc">|&gt;</span></span>
+<span id="cb85-12"><a href="#cb85-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">20</span>) <span class="sc">|&gt;</span></span>
+<span id="cb85-13"><a href="#cb85-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">|&gt;</span></span>
+<span id="cb85-14"><a href="#cb85-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_header</span>(</span>
+<span id="cb85-15"><a href="#cb85-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Top 20 CoreLogic Property Types with Multi-Parcel Matches"</span>,</span>
+<span id="cb85-16"><a href="#cb85-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Weighted by number of OneMap parcels affected"</span></span>
+<span id="cb85-17"><a href="#cb85-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb85-18"><a href="#cb85-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmt_integer</span>(<span class="at">columns =</span> n_parcels_affected) <span class="sc">|&gt;</span></span>
+<span id="cb85-19"><a href="#cb85-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
+<span id="cb85-20"><a href="#cb85-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">PROPERTY.INDICATOR.CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"Property Indicator"</span>,</span>
+<span id="cb85-21"><a href="#cb85-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>            <span class="ot">=</span> <span class="st">"Land Use Code"</span>,</span>
+<span id="cb85-22"><a href="#cb85-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">COUNTY.USE.DESCRIPTION</span><span class="st">`</span>   <span class="ot">=</span> <span class="st">"County Use Description"</span>,</span>
+<span id="cb85-23"><a href="#cb85-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_parcels_affected         =</span> <span class="st">"Parcels Affected"</span></span>
+<span id="cb85-24"><a href="#cb85-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="jseqoahbyh" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#jseqoahbyh table {
+<div id="ojcyszhyko" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ojcyszhyko table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#jseqoahbyh thead, #jseqoahbyh tbody, #jseqoahbyh tfoot, #jseqoahbyh tr, #jseqoahbyh td, #jseqoahbyh th {
+#ojcyszhyko thead, #ojcyszhyko tbody, #ojcyszhyko tfoot, #ojcyszhyko tr, #ojcyszhyko td, #ojcyszhyko th {
   border-style: none;
 }
 
-#jseqoahbyh p {
+#ojcyszhyko p {
   margin: 0;
   padding: 0;
 }
 
-#jseqoahbyh .gt_table {
+#ojcyszhyko .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1635,12 +1840,12 @@ Attaching package: 'tidyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_caption {
+#ojcyszhyko .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#jseqoahbyh .gt_title {
+#ojcyszhyko .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1652,7 +1857,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#jseqoahbyh .gt_subtitle {
+#ojcyszhyko .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1664,7 +1869,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-width: 0;
 }
 
-#jseqoahbyh .gt_heading {
+#ojcyszhyko .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1676,13 +1881,13 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_bottom_border {
+#ojcyszhyko .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_col_headings {
+#ojcyszhyko .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1697,7 +1902,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_col_heading {
+#ojcyszhyko .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1717,7 +1922,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#jseqoahbyh .gt_column_spanner_outer {
+#ojcyszhyko .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1729,15 +1934,15 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 4px;
 }
 
-#jseqoahbyh .gt_column_spanner_outer:first-child {
+#ojcyszhyko .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#jseqoahbyh .gt_column_spanner_outer:last-child {
+#ojcyszhyko .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#jseqoahbyh .gt_column_spanner {
+#ojcyszhyko .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1749,11 +1954,11 @@ Attaching package: 'tidyr'</code></pre>
   width: 100%;
 }
 
-#jseqoahbyh .gt_spanner_row {
+#ojcyszhyko .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#jseqoahbyh .gt_group_heading {
+#ojcyszhyko .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1779,7 +1984,7 @@ Attaching package: 'tidyr'</code></pre>
   text-align: left;
 }
 
-#jseqoahbyh .gt_empty_group_heading {
+#ojcyszhyko .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1794,15 +1999,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: middle;
 }
 
-#jseqoahbyh .gt_from_md > :first-child {
+#ojcyszhyko .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#jseqoahbyh .gt_from_md > :last-child {
+#ojcyszhyko .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#jseqoahbyh .gt_row {
+#ojcyszhyko .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1821,7 +2026,7 @@ Attaching package: 'tidyr'</code></pre>
   overflow-x: hidden;
 }
 
-#jseqoahbyh .gt_stub {
+#ojcyszhyko .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1834,7 +2039,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jseqoahbyh .gt_stub_row_group {
+#ojcyszhyko .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1848,15 +2053,15 @@ Attaching package: 'tidyr'</code></pre>
   vertical-align: top;
 }
 
-#jseqoahbyh .gt_row_group_first td {
+#ojcyszhyko .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#jseqoahbyh .gt_row_group_first th {
+#ojcyszhyko .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#jseqoahbyh .gt_summary_row {
+#ojcyszhyko .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1866,16 +2071,16 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jseqoahbyh .gt_first_summary_row {
+#ojcyszhyko .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_first_summary_row.thick {
+#ojcyszhyko .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#jseqoahbyh .gt_last_summary_row {
+#ojcyszhyko .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1885,7 +2090,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_grand_summary_row {
+#ojcyszhyko .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1895,7 +2100,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jseqoahbyh .gt_first_grand_summary_row {
+#ojcyszhyko .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1905,7 +2110,7 @@ Attaching package: 'tidyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_last_grand_summary_row_top {
+#ojcyszhyko .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1915,11 +2120,11 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_striped {
+#ojcyszhyko .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#jseqoahbyh .gt_table_body {
+#ojcyszhyko .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1928,7 +2133,7 @@ Attaching package: 'tidyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_footnotes {
+#ojcyszhyko .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1942,7 +2147,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_footnote {
+#ojcyszhyko .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1951,7 +2156,7 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jseqoahbyh .gt_sourcenotes {
+#ojcyszhyko .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1965,7 +2170,7 @@ Attaching package: 'tidyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#jseqoahbyh .gt_sourcenote {
+#ojcyszhyko .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1973,72 +2178,72 @@ Attaching package: 'tidyr'</code></pre>
   padding-right: 5px;
 }
 
-#jseqoahbyh .gt_left {
+#ojcyszhyko .gt_left {
   text-align: left;
 }
 
-#jseqoahbyh .gt_center {
+#ojcyszhyko .gt_center {
   text-align: center;
 }
 
-#jseqoahbyh .gt_right {
+#ojcyszhyko .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#jseqoahbyh .gt_font_normal {
+#ojcyszhyko .gt_font_normal {
   font-weight: normal;
 }
 
-#jseqoahbyh .gt_font_bold {
+#ojcyszhyko .gt_font_bold {
   font-weight: bold;
 }
 
-#jseqoahbyh .gt_font_italic {
+#ojcyszhyko .gt_font_italic {
   font-style: italic;
 }
 
-#jseqoahbyh .gt_super {
+#ojcyszhyko .gt_super {
   font-size: 65%;
 }
 
-#jseqoahbyh .gt_footnote_marks {
+#ojcyszhyko .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#jseqoahbyh .gt_asterisk {
+#ojcyszhyko .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#jseqoahbyh .gt_indent_1 {
+#ojcyszhyko .gt_indent_1 {
   text-indent: 5px;
 }
 
-#jseqoahbyh .gt_indent_2 {
+#ojcyszhyko .gt_indent_2 {
   text-indent: 10px;
 }
 
-#jseqoahbyh .gt_indent_3 {
+#ojcyszhyko .gt_indent_3 {
   text-indent: 15px;
 }
 
-#jseqoahbyh .gt_indent_4 {
+#ojcyszhyko .gt_indent_4 {
   text-indent: 20px;
 }
 
-#jseqoahbyh .gt_indent_5 {
+#ojcyszhyko .gt_indent_5 {
   text-indent: 25px;
 }
 
-#jseqoahbyh .katex-display {
+#ojcyszhyko .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#jseqoahbyh div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#ojcyszhyko div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2052,132 +2257,132 @@ Attaching package: 'tidyr'</code></pre>
 <td colspan="4" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border">Weighted by number of OneMap parcels affected</td>
 </tr>
 <tr class="gt_col_headings header">
-<th id="PROPERTY-INDICATOR-CODE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Property Indicator</th>
-<th id="LAND-USE-CODE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Land Use Code</th>
-<th id="COUNTY-USE-DESCRIPTION" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">County Use Description</th>
+<th id="PROPERTY.INDICATOR.CODE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Property Indicator</th>
+<th id="LAND.USE.CODE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Land Use Code</th>
+<th id="COUNTY.USE.DESCRIPTION" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">County Use Description</th>
 <th id="n_parcels_affected" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">Parcels Affected</th>
 </tr>
 </thead>
 <tbody class="gt_table_body">
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">80</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">400</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">VACANT LAND</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">9,434</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">80</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">400</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">VACANT</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">30,290</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RESIDENTIAL SINGLE FAMILY</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SINGLE FAMILY RESIDENTIAL</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">20,933</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">80</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">400</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">VACANT LAND</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">17,605</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RESIDENTIAL-1 FAMILY</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">14,832</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RESIDENTIAL SINGLE FAMILY</td>
 <td class="gt_row gt_right" headers="n_parcels_affected">9,194</td>
 </tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SINGLE FAMILY RES</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">7,681</td>
+</tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">11</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">112</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">CONDOMINIUM</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">8,270</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">NA</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">NA</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">NA</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">7,520</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">SINGLE FAMILY RESIDENTIAL</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">5,494</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">160</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RURAL HOMESITE</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">6,765</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">SINGLE FAMILY RES. - RURAL AC</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">100</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RESIDENTIAL</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">6,541</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SINGLE FAMILY RESIDENTIAL RURA</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">5,976</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SINGLE FAMILY RES. - RURAL AC</td>
 <td class="gt_row gt_right" headers="n_parcels_affected">5,367</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">SFD DWELLING</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">4,382</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RESIDENTIAL</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">5,355</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">100</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">VACANT LAND</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">3,270</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SFD DWELLING</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">4,852</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RESIDENTIAL</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,853</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SINGLE FAMILY</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">4,545</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">11</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">112</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RS IM/ CONDO</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,763</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">20</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">200</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">COMMERCIAL</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">4,184</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">137</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">DLBL WD/TRIPLE WD MOBILE HM</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,576</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">SIN FAM RES RURAL ACREAGE</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">4,154</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">160</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RURAL HOME LOT</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,484</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">DWELLING</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">3,840</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RESIDENTIAL LOT</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,371</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">100</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">VACANT LAND</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">3,652</td>
 </tr>
 <tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">22</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">133</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">MULT-FAMILY</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,348</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">10</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">163</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">RS IM/ 1-FAMILY</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">3,500</td>
 </tr>
 <tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">NA</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">NA</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">NA</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">2,321</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">100</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RESIDENTIAL</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,818</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">160</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">RURAL HOMESITE</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,790</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">70</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">500</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">AGRICULTURAL</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,731</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">80</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">460</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">VACANT SF RES</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,606</td>
-</tr>
-<tr class="odd">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">80</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">400</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">ACREAGE</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,578</td>
-</tr>
-<tr class="even">
-<td class="gt_row gt_right" headers="PROPERTY INDICATOR CODE">10</td>
-<td class="gt_row gt_right" headers="LAND USE CODE">163</td>
-<td class="gt_row gt_left" headers="COUNTY USE DESCRIPTION">SINGLE FAMILY</td>
-<td class="gt_row gt_right" headers="n_parcels_affected">1,372</td>
+<td class="gt_row gt_right" headers="PROPERTY.INDICATOR.CODE">11</td>
+<td class="gt_row gt_right" headers="LAND.USE.CODE">112</td>
+<td class="gt_row gt_left" headers="COUNTY.USE.DESCRIPTION">CONDOMINIUM</td>
+<td class="gt_row gt_right" headers="n_parcels_affected">3,452</td>
 </tr>
 </tbody>
 </table>
@@ -2187,13 +2392,13 @@ Attaching package: 'tidyr'</code></pre>
 </div></div>
 <p><strong>Key findings:</strong></p>
 <ul>
-<li>The majority of CL records (<strong>429,800</strong>, 93.7%) match exactly one OneMap parcel — these are clean one-to-one matches.</li>
-<li><strong>105,146</strong> parcels share a CL record with at least one other parcel.</li>
+<li>The majority of CL records (<strong>836,229</strong>, 92.8%) match exactly one OneMap parcel — these are clean one-to-one matches.</li>
+<li><strong>309,614</strong> parcels share a CL record with at least one other parcel.</li>
 <li>Multi-match cases fall into three broad categories:
 <ul>
-<li><strong>Condominiums</strong> (<code>PROPERTY INDICATOR CODE = 11</code>, <code>LAND USE CODE = 112</code>): One building polygon in OneMap is the nearest neighbor for many individual CL unit records. This is expected behavior.</li>
-<li><strong>Single-family residential</strong> (<code>PROPERTY INDICATOR CODE = 10</code>, <code>LAND USE CODE = 163</code>): A CL residential point is the nearest neighbor to multiple surrounding OneMap parcels (e.g., adjacent vacant lots, subdivided tracts with no site addresses). This is the primary risk for downstream application duplication.</li>
-<li><strong>Vacant land</strong> (<code>PROPERTY INDICATOR CODE = 80</code> or <code>10</code>, <code>LAND USE CODE = 400</code> or <code>100</code>): Similar to the residential case — many parcels cluster around a single CL vacant land point.</li>
+<li><strong>Condominiums</strong> (<code>PROPERTY.INDICATOR.CODE = 11</code>, <code>LAND.USE.CODE = 112</code>): One building polygon in OneMap is the nearest neighbor for many individual CL unit records. This is expected behavior.</li>
+<li><strong>Single-family residential</strong> (<code>PROPERTY.INDICATOR.CODE = 10</code>, <code>LAND.USE.CODE = 163</code>): A CL residential point is the nearest neighbor to multiple surrounding OneMap parcels (e.g., adjacent vacant lots, subdivided tracts with no site addresses). This is the primary risk for downstream application duplication.</li>
+<li><strong>Vacant land</strong> (<code>PROPERTY.INDICATOR.CODE = 80</code> or <code>10</code>, <code>LAND.USE.CODE = 400</code> or <code>100</code>): Similar to the residential case — many parcels cluster around a single CL vacant land point.</li>
 </ul></li>
 <li>A <code>n_cl_matches</code> flag column should be added in downstream joins to allow filtering to clean one-to-one matches when needed.</li>
 </ul>

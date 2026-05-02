@@ -107,11 +107,11 @@ parcels <- parcels |>
   mutate(
     invalidparcels = case_when(
       # No identifying info at all
-      is.na(`LAND USE CODE`) & parno == "" & is.na(siteadd) & mailadd == "" ~ 1L,
+      is.na(`LAND.USE.CODE`) & parno == "" & is.na(siteadd) & mailadd == "" ~ 1L,
       # Carteret: no land use code, blank parno → likely right-of-way
-      is.na(`LAND USE CODE`) & parno == "" & cntyfips == "031" ~ 1L,
+      is.na(`LAND.USE.CODE`) & parno == "" & cntyfips == "031" ~ 1L,
       # Brunswick: no parno or altparno → right-of-way
-      is.na(`LAND USE CODE`) & parno == "" & altparno == "" & cntyfips == "019" ~ 1L,
+      is.na(`LAND.USE.CODE`) & parno == "" & altparno == "" & cntyfips == "019" ~ 1L,
       # Explicit ROW tags (excluding "ROWAN COUNTY")
       (str_detect(parno,    regex("row", ignore_case = TRUE)) |
        str_detect(altparno, regex("row", ignore_case = TRUE))) &
@@ -181,13 +181,13 @@ luc_bottom      <- c("605","606","607","609","610","614","615","618","620","630"
 
 parcels <- parcels |>
   mutate(
-    `LAND USE CODE` = as.character(`LAND USE CODE`),
+    `LAND.USE.CODE` = as.character(`LAND.USE.CODE`),
 
     # Land use flags (kept for downstream use)
-    vacant  = if_else(`LAND USE CODE` %in% luc_vacant,      1L, 0L),
-    gov_lu  = if_else(`LAND USE CODE` %in% luc_gov,         1L, 0L),
-    res_lu  = if_else(`LAND USE CODE` %in% luc_residential, 1L, 0L),
-    fr_1_4  = if_else(`LAND USE CODE` %in% luc_fr_1_4,      1L, 0L),
+    vacant  = if_else(`LAND.USE.CODE` %in% luc_vacant,      1L, 0L),
+    gov_lu  = if_else(`LAND.USE.CODE` %in% luc_gov,         1L, 0L),
+    res_lu  = if_else(`LAND.USE.CODE` %in% luc_residential, 1L, 0L),
+    fr_1_4  = if_else(`LAND.USE.CODE` %in% luc_fr_1_4,      1L, 0L),
 
     # Address quality: site address weighted 2x, mail address 1x
     qual_siteadd = if_else(!is.na(siteadd) & siteadd != "", 2L, 0L),
@@ -195,11 +195,11 @@ parcels <- parcels |>
 
     # Tiered LUC score (0–4)
     luc_tier = case_when(
-      `LAND USE CODE` %in% luc_fr_1_4                                        ~ 4L,
-      `LAND USE CODE` %in% luc_vacant                                         ~ 3L,
-      `LAND USE CODE` %in% luc_gov                                            ~ 3L,
-      `LAND USE CODE` %in% luc_residential & !`LAND USE CODE` %in% luc_fr_1_4 ~ 2L,
-      `LAND USE CODE` %in% luc_bottom                                         ~ 0L,
+      `LAND.USE.CODE` %in% luc_fr_1_4                                        ~ 4L,
+      `LAND.USE.CODE` %in% luc_vacant                                         ~ 3L,
+      `LAND.USE.CODE` %in% luc_gov                                            ~ 3L,
+      `LAND.USE.CODE` %in% luc_residential & !`LAND.USE.CODE` %in% luc_fr_1_4 ~ 2L,
+      `LAND.USE.CODE` %in% luc_bottom                                         ~ 0L,
       TRUE                                                                     ~ 1L
     ),
 
