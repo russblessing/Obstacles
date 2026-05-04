@@ -131,7 +131,7 @@ county_configs <- list(
   list(fips = "37101", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
   list(fips = "37193", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
   list(fips = "37183", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
-  list(fips = "37063", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
+  list(fips = "37063", nc_key = "altparno",  cl_key = "APN (PARCEL NUMBER UNFORMATTED)"),
   list(fips = "37071", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
   list(fips = "37109", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
   list(fips = "37137", nc_key = "parno",     cl_key = "ALTERNATE PARCEL ID"),
