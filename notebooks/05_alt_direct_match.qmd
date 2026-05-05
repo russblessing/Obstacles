@@ -53,6 +53,8 @@ library(tidyr)
 library(purrr)
 library(knitr)
 library(DT)
+library(leaflet)
+library(glue)
 ```
 
 ```{r setup}
@@ -68,7 +70,8 @@ apps_path    <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs
 HIGH_TIER_MIN <- 3L
 
 # Primary-key columns on the mit/app sides.
-# Both are set to "unique_id" which is assigned in the canonical Step 5.
+# Both default to "unique_id", assigned by row_number() at load time below —
+# keeps the script independent of canonical Step 5.
 # Adjust if the raw inputs use a different HMA/IHP key.
 mit_id_col <- "unique_id"
 app_id_col <- "unique_id"
@@ -91,8 +94,12 @@ parcels <- st_read(parcels_path, quiet = TRUE) |>
 
 # Do NOT dedup — every HMA / IHP record is preserved, coordinate duplicates
 # included. A point shared by six mitigations stays as six rows.
-mits <- st_read(mits_path, quiet = TRUE) |> st_transform(st_crs(parcels))
-apps <- st_read(apps_path, quiet = TRUE) |> st_transform(st_crs(parcels))
+mits <- st_read(mits_path, quiet = TRUE) |>
+  st_transform(st_crs(parcels)) |>
+  mutate(unique_id = row_number())
+apps <- st_read(apps_path, quiet = TRUE) |>
+  st_transform(st_crs(parcels)) |>
+  mutate(unique_id = row_number())
 ```
 
 ---
@@ -319,8 +326,5 @@ Same columns in the CSVs, without geometry.
 
 - **`HIGH_TIER_MIN`** is set to `3L` (tiers 3–4: vacant, gov, all residential).
   Change to `4L` for tier-4-only (1–4 family + site address).
-- **Input paths** default to `mit_sa_full_noqa.gpkg` / `app_sa_full_noqa.gpkg`
-  (the pre-QA intermediates written by the canonical Step 5). Confirm these are
-  the right inputs, or swap in the raw study-area files before QA is applied.
 - **`mit_id_col` / `app_id_col`** default to `"unique_id"`. If the input files
   don't carry that column, substitute the appropriate HMA/IHP primary key.

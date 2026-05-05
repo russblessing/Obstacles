@@ -137,45 +137,70 @@ Land use codes that define each priority bucket:
 
 ```{r luc-definitions}
 luc_vacant      <- c("465","460","455","454","453","452","450","400")
-luc_gov         <- c("604","603","601")           # muni/county/tax-exempt owned
+luc_gov         <- c("604","603","601","600")     # +600 (E-Exempt) — parallels 601/603/604
 luc_residential <- c("165","163","160","151","138","137","136","135","134","133",
                       "132","131","117","116","115","113","112","111","109","106",
                       "103","102","100")
-luc_fr_1_4      <- c("165","163","160","151","138","137","136","135","132","115",
+luc_fr_1_4      <- c("165","163","160","151","138","137","136","135",
+                      "134","133",                # +133, 134 (triplex, quadruplex — definitional fix)
+                      "132","115",
+                      "113","112","111",          # +111–113 (mobile/manufactured/modular — FEMA priority)
                       "102","100")
-luc_top         <- c(luc_vacant, luc_gov, luc_residential)
-luc_bottom      <- c("605","606","607","609","610","614","615","618","620","630",
+luc_buyout      <- c("602")                       # Hindsight — completed historical buyouts (LUC 602)
+luc_top         <- c(luc_vacant, luc_gov, luc_residential, luc_buyout)
+luc_bottom      <- c("283",                       # +283 (commercial supermarket)
+                      "605","606","607","609","610","614","615","618","620","630",
                       "800","818","839","850","860","872","875","877","880","883",
                       "885","886","114")
 ```
 
-> **Scoring change from original Python script**
->
-> The original script collapsed vacant, government-owned, and all residential
-> parcels into a single `qual_luc = 3` bucket, meaning a 1–4 family home and
-> a municipal lot were treated identically. It also weighted site address and
-> mailing address equally (1 pt each), and the composite `qual_sum` only
-> ranged 0–5, making the high/med/low thresholds somewhat arbitrary.
->
-> The revised scheme:
->
-> | LUC group | `luc_tier` | Rationale |
-> |---|---|---|
-> | 1–4 family residential (`luc_fr_1_4`) | 4 | Primary buyout/mitigation candidate |
-> | Vacant land (`luc_vacant`) | 3 | High candidate, no structure risk |
-> | Gov-owned (`luc_gov`) | 3 | Eligible but less common |
-> | Other residential (`luc_residential \ luc_fr_1_4`) | 2 | Lower priority residential |
-> | Unknown LUC | 1 | Insufficient info |
-> | Commercial/industrial (`luc_bottom`) | 0 | Unlikely candidates |
->
-> Site address is weighted **2 pts** (more useful for geocoding/matching than
-> mailing address), mailing address **1 pt**, giving a `qual_sum` range of
-> 0–7 and more granular priority tiers.
->
-> The `gov` list also had a missing comma bug in the Python
-> (`['604' '603', '601']` → string `'604603'`), so no parcel ever matched it.
-> Fixed here.
+**Scoring change from original Python script**
 
+The original script collapsed vacant, government-owned, and all residential
+parcels into a single `qual_luc = 3` bucket, meaning a 1–4 family home and
+a municipal lot were treated identically. It also weighted site address and
+mailing address equally (1 pt each), and the composite `qual_sum` only
+ranged 0–5, making the high/med/low thresholds somewhat arbitrary.
+
+The revised scheme, with hindsight-specific elevation for completed buyouts:
+
+| LUC group | `luc_tier` | `match_priority` | Rationale |
+|---|---|---|---|
+| Completed buyouts (`luc_buyout`, LUC 602) | 3 | high (always) | Hindsight: confirmed historical buyout — parcel converted to exempt status *because of* the program we're studying |
+| 1–4 family residential (`luc_fr_1_4`) | 4 | high if site address present | Primary buyout/mitigation candidate; includes mobile/manufactured/modular housing per FEMA HMA priorities |
+| Vacant land (`luc_vacant`) | 3 | med | High candidate, no structure risk |
+| Gov-owned (`luc_gov`) | 3 | med | Eligible but less common |
+| Other residential (`luc_residential \ luc_fr_1_4`) | 2 | med if qual_sum ≥ 5, else low | Multi-family / condo / apartment — rarely targeted |
+| Unknown LUC | 1 | low | Insufficient info |
+| Commercial/industrial (`luc_bottom`) | 0 | low | Unlikely candidates |
+
+Site address is weighted **2 pts** (more useful for geocoding/matching than
+mailing address), mailing address **1 pt**, giving a `qual_sum` range of
+0–7 and more granular priority tiers.
+
+**`luc_fr_1_4` membership reflects FEMA HMA program priorities** rather
+than CoreLogic's literal numeric subgroupings:
+
+- LUC 111 ("Mobile home"), 112 ("Manufactured home"), 113 ("Modular home")
+  are included to reflect FEMA's documented emphasis on mobile/manufactured/
+  modular housing in flood-prone areas.
+- LUC 133 ("Triplex") and 134 ("Quadruplex") added for definitional
+  consistency with the "1–4 family" label — both are 2–4 unit residential
+  and were missing from the original list.
+
+**Code list corrections from the original Python:**
+
+- The `gov` list had a missing comma bug (`['604' '603', '601']` → the
+  string `'604603'`), so no parcel ever matched it. Fixed here.
+- LUC 600 ("E-Exempt") added to `luc_gov` — parallels the existing
+  601/603/604 exempt-government codes.
+- LUC 283 (CoreLogic commercial) added to `luc_bottom`.
+- LUC 602 ("Exempt Governmental (Flood Buyout)") added as a separate
+  `luc_buyout` flag. Treated as tier 3 in `luc_tier` (current state =
+  exempt government) and elevated to `match_priority = "high"` for
+  the hindsight analysis — a mit/app record landing on a 602 parcel
+  is a confirmed historical buyout, the strongest possible match signal.
+  
 ```{r score-parcels}
 #| eval: true
 
@@ -184,20 +209,22 @@ parcels <- parcels |>
     `LAND.USE.CODE` = as.character(`LAND.USE.CODE`),
 
     # Land use flags (kept for downstream use)
-    vacant  = if_else(`LAND.USE.CODE` %in% luc_vacant,      1L, 0L),
-    gov_lu  = if_else(`LAND.USE.CODE` %in% luc_gov,         1L, 0L),
-    res_lu  = if_else(`LAND.USE.CODE` %in% luc_residential, 1L, 0L),
-    fr_1_4  = if_else(`LAND.USE.CODE` %in% luc_fr_1_4,      1L, 0L),
+    vacant              = if_else(`LAND.USE.CODE` %in% luc_vacant,      1L, 0L),
+    gov_lu              = if_else(`LAND.USE.CODE` %in% luc_gov,         1L, 0L),
+    res_lu              = if_else(`LAND.USE.CODE` %in% luc_residential, 1L, 0L),
+    fr_1_4              = if_else(`LAND.USE.CODE` %in% luc_fr_1_4,      1L, 0L),
+    is_completed_buyout = `LAND.USE.CODE` %in% luc_buyout,
 
     # Address quality: site address weighted 2x, mail address 1x
     qual_siteadd = if_else(!is.na(siteadd) & siteadd != "", 2L, 0L),
     qual_mailadd = if_else(!is.na(mailadd) & mailadd != "", 1L, 0L),
 
-    # Tiered LUC score (0–4)
+    # Tiered LUC score (0–4) — reflects current CoreLogic classification
     luc_tier = case_when(
       `LAND.USE.CODE` %in% luc_fr_1_4                                        ~ 4L,
       `LAND.USE.CODE` %in% luc_vacant                                         ~ 3L,
       `LAND.USE.CODE` %in% luc_gov                                            ~ 3L,
+      `LAND.USE.CODE` %in% luc_buyout                                         ~ 3L,
       `LAND.USE.CODE` %in% luc_residential & !`LAND.USE.CODE` %in% luc_fr_1_4 ~ 2L,
       `LAND.USE.CODE` %in% luc_bottom                                         ~ 0L,
       TRUE                                                                     ~ 1L
@@ -206,9 +233,10 @@ parcels <- parcels |>
     # Composite score (0–7) and priority tier
     qual_sum = luc_tier + qual_siteadd + qual_mailadd,
     match_priority = case_when(
-      luc_tier == 4 & qual_siteadd == 2 ~ "high",   # 1-4 family + site address
-      luc_tier >= 3 | qual_sum >= 5     ~ "med",
-      TRUE                              ~ "low"
+      is_completed_buyout                ~ "high",   # Hindsight: confirmed historical buyout
+      luc_tier == 4 & qual_siteadd == 2  ~ "high",   # 1–4 family + site address
+      luc_tier >= 3 | qual_sum >= 5      ~ "med",
+      TRUE                               ~ "low"
     )
   )
 
