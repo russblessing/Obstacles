@@ -207,11 +207,13 @@ Hill},country={USA},countrysep={,},postcodesep={}}
         
 \begin{abstract}
 As damages from floods, fires, and other climate extremes mount, public
-investments in risk reduction have also grown. In the US, public
-spending on risk reduction efforts totaled over \$X in 2024, and demand
-for such funds regularly exceeds available funding. Evidence suggests
-that in this competitive landscape for funding, urban and whiter
-communities have fared better at obtaining funding but are often
+investments in risk reduction have also grown. In the US, FEMA made over
+\$1.6 billion available through its two main competitive pre-disaster
+mitigation programs --- Building Resilient Infrastructure and
+Communities (BRIC) and Flood Mitigation Assistance (FMA) --- for FY2024,
+and demand for such funds regularly exceeds available funding. Evidence
+suggests that in this competitive landscape for funding, urban and
+whiter communities have fared better at obtaining funding but are often
 spending it on more disadvantaged neighborhoods within them. However,
 the reasons for this trend are unclear: complexities in the application
 process, cost-benefit analysis requirements, and flood damage may all
@@ -323,7 +325,8 @@ temporary housing, property repair, unemployment assistance, and other
 immediate needs. Racial and income disparities in IHP access have been
 observed across a wide range of events, including the 1994 Northridge
 earthquake \citep{bolinNorthridgeEarthquakeCommunitybased1998},
-Hurricane Katrina \citep{XX}, Hurricane Dolly in South Texas
+Hurricane Katrina \citep{kamelSocialMarginalisationFederal2012},
+Hurricane Dolly in South Texas
 \citep{riveraProceduralVulnerabilityIts2022}, and the 2017 Thomas Fire
 \citep{mendezInvisibleVictimsDisaster2020}. More broadly, studies find
 that social vulnerability is inversely associated with access to federal
@@ -358,7 +361,7 @@ scale while within-county selection follows a different logic
 \citep{elliottRacialInequitiesFederal2020a, loughranUnequalRetreatsHow2022}.
 Home elevation funding exhibits a different and more troubling pattern,
 flowing disproportionately toward high-income and predominantly white
-communities \citep[Frank 2022]{MISSING}.
+communities \citep{frankFEMAHomeElevation2022}.
 
 A structural driver of these disparities is the federal cost-benefit
 analysis (CBA) requirement. Because CBA estimates avoided losses as a
@@ -414,6 +417,170 @@ distribution of who ultimately benefits. By tracking properties from
 flood event to funding outcome, we can assess not just who receives
 mitigation assistance, but where along the pipeline the losses occur,
 and for whom.
+
+\section{Materials and Methods}\label{materials-and-methods}
+
+We construct a novel, multi-layered property-level dataset that links
+flood exposure, federal flood mitigation applications, and funding
+outcomes for eastern North Carolina between 1996 and 2020. The dataset
+combines parcel geometries from the North Carolina OneMap database,
+attribute records from the CoreLogic property database, address-level
+National Flood Insurance Program (NFIP) records used to reconstruct
+flood inundation footprints
+\citep{garciaReconstructingRepetitiveFlood2025}, application and funding
+records from the North Carolina Department of Public Safety (NCDPS), and
+block-group demographic data from the American Community Survey (ACS).
+We use this dataset to track residential properties through five
+sequential stages of the flood mitigation funding pipeline (Fig. 5):
+whether a property has flooded, whether it is eligible for federal
+mitigation funding, whether its local government has applied for
+funding, whether the property itself is named on an application, and
+whether that application was funded. The framework allows us to
+identify, at each transition, which properties drop out and how the
+composition of the remaining pool shifts in terms of flood-exposure
+history, property value, and neighborhood racial composition.
+
+\subsection{Study area and unit of
+analysis}\label{study-area-and-unit-of-analysis}
+
+Our analysis covers the eastern portion of North Carolina, defined
+hydrologically as the entirety of the Neuse--Pamlico and Cape Fear
+watersheds together with the portions of the Pee Dee and Chowan--Roanoke
+watersheds that drain through the state. This domain spans 78 of North
+Carolina's 100 counties and contains the bulk of the state's repetitive
+flood activity over the study period.
+
+The base unit of analysis is the residential parcel. Parcel geometries
+are sourced from the North Carolina OneMap database, which aggregates
+county tax assessor records into a statewide spatial layer. Each parcel
+is linked to property-level attributes (land use code, structure
+characteristics, assessor value) drawn from the CoreLogic property
+database. Where parcel records and CoreLogic records share a common
+identifier we match directly; the remaining parcels are matched
+spatially, with address-string similarity used to break ties when more
+than one CoreLogic record is closest. We retain 1--4 family residential
+parcels and exclude commercial, industrial, agricultural, and most
+government-owned land uses. The final analytic sample comprises
+\textbf{3,575,337 unique 1--4 family residential properties} across the
+78-county study area.
+
+A small number of residential parcels are recorded in CoreLogic as
+currently vacant or government-owned. Because completed buyouts demolish
+the structure and transfer the parcel to public ownership, these
+post-buyout parcels appear in the present-day data with property values
+that reflect their post-mitigation rather than pre-mitigation state. To
+recover a pre-mitigation value for parcels that we have reason to
+believe were previously residential, we impute the property value as the
+mean assessor value of the five nearest non-vacant residential parcels.
+Parcels that are vacant for reasons unrelated to mitigation are excluded
+from the property-value analysis.
+
+\subsection{Flood exposure}\label{flood-exposure}
+
+Flood exposure is constructed at the parcel level using inundation
+footprints generated by the random-forest model of Garcia et al.
+\citeyearpar{garciaReconstructingRepetitiveFlood2025}. The model is
+trained on address-level NFIP policies-in-force and claims records for
+January 1996 through September 2020, obtained from FEMA Region IV, and
+produces 30 m × 30 m gridded inundation footprints for individual flood
+events. We retain the 78 events with the largest claim counts in the
+study area, which together account for the majority of NFIP-recorded
+losses over the period. A parcel is classified as \textbf{flooded} if
+its geometry intersects the footprint of at least one of these 78
+events; we additionally record the count of intersecting events per
+parcel, which we use as a continuous measure of cumulative
+flood-exposure intensity. This property-resolved flood history is, to
+our knowledge, the first parcel-scale, multi-event reconstruction of
+repetitive flooding in the region, and serves as the reference set
+against which subsequent pipeline stages are measured.
+
+\subsection{Eligibility for federal mitigation
+funding}\label{eligibility-for-federal-mitigation-funding}
+
+Application and funding records cover three FEMA Hazard Mitigation
+Assistance (HMA) programs administered by NCDPS: the Hazard Mitigation
+Grant Program (HMGP), the Repetitive Flood Claims Program (RFC), and the
+Severe Repetitive Loss Grant Program (SRL). HMGP, the largest of the
+three, becomes available only after a presidential disaster declaration
+(PDD), which is issued event-by-event and county-by-county. We therefore
+define a parcel as \textbf{eligible} for federal mitigation funding if
+it was inundated during an event for which the parcel's county received
+a PDD. Of the 78 events in our flood-exposure dataset, 18 triggered PDDs
+covering at least one county in the study area; these constitute the
+universe of disaster declarations for North Carolina over the study
+period. RFC and SRL eligibility, by contrast, depend on a parcel's NFIP
+claim history rather than on a PDD, and we discuss any sensitivity of
+our results to this distinction in the Supplementary Materials.
+
+\subsection{Applications and funding}\label{applications-and-funding}
+
+NCDPS provided address-level records of every project that has been
+submitted for HMA funding from the state's three covered programs over
+the study period, together with the subset of those projects that were
+ultimately funded. The records identify the local sub-applicant (county
+or municipality) and the addresses associated with each project.
+
+The HMA application process is administered through local governments.
+Households cannot apply directly to FEMA: instead, a county or municipal
+government compiles project documentation --- including the cost-benefit
+analysis, NFIP claim records, and deed and title records --- and submits
+applications on behalf of interested homeowners, often with state-level
+coordination from NCDPS. Local governments differ substantially in their
+willingness and capacity to do this work
+\citep{machManagedRetreatVoluntary2019, junodEquitableInvestmentsResilience2021a}.
+To capture this community-level filter, we attribute every parcel to its
+containing municipality (or, where no municipality exists, to its
+containing county) and classify each jurisdiction as having applied for
+HMA funding at least once during the study period or not. Within
+applying jurisdictions, we then geocode application and funding records
+back to OneMap parcels and classify each property as \textbf{never
+applied}, \textbf{applied but not funded}, or \textbf{applied and
+funded}.
+
+\subsection{Property values and neighborhood
+demographics}\label{property-values-and-neighborhood-demographics}
+
+Property values are taken from the most recent CoreLogic vintage and
+used at the parcel level. To make values comparable across counties with
+different assessment cycles and price levels, we additionally express
+each property's value as a percentile of the assessor-value distribution
+within its own county, and use this percentile rank as our primary
+property-value measure throughout the analysis.
+
+Neighborhood-level race and income are joined at the census block-group
+scale. We use the 2013 vintage of the American Community Survey because
+it falls near the midpoint of our event window (1996--2020) and matches
+the demographic context that prevailed during the bulk of the analyzed
+disaster declarations. Block-group variables include the share of
+residents identifying as non-Hispanic white, the share identifying as
+non-Hispanic Black, and median household income. We aggregate
+parcel-level results to the block group when reporting
+demographic-composition shifts across pipeline stages.
+
+\subsection{Pipeline analysis}\label{pipeline-analysis}
+
+The five-stage pipeline (flooded → eligible → in an applying community →
+applied → funded) is a sequence of nested subsets: each stage is, by
+construction, a subset of the previous one. We characterize each stage
+in three ways. First, we count the number of parcels that survive into
+the stage and report stage-to-stage attrition rates, separately for
+once-flooded and repeatedly flooded parcels. Second, we describe the
+distribution of flood-exposure intensity (count of intersecting events)
+at each stage, to test whether the parcels surviving deeper into the
+pipeline are systematically those with more severe flood histories.
+Third, we describe the distribution of property values
+(county-percentile rank) and block-group demographics at each stage, to
+identify where in the pipeline shifts in wealth and racial composition
+emerge.
+
+This cross-sectional design intentionally treats the pipeline as a
+series of selection filters rather than estimating causal effects of any
+single program rule. Our claim is descriptive: by tracking who is
+present at each stage, we can pinpoint the transitions at which
+inequities in mitigation outcomes are produced, rather than inferring
+them from funded properties alone --- a contribution made possible only
+because address-level applications and funding records are observed
+alongside flood exposure and the full property universe.
 
 \section{Results}\label{results}
 

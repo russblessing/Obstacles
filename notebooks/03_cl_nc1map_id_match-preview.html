@@ -369,7 +369,7 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37101"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
 <span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37193"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
 <span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37183"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37063"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37063"</span>, <span class="at">nc_key =</span> <span class="st">"altparno"</span>,  <span class="at">cl_key =</span> <span class="st">"APN (PARCEL NUMBER UNFORMATTED)"</span>),</span>
 <span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37071"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
 <span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37109"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
 <span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">fips =</span> <span class="st">"37137"</span>, <span class="at">nc_key =</span> <span class="st">"parno"</span>,     <span class="at">cl_key =</span> <span class="st">"ALTERNATE PARCEL ID"</span>),</span>
@@ -705,7 +705,7 @@ Attaching package: 'dplyr'</code></pre>
 <section id="summary-of-matching-results" class="level2">
 <h2 class="anchored" data-anchor-id="summary-of-matching-results">Summary of Matching Results</h2>
 <p>This code follows the same county-by-county strategy across all 74 counties in the study area, joining on the best available parcel ID field for each county (<code>parno</code>, <code>altparno</code>, or <code>nparno</code> on the parcel side; <code>APN (PARCEL NUMBER UNFORMATTED)</code>, <code>ALTERNATE PARCEL ID</code>, <code>ORIGINAL APN</code>, or <code>ONLINE FORMATTED PARCEL ID</code> on the CoreLogic side).</p>
-<p>This run produced <strong>3,127,462</strong> matched records, compared to the prior benchmark of <strong>3,237,387</strong> (difference: -109,925).</p>
+<p>This run produced <strong>3,248,412</strong> matched records, compared to the prior benchmark of <strong>3,237,387</strong> (difference: 11,025).</p>
 <p>5 counties (37071, 37109, 37035, 37011, 37023) had no parcels in the OneMap data and therefore produced no matches. This reflects a data gap in the parcel source rather than a matching failure, and these counties are carried forward in <code>remaining_all</code> for follow-up.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
 <details class="code-fold">
@@ -732,23 +732,23 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb90-20"><a href="#cb90-20" aria-hidden="true" tabindex="-1"></a>  gt<span class="sc">::</span><span class="fu">cols_label</span>(<span class="at">Metric =</span> <span class="st">""</span>, <span class="at">Value =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="svmnwcrrty" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#svmnwcrrty table {
+<div id="rovzvkrruz" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#rovzvkrruz table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#svmnwcrrty thead, #svmnwcrrty tbody, #svmnwcrrty tfoot, #svmnwcrrty tr, #svmnwcrrty td, #svmnwcrrty th {
+#rovzvkrruz thead, #rovzvkrruz tbody, #rovzvkrruz tfoot, #rovzvkrruz tr, #rovzvkrruz td, #rovzvkrruz th {
   border-style: none;
 }
 
-#svmnwcrrty p {
+#rovzvkrruz p {
   margin: 0;
   padding: 0;
 }
 
-#svmnwcrrty .gt_table {
+#rovzvkrruz .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -774,12 +774,12 @@ Attaching package: 'dplyr'</code></pre>
   border-left-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_caption {
+#rovzvkrruz .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#svmnwcrrty .gt_title {
+#rovzvkrruz .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -791,7 +791,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-width: 0;
 }
 
-#svmnwcrrty .gt_subtitle {
+#rovzvkrruz .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -803,7 +803,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-width: 0;
 }
 
-#svmnwcrrty .gt_heading {
+#rovzvkrruz .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -815,13 +815,13 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_bottom_border {
+#rovzvkrruz .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_col_headings {
+#rovzvkrruz .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -836,7 +836,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_col_heading {
+#rovzvkrruz .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -856,7 +856,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#svmnwcrrty .gt_column_spanner_outer {
+#rovzvkrruz .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -868,15 +868,15 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 4px;
 }
 
-#svmnwcrrty .gt_column_spanner_outer:first-child {
+#rovzvkrruz .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#svmnwcrrty .gt_column_spanner_outer:last-child {
+#rovzvkrruz .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#svmnwcrrty .gt_column_spanner {
+#rovzvkrruz .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -888,11 +888,11 @@ Attaching package: 'dplyr'</code></pre>
   width: 100%;
 }
 
-#svmnwcrrty .gt_spanner_row {
+#rovzvkrruz .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#svmnwcrrty .gt_group_heading {
+#rovzvkrruz .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -918,7 +918,7 @@ Attaching package: 'dplyr'</code></pre>
   text-align: left;
 }
 
-#svmnwcrrty .gt_empty_group_heading {
+#rovzvkrruz .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -933,15 +933,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: middle;
 }
 
-#svmnwcrrty .gt_from_md > :first-child {
+#rovzvkrruz .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#svmnwcrrty .gt_from_md > :last-child {
+#rovzvkrruz .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#svmnwcrrty .gt_row {
+#rovzvkrruz .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -960,7 +960,7 @@ Attaching package: 'dplyr'</code></pre>
   overflow-x: hidden;
 }
 
-#svmnwcrrty .gt_stub {
+#rovzvkrruz .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -973,7 +973,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#svmnwcrrty .gt_stub_row_group {
+#rovzvkrruz .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -987,15 +987,15 @@ Attaching package: 'dplyr'</code></pre>
   vertical-align: top;
 }
 
-#svmnwcrrty .gt_row_group_first td {
+#rovzvkrruz .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#svmnwcrrty .gt_row_group_first th {
+#rovzvkrruz .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#svmnwcrrty .gt_summary_row {
+#rovzvkrruz .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1005,16 +1005,16 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#svmnwcrrty .gt_first_summary_row {
+#rovzvkrruz .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_first_summary_row.thick {
+#rovzvkrruz .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#svmnwcrrty .gt_last_summary_row {
+#rovzvkrruz .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1024,7 +1024,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_grand_summary_row {
+#rovzvkrruz .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1034,7 +1034,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#svmnwcrrty .gt_first_grand_summary_row {
+#rovzvkrruz .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1044,7 +1044,7 @@ Attaching package: 'dplyr'</code></pre>
   border-top-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_last_grand_summary_row_top {
+#rovzvkrruz .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1054,11 +1054,11 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_striped {
+#rovzvkrruz .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#svmnwcrrty .gt_table_body {
+#rovzvkrruz .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1067,7 +1067,7 @@ Attaching package: 'dplyr'</code></pre>
   border-bottom-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_footnotes {
+#rovzvkrruz .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1081,7 +1081,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_footnote {
+#rovzvkrruz .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1090,7 +1090,7 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#svmnwcrrty .gt_sourcenotes {
+#rovzvkrruz .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1104,7 +1104,7 @@ Attaching package: 'dplyr'</code></pre>
   border-right-color: #D3D3D3;
 }
 
-#svmnwcrrty .gt_sourcenote {
+#rovzvkrruz .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1112,72 +1112,72 @@ Attaching package: 'dplyr'</code></pre>
   padding-right: 5px;
 }
 
-#svmnwcrrty .gt_left {
+#rovzvkrruz .gt_left {
   text-align: left;
 }
 
-#svmnwcrrty .gt_center {
+#rovzvkrruz .gt_center {
   text-align: center;
 }
 
-#svmnwcrrty .gt_right {
+#rovzvkrruz .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#svmnwcrrty .gt_font_normal {
+#rovzvkrruz .gt_font_normal {
   font-weight: normal;
 }
 
-#svmnwcrrty .gt_font_bold {
+#rovzvkrruz .gt_font_bold {
   font-weight: bold;
 }
 
-#svmnwcrrty .gt_font_italic {
+#rovzvkrruz .gt_font_italic {
   font-style: italic;
 }
 
-#svmnwcrrty .gt_super {
+#rovzvkrruz .gt_super {
   font-size: 65%;
 }
 
-#svmnwcrrty .gt_footnote_marks {
+#rovzvkrruz .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#svmnwcrrty .gt_asterisk {
+#rovzvkrruz .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#svmnwcrrty .gt_indent_1 {
+#rovzvkrruz .gt_indent_1 {
   text-indent: 5px;
 }
 
-#svmnwcrrty .gt_indent_2 {
+#rovzvkrruz .gt_indent_2 {
   text-indent: 10px;
 }
 
-#svmnwcrrty .gt_indent_3 {
+#rovzvkrruz .gt_indent_3 {
   text-indent: 15px;
 }
 
-#svmnwcrrty .gt_indent_4 {
+#rovzvkrruz .gt_indent_4 {
   text-indent: 20px;
 }
 
-#svmnwcrrty .gt_indent_5 {
+#rovzvkrruz .gt_indent_5 {
   text-indent: 25px;
 }
 
-#svmnwcrrty .katex-display {
+#rovzvkrruz .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#svmnwcrrty div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#rovzvkrruz div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1202,15 +1202,15 @@ Attaching package: 'dplyr'</code></pre>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="This Run  Metric">Matched</td>
-<td class="gt_row gt_right" headers="This Run  Value">3,127,462</td>
+<td class="gt_row gt_right" headers="This Run  Value">3,248,412</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="This Run  Metric">Unmatched</td>
-<td class="gt_row gt_right" headers="This Run  Value">693,362</td>
+<td class="gt_row gt_right" headers="This Run  Value">572,412</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="This Run  Metric">% Unmatched</td>
-<td class="gt_row gt_right" headers="This Run  Value">18.15%</td>
+<td class="gt_row gt_right" headers="This Run  Value">14.98%</td>
 </tr>
 <tr class="gt_group_heading_row even">
 <th colspan="2" id="Comparison to Prior Analysis" class="gt_group_heading" data-quarto-table-cell-role="th" scope="colgroup">Comparison to Prior Analysis</th>
@@ -1221,7 +1221,7 @@ Attaching package: 'dplyr'</code></pre>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Comparison to Prior Analysis  Metric">Difference from Prior</td>
-<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">-109,925</td>
+<td class="gt_row gt_right" headers="Comparison to Prior Analysis  Value">11,025</td>
 </tr>
 </tbody>
 </table>
