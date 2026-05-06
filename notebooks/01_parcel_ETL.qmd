@@ -8,7 +8,6 @@ format:
     code-fold: true
     code-summary: "Show / hide code"
 execute:
-  freeze: false
   cache: true 
   echo: true
   message: true
@@ -331,4 +330,19 @@ dupes_full |>
     caption = "Distribution of duplicate counts",
     options = list(pageLength = 10)
   )
+```
+
+
+```{r histogram-dupes}
+
+ggplot(dupes_full, aes(x = n)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  scale_x_continuous(breaks = seq(2, max(dupes_full$n), by = 1)) +
+  labs(
+    title = "Distribution of Duplicate Counts",
+    x = "Number of Duplicates (n)",
+    y = "Number of Parcels"
+  ) +
+  theme_minimal()
+
 ```
