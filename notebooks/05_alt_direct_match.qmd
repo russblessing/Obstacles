@@ -53,6 +53,8 @@ library(tidyr)
 library(purrr)
 library(knitr)
 library(DT)
+library(leaflet)
+library(glue)
 ```
 
 ```{r setup}
@@ -61,15 +63,10 @@ out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 parcels_path <- file.path(out_dir, "parcels_pri.gpkg")
 mits_path    <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/mit_newgeo.gpkg"
 apps_path    <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/raw_app_ncb/applications_final.gpkg"
+flood_boundary_path <- "/proj/mhinolab/projects/obstacles/NC_huc6_data_union_sf/NC_huc6_data_union_sf.shp"
 
-# luc_tier >= HIGH_TIER_MIN is considered "high priority" for tagging and
-# proximity review. Tiers 3 and 4 = vacant/gov/residential + 1-4 family.
-# Flip to 4L if supervisors want tier-4-only (1-4 family + site address only).
 HIGH_TIER_MIN <- 3L
 
-# Primary-key columns on the mit/app sides.
-# Both are set to "unique_id" which is assigned in the canonical Step 5.
-# Adjust if the raw inputs use a different HMA/IHP key.
 mit_id_col <- "unique_id"
 app_id_col <- "unique_id"
 ```
@@ -89,10 +86,22 @@ parcels <- st_read(parcels_path, quiet = TRUE) |>
   ) |>
   st_transform(32119)
 
-# Do NOT dedup — every HMA / IHP record is preserved, coordinate duplicates
-# included. A point shared by six mitigations stays as six rows.
-mits <- st_read(mits_path, quiet = TRUE) |> st_transform(st_crs(parcels))
-apps <- st_read(apps_path, quiet = TRUE) |> st_transform(st_crs(parcels))
+# Flood study area boundary
+flood_boundary <- st_read(flood_boundary_path, quiet = TRUE) |>
+  st_transform(st_crs(parcels))
+
+# Read raw mits/apps, clip to flood study area via st_within, then assign
+# unique_id within the clipped set. Matches the canonical Step 5 SA filter.
+# Do NOT dedup — every HMA / IHP record is preserved, coordinate duplicates included.
+mits <- st_read(mits_path, quiet = TRUE) |>
+  st_transform(st_crs(parcels)) |>
+  st_filter(flood_boundary, .predicate = st_within) |>
+  mutate(unique_id = row_number())
+
+apps <- st_read(apps_path, quiet = TRUE) |>
+  st_transform(st_crs(parcels)) |>
+  st_filter(flood_boundary, .predicate = st_within) |>
+  mutate(unique_id = row_number())
 ```
 
 ---
@@ -319,8 +328,5 @@ Same columns in the CSVs, without geometry.
 
 - **`HIGH_TIER_MIN`** is set to `3L` (tiers 3–4: vacant, gov, all residential).
   Change to `4L` for tier-4-only (1–4 family + site address).
-- **Input paths** default to `mit_sa_full_noqa.gpkg` / `app_sa_full_noqa.gpkg`
-  (the pre-QA intermediates written by the canonical Step 5). Confirm these are
-  the right inputs, or swap in the raw study-area files before QA is applied.
 - **`mit_id_col` / `app_id_col`** default to `"unique_id"`. If the input files
   don't carry that column, substitute the appropriate HMA/IHP primary key.

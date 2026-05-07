@@ -390,71 +390,99 @@ Attaching package: 'tidyr'</code></pre>
 <details class="code-fold">
 <summary>Show / hide code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>luc_vacant      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"465"</span>,<span class="st">"460"</span>,<span class="st">"455"</span>,<span class="st">"454"</span>,<span class="st">"453"</span>,<span class="st">"452"</span>,<span class="st">"450"</span>,<span class="st">"400"</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>luc_gov         <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"604"</span>,<span class="st">"603"</span>,<span class="st">"601"</span>)           <span class="co"># muni/county/tax-exempt owned</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>luc_gov         <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"604"</span>,<span class="st">"603"</span>,<span class="st">"601"</span>,<span class="st">"600"</span>)     <span class="co"># +600 (E-Exempt) — parallels 601/603/604</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>luc_residential <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"134"</span>,<span class="st">"133"</span>,</span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"132"</span>,<span class="st">"131"</span>,<span class="st">"117"</span>,<span class="st">"116"</span>,<span class="st">"115"</span>,<span class="st">"113"</span>,<span class="st">"112"</span>,<span class="st">"111"</span>,<span class="st">"109"</span>,<span class="st">"106"</span>,</span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"103"</span>,<span class="st">"102"</span>,<span class="st">"100"</span>)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>luc_fr_1_4      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,<span class="st">"132"</span>,<span class="st">"115"</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"102"</span>,<span class="st">"100"</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>luc_top         <span class="ot">&lt;-</span> <span class="fu">c</span>(luc_vacant, luc_gov, luc_residential)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>luc_bottom      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"605"</span>,<span class="st">"606"</span>,<span class="st">"607"</span>,<span class="st">"609"</span>,<span class="st">"610"</span>,<span class="st">"614"</span>,<span class="st">"615"</span>,<span class="st">"618"</span>,<span class="st">"620"</span>,<span class="st">"630"</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"800"</span>,<span class="st">"818"</span>,<span class="st">"839"</span>,<span class="st">"850"</span>,<span class="st">"860"</span>,<span class="st">"872"</span>,<span class="st">"875"</span>,<span class="st">"877"</span>,<span class="st">"880"</span>,<span class="st">"883"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"885"</span>,<span class="st">"886"</span>,<span class="st">"114"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>luc_fr_1_4      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"165"</span>,<span class="st">"163"</span>,<span class="st">"160"</span>,<span class="st">"151"</span>,<span class="st">"138"</span>,<span class="st">"137"</span>,<span class="st">"136"</span>,<span class="st">"135"</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"134"</span>,<span class="st">"133"</span>,                <span class="co"># +133, 134 (triplex, quadruplex — definitional fix)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"132"</span>,<span class="st">"115"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"113"</span>,<span class="st">"112"</span>,<span class="st">"111"</span>,          <span class="co"># +111–113 (mobile/manufactured/modular — FEMA priority)</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"102"</span>,<span class="st">"100"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>luc_buyout      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"602"</span>)                       <span class="co"># Hindsight — completed historical buyouts (LUC 602)</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>luc_top         <span class="ot">&lt;-</span> <span class="fu">c</span>(luc_vacant, luc_gov, luc_residential, luc_buyout)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>luc_bottom      <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"283"</span>,                       <span class="co"># +283 (commercial supermarket)</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"605"</span>,<span class="st">"606"</span>,<span class="st">"607"</span>,<span class="st">"609"</span>,<span class="st">"610"</span>,<span class="st">"614"</span>,<span class="st">"615"</span>,<span class="st">"618"</span>,<span class="st">"620"</span>,<span class="st">"630"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"800"</span>,<span class="st">"818"</span>,<span class="st">"839"</span>,<span class="st">"850"</span>,<span class="st">"860"</span>,<span class="st">"872"</span>,<span class="st">"875"</span>,<span class="st">"877"</span>,<span class="st">"880"</span>,<span class="st">"883"</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"885"</span>,<span class="st">"886"</span>,<span class="st">"114"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
-<blockquote class="blockquote">
 <p><strong>Scoring change from original Python script</strong></p>
 <p>The original script collapsed vacant, government-owned, and all residential parcels into a single <code>qual_luc = 3</code> bucket, meaning a 1–4 family home and a municipal lot were treated identically. It also weighted site address and mailing address equally (1 pt each), and the composite <code>qual_sum</code> only ranged 0–5, making the high/med/low thresholds somewhat arbitrary.</p>
-<p>The revised scheme:</p>
+<p>The revised scheme, with hindsight-specific elevation for completed buyouts:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>LUC group</th>
 <th><code>luc_tier</code></th>
+<th><code>match_priority</code></th>
 <th>Rationale</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td>Completed buyouts (<code>luc_buyout</code>, LUC 602)</td>
+<td>3</td>
+<td>high (always)</td>
+<td>Hindsight: confirmed historical buyout — parcel converted to exempt status <em>because of</em> the program we’re studying</td>
+</tr>
+<tr class="even">
 <td>1–4 family residential (<code>luc_fr_1_4</code>)</td>
 <td>4</td>
-<td>Primary buyout/mitigation candidate</td>
+<td>high if site address present</td>
+<td>Primary buyout/mitigation candidate; includes mobile/manufactured/modular housing per FEMA HMA priorities</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Vacant land (<code>luc_vacant</code>)</td>
 <td>3</td>
+<td>med</td>
 <td>High candidate, no structure risk</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Gov-owned (<code>luc_gov</code>)</td>
 <td>3</td>
+<td>med</td>
 <td>Eligible but less common</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Other residential (<code>luc_residential \ luc_fr_1_4</code>)</td>
 <td>2</td>
-<td>Lower priority residential</td>
-</tr>
-<tr class="odd">
-<td>Unknown LUC</td>
-<td>1</td>
-<td>Insufficient info</td>
+<td>med if qual_sum ≥ 5, else low</td>
+<td>Multi-family / condo / apartment — rarely targeted</td>
 </tr>
 <tr class="even">
+<td>Unknown LUC</td>
+<td>1</td>
+<td>low</td>
+<td>Insufficient info</td>
+</tr>
+<tr class="odd">
 <td>Commercial/industrial (<code>luc_bottom</code>)</td>
 <td>0</td>
+<td>low</td>
 <td>Unlikely candidates</td>
 </tr>
 </tbody>
 </table>
 <p>Site address is weighted <strong>2 pts</strong> (more useful for geocoding/matching than mailing address), mailing address <strong>1 pt</strong>, giving a <code>qual_sum</code> range of 0–7 and more granular priority tiers.</p>
-<p>The <code>gov</code> list also had a missing comma bug in the Python (<code>['604' '603', '601']</code> → string <code>'604603'</code>), so no parcel ever matched it. Fixed here.</p>
-</blockquote>
+<p><strong><code>luc_fr_1_4</code> membership reflects FEMA HMA program priorities</strong> rather than CoreLogic’s literal numeric subgroupings:</p>
+<ul>
+<li>LUC 111 (“Mobile home”), 112 (“Manufactured home”), 113 (“Modular home”) are included to reflect FEMA’s documented emphasis on mobile/manufactured/ modular housing in flood-prone areas.</li>
+<li>LUC 133 (“Triplex”) and 134 (“Quadruplex”) added for definitional consistency with the “1–4 family” label — both are 2–4 unit residential and were missing from the original list.</li>
+</ul>
+<p><strong>Code list corrections from the original Python:</strong></p>
+<ul>
+<li>The <code>gov</code> list had a missing comma bug (<code>['604' '603', '601']</code> → the string <code>'604603'</code>), so no parcel ever matched it. Fixed here.</li>
+<li>LUC 600 (“E-Exempt”) added to <code>luc_gov</code> — parallels the existing 601/603/604 exempt-government codes.</li>
+<li>LUC 283 (CoreLogic commercial) added to <code>luc_bottom</code>.</li>
+<li>LUC 602 (“Exempt Governmental (Flood Buyout)”) added as a separate <code>luc_buyout</code> flag. Treated as tier 3 in <code>luc_tier</code> (current state = exempt government) and elevated to <code>match_priority = "high"</code> for the hindsight analysis — a mit/app record landing on a 602 parcel is a confirmed historical buyout, the strongest possible match signal.</li>
+</ul>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [6]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
@@ -464,37 +492,40 @@ Attaching package: 'tidyr'</code></pre>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">as.character</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span>),</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Land use flags (kept for downstream use)</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4  =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Address quality: site address weighted 2x, mail address 1x</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_siteadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> siteadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">2</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_mailadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(mailadd) <span class="sc">&amp;</span> mailadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tiered LUC score (0–4)</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">luc_tier =</span> <span class="fu">case_when</span>(</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                                     <span class="sc">~</span> <span class="dv">1</span>L</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Composite score (0–7) and priority tier</span></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_sum =</span> luc_tier <span class="sc">+</span> qual_siteadd <span class="sc">+</span> qual_mailadd,</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">match_priority =</span> <span class="fu">case_when</span>(</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> qual_siteadd <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"high"</span>,   <span class="co"># 1-4 family + site address</span></span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">|</span> qual_sum <span class="sc">&gt;=</span> <span class="dv">5</span>     <span class="sc">~</span> <span class="st">"med"</span>,</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                              <span class="sc">~</span> <span class="st">"low"</span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Save prioritised parcel layer</span></span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels, <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>),</span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">vacant              =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">gov_lu              =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov,         <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">res_lu              =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">fr_1_4              =</span> <span class="fu">if_else</span>(<span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4,      <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">is_completed_buyout =</span> <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_buyout,</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Address quality: site address weighted 2x, mail address 1x</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_siteadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(siteadd) <span class="sc">&amp;</span> siteadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">2</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_mailadd =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(mailadd) <span class="sc">&amp;</span> mailadd <span class="sc">!=</span> <span class="st">""</span>, <span class="dv">1</span>L, <span class="dv">0</span>L),</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Tiered LUC score (0–4) — reflects current CoreLogic classification</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">luc_tier =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4                                        <span class="sc">~</span> <span class="dv">4</span>L,</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_vacant                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_gov                                            <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_buyout                                         <span class="sc">~</span> <span class="dv">3</span>L,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_residential <span class="sc">&amp;</span> <span class="sc">!</span><span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_fr_1_4 <span class="sc">~</span> <span class="dv">2</span>L,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">LAND.USE.CODE</span><span class="st">`</span> <span class="sc">%in%</span> luc_bottom                                         <span class="sc">~</span> <span class="dv">0</span>L,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                                     <span class="sc">~</span> <span class="dv">1</span>L</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Composite score (0–7) and priority tier</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">qual_sum =</span> luc_tier <span class="sc">+</span> qual_siteadd <span class="sc">+</span> qual_mailadd,</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">match_priority =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>      is_completed_buyout                <span class="sc">~</span> <span class="st">"high"</span>,   <span class="co"># Hindsight: confirmed historical buyout</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">==</span> <span class="dv">4</span> <span class="sc">&amp;</span> qual_siteadd <span class="sc">==</span> <span class="dv">2</span>  <span class="sc">~</span> <span class="st">"high"</span>,   <span class="co"># 1–4 family + site address</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>      luc_tier <span class="sc">&gt;=</span> <span class="dv">3</span> <span class="sc">|</span> qual_sum <span class="sc">&gt;=</span> <span class="dv">5</span>      <span class="sc">~</span> <span class="st">"med"</span>,</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                               <span class="sc">~</span> <span class="st">"low"</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Save prioritised parcel layer</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(parcels, <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_pri.gpkg"</span>),</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [7]:</pre></div><div class="cell">
@@ -604,8 +635,8 @@ Attaching package: 'tidyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells  100259253 5354.5  200685800 10717.8  200685800 10717.8
-Vcells 1182008138 9018.1 2216848568 16913.3 2083345619 15894.7</code></pre>
+Ncells  100259860 5354.5  161742945  8638.1  161742945  8638.1
+Vcells 1184120506 9034.2 1847486657 14095.3 1808775493 13799.9</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
@@ -818,8 +849,8 @@ Vcells 1182008138 9018.1 2216848568 16913.3 2083345619 15894.7</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>            used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells  70249080 3751.8  200685800 10717.8  200685800 10717.8
-Vcells 934514000 7129.8 2216848568 16913.3 2083345619 15894.7</code></pre>
+Ncells  70249681 3751.8  188210430 10051.6  235263037 12564.5
+Vcells 936626360 7145.9 2218853774 16928.6 2218853774 16928.6</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
@@ -1016,9 +1047,9 @@ Vcells 934514000 7129.8 2216848568 16913.3 2083345619 15894.7</code></pre>
 <tr class="odd">
 <td style="text-align: left;">Mitigations</td>
 <td style="text-align: right;">8,801</td>
-<td style="text-align: right;">6,098</td>
-<td style="text-align: right;">969</td>
-<td style="text-align: right;">283</td>
+<td style="text-align: right;">6,173</td>
+<td style="text-align: right;">1,031</td>
+<td style="text-align: right;">146</td>
 <td style="text-align: right;">5</td>
 <td style="text-align: right;">7,355</td>
 <td style="text-align: right;">5</td>
@@ -1026,9 +1057,9 @@ Vcells 934514000 7129.8 2216848568 16913.3 2083345619 15894.7</code></pre>
 <tr class="even">
 <td style="text-align: left;">Applications</td>
 <td style="text-align: right;">23,232</td>
-<td style="text-align: right;">8,547</td>
-<td style="text-align: right;">1,249</td>
-<td style="text-align: right;">485</td>
+<td style="text-align: right;">8,674</td>
+<td style="text-align: right;">1,243</td>
+<td style="text-align: right;">364</td>
 <td style="text-align: right;">15</td>
 <td style="text-align: right;">10,296</td>
 <td style="text-align: right;">15</td>
@@ -1086,28 +1117,28 @@ Vcells 934514000 7129.8 2216848568 16913.3 2083345619 15894.7</code></pre>
 <tr class="odd">
 <td style="text-align: left;">Parcels with a mitigation</td>
 <td style="text-align: right;">6,087</td>
-<td style="text-align: right;">5,749</td>
+<td style="text-align: right;">5,836</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Parcels with an application</td>
 <td style="text-align: right;">8,782</td>
-<td style="text-align: right;">8,450</td>
+<td style="text-align: right;">8,523</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Parcels with both (mit ∩ app)</td>
 <td style="text-align: right;">4,292</td>
-<td style="text-align: right;">4,077</td>
+<td style="text-align: right;">4,137</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Share of app parcels with a mit</td>
 <td style="text-align: right;">48.9%</td>
-<td style="text-align: right;">48.2%</td>
+<td style="text-align: right;">48.5%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div></div>
-<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.2%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
+<p>Despite the count differences, the share of application parcels that also received a mitigation is nearly identical across both runs (48.9% vs.&nbsp;48.5%), suggesting the matching logic is consistent — the absolute differences are driven by input data updates and the scoring, deduplication, and parcel duplicate-preservation fixes above.</p>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
