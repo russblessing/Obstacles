@@ -10,6 +10,7 @@ project:
     - notebooks/03_cl_nc1map_id_match.qmd
     - notebooks/04_spatial_join.qmd
     - notebooks/05_spatial_match_app_mit.qmd
+    - notebooks/05_alt_direct_match.qmd
 
 manuscript:
   article: index.qmd
