@@ -1,0 +1,588 @@
+---
+title: "Step 6: Property Value Interpolation & EIF Census Enrichment"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+This notebook does two related things:
+
+**Property value interpolation.** For parcels matched to a mitigation or
+application record but carrying an unreliable `TOTAL.VALUE.CALCULATED`
+(vacant land, government-owned, anomalously low values), estimate a
+market-comparable value by averaging the recorded values of the nearest
+1–4 family residential donor parcels. Three estimates per recipient
+(k = 5, 10, 50 nearest neighbors).
+
+**EIF census enrichment.** For each mit/app point, attach Census Bureau
+Gridded EIF attributes from the 2024 release at the 0.01° grid cell
+containing that point. Three EIF files joined: housing units / age /
+home value, population × age × race × sex, and population × race ×
+income decile.
+
+Both stages consume the **alt Step 5 resolved outputs** as the single source of
+mit/app data. Each record carries an `assigned_parcel_index` (resolved
+to one parcel per record, no fan-out) and a point geometry. The
+interpolation uses `assigned_parcel_index` to count mits/apps per
+parcel; the EIF enrichment uses the point geometry to snap each record
+to its grid cell.
+
+**Inputs:**
+
+- `parcels_pri.gpkg` — parcels with priority scoring (canonical Step 5)
+- `alt_mits_resolved.gpkg` — point-geometry mits, one row per record,
+  resolved to one assigned parcel each (alt Step 5)
+- `alt_apps_resolved.gpkg` — point-geometry apps, same structure (alt Step 5)
+- Three Gridded EIF parquet files (downloaded on first run)
+
+**Outputs (written to `out_dir`):**
+
+- `interpolate_to.gpkg`, `interpolate_from.gpkg` — recipient and donor pools
+- `interpolated_vals.gpkg`, `interpolated_parcels_final.csv` — parcels with interpolated values
+- `mits_with_eif.gpkg`, `apps_with_eif.gpkg` — alt resolved outputs with EIF cell attributes
+- `mits_with_eif.csv`, `apps_with_eif.csv` — same, no geometry
+
+## Methodology
+
+**Recipients (parcels with unreliable recorded property values)**: parcels
+that have at least one mit or app assigned to them by alt Step 5 AND
+whose recorded `TOTAL.VALUE.CALCULATED` is treated as unreliable.
+A value is treated as unreliable if the parcel is:
+
+- vacant land (`vacant == 1`) — no structure, recorded value reflects land only
+- government land use (`gov_lu == 1`) — typically tax-exempt with $0 assessed
+- government-owned by owner name (`gov_owned == 1`) — same
+- low recorded value (`TOTAL.VALUE.CALCULATED < $25,000`) — anomalously low,
+  likely indicates undervaluation, recent transfer, or data quality issue
+
+**Donors (parcels providing value estimates)**: 1–4 family residential,
+NOT government-owned, with non-missing recorded total value above
+$25,000. Strict NA exclusion ensures every neighbor mean is computed
+over exactly k actual values.
+
+**Mit/app per-parcel counts** are computed from `assigned_parcel_index`
+in the alt resolved outputs — each unique mit/app contributes to
+exactly one parcel. This avoids the fan-out double-counting that would
+happen if we counted from canonical `mits_pcls.gpkg` (where a mit
+hitting N parcels appears in N rows). Records with `assignment_method
+== "unassigned"` are excluded from counts.
+
+**Government-ownership detection** uses a regex on `OWNER.1.FULL.NAME`
+matching common government-entity keywords (`CITY`, `STATE`, `TOWN`,
+`VILLAGE`, `COUNTY`, `METROPOLITAN`, plus abbreviations) excluding
+`INC` and `LLC`.
+
+**EIF cell join** uses cell-membership rather than spatial intersection —
+each mit/app point's lat/lon is snapped to its 0.01° grid cell corner
+via `floor(coord * 100) / 100`, then joined to EIF data by the snapped
+coordinates as a key. Equivalent result, much faster than `st_join`.
+
+**Caveats** worth noting in the manuscript:
+
+- The $25,000 thresholds are heuristic; sensitivity analysis at $10k
+  and $50k recommended.
+- Three K values (5/10/50) are produced in parallel; downstream
+  analysis picks the granularity.
+- EIF counts are differentially-private — approximate per cell.
+- 1.2 km² EIF cells share between adjacent condo buildings.
+- Donor pool is statewide; border parcels may reach across counties.
+- Government detection uses owner-name regex (or CoreLogic exemption
+  code if present — see Section 3).
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(stringr)
+library(tidyr)
+library(purrr)
+library(RANN)
+library(arrow)
+library(knitr)
+```
+
+```{r setup}
+out_dir         <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+parcels_path    <- file.path(out_dir, "parcels_pri.gpkg")
+mits_alt_path   <- file.path(out_dir, "alt_mits_resolved.gpkg")
+apps_alt_path   <- file.path(out_dir, "alt_apps_resolved.gpkg")
+
+# Tunables — interpolation
+LOW_VALUE_THRESHOLD <- 25000   # parcels with TOTAL.VALUE.CALCULATED below this
+                                # are flagged as needing interpolation
+MIN_DONOR_VALUE     <- 25000   # minimum recorded value for a donor parcel
+K_VALUES            <- c(5, 10, 50)
+
+# Tunables — government ownership regex
+GOV_KEYWORDS     <- "\\bCITY\\b|\\bSTATE\\b|\\bTOWN\\b|\\bVILLAGE\\b|\\bCOUNTY\\b|\\bMETROPOLITAN\\b|\\bCTY\\b|\\bST\\b|\\bTWN\\b|\\bVILL\\b|\\bVIL\\b|\\bCNTY\\b|\\bMETRO\\b"
+EXCLUDE_KEYWORDS <- "\\bINC\\b|\\bLLC\\b"
+
+# EIF source files (2024 release)
+eif_files <- list(
+  hu_age_homeval = list(
+    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_hu_age_homeval_2024.parquet",
+    path   = file.path(out_dir, "gridded_eif_hu_age_homeval_2024.parquet"),
+    prefix = "hu"
+  ),
+  ageracesex = list(
+    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_pop_ageracesex_2024.parquet",
+    path   = file.path(out_dir, "gridded_eif_pop_ageracesex_2024.parquet"),
+    prefix = "ars"
+  ),
+  raceincome = list(
+    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_pop_raceincome_2024.parquet",
+    path   = file.path(out_dir, "gridded_eif_pop_raceincome_2024.parquet"),
+    prefix = "ri"
+  )
+)
+
+# NC bounding box (WGS84) with small buffer for cells crossing the boundary
+NC_BBOX <- list(lat_min = 33.7, lat_max = 36.7,
+                lon_min = -84.5, lon_max = -75.4)
+```
+
+## 1  Load parcels and alt mits/apps
+
+```{r load-parcels}
+parcels <- st_read(parcels_path, quiet = TRUE) |>
+  st_transform(32119)
+
+cat("Parcels loaded:", nrow(parcels), "rows\n")
+```
+
+```{r load-mits-apps}
+mits_resolved <- st_read(mits_alt_path, quiet = TRUE)
+apps_resolved <- st_read(apps_alt_path, quiet = TRUE)
+
+cat("Mits (alt resolved):", nrow(mits_resolved), "rows\n")
+cat("Apps (alt resolved):", nrow(apps_resolved), "rows\n")
+
+# Quick distribution of how each side was assigned
+cat("\nMit assignment_method distribution:\n")
+mits_resolved |> st_drop_geometry() |> count(assignment_method, sort = TRUE) |> print()
+cat("\nApp assignment_method distribution:\n")
+apps_resolved |> st_drop_geometry() |> count(assignment_method, sort = TRUE) |> print()
+```
+
+## 2  Aggregate mit/app counts per parcel
+
+One mit/app contributes to exactly one parcel — counted by
+`assigned_parcel_index` from the alt resolved outputs. Records with
+`assignment_method == "unassigned"` (no parcel within reach) are
+excluded. Parcels with no matched mits/apps get a zero count.
+
+```{r mit-app-counts}
+mit_counts <- mits_resolved |>
+  st_drop_geometry() |>
+  filter(!is.na(assigned_parcel_index)) |>
+  count(assigned_parcel_index, name = "mit_count") |>
+  rename(parcel_index = assigned_parcel_index)
+
+app_counts <- apps_resolved |>
+  st_drop_geometry() |>
+  filter(!is.na(assigned_parcel_index)) |>
+  count(assigned_parcel_index, name = "app_count") |>
+  rename(parcel_index = assigned_parcel_index)
+
+parcels <- parcels |>
+  left_join(mit_counts, by = "parcel_index") |>
+  left_join(app_counts, by = "parcel_index") |>
+  mutate(
+    mit_count = replace_na(mit_count, 0L),
+    app_count = replace_na(app_count, 0L)
+  )
+
+cat("Parcels with at least one assigned mit:", sum(parcels$mit_count > 0), "\n")
+cat("Parcels with at least one assigned app:", sum(parcels$app_count > 0), "\n")
+cat("Parcels with both:                     ",
+    sum(parcels$mit_count > 0 & parcels$app_count > 0), "\n")
+```
+
+## 3  Identify government-owned parcels
+
+```{r gov-owned}
+parcels <- parcels |>
+  mutate(
+    owner_name_clean = replace_na(`OWNER.1.FULL.NAME`, ""),
+    gov_owned = as.integer(
+      str_detect(owner_name_clean, regex(GOV_KEYWORDS,    ignore_case = TRUE)) &
+      !str_detect(owner_name_clean, regex(EXCLUDE_KEYWORDS, ignore_case = TRUE))
+    )
+  ) |>
+  select(-owner_name_clean)
+
+cat("Government-owned parcels (by owner name):", sum(parcels$gov_owned), "\n")
+cat("Overlap with gov_lu (by land use code):  ",
+    sum(parcels$gov_owned == 1 & parcels$gov_lu == 1), "\n")
+```
+
+## 4  Type conversions
+
+`TOTAL.VALUE.CALCULATED` and `IMPROVEMENT.VALUE.CALCULATED` came in as
+character. Coerce to numeric for the threshold filters and KNN means.
+
+```{r type-conversions}
+parcels <- parcels |>
+  mutate(
+    `TOTAL.VALUE.CALCULATED`       = suppressWarnings(as.numeric(`TOTAL.VALUE.CALCULATED`)),
+    `IMPROVEMENT.VALUE.CALCULATED` = suppressWarnings(as.numeric(`IMPROVEMENT.VALUE.CALCULATED`)),
+    fr_1_4 = as.integer(fr_1_4)
+  )
+```
+
+## 5  Define recipient and donor pools
+
+```{r build-pools}
+to_interpolate <- parcels |>
+  filter(
+    (mit_count > 0 | app_count > 0),
+    (
+      vacant == 1 |
+      gov_lu == 1 |
+      gov_owned == 1 |
+      (!is.na(`TOTAL.VALUE.CALCULATED`) & `TOTAL.VALUE.CALCULATED` < LOW_VALUE_THRESHOLD)
+    )
+  )
+
+interpolate_from <- parcels |>
+  filter(
+    fr_1_4 == 1,
+    gov_owned == 0,
+    !is.na(`TOTAL.VALUE.CALCULATED`),
+    `TOTAL.VALUE.CALCULATED` > MIN_DONOR_VALUE
+  )
+
+cat("Recipients (to_interpolate):", nrow(to_interpolate), "\n")
+cat("Donors (interpolate_from):  ", nrow(interpolate_from), "\n")
+
+st_write(to_interpolate,   file.path(out_dir, "interpolate_to.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(interpolate_from, file.path(out_dir, "interpolate_from.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+```
+
+## 6  K-nearest-neighbor interpolation
+
+For each recipient parcel, find the K nearest donor parcels by centroid
+distance, then average their `TOTAL.VALUE.CALCULATED`. Three values of
+K (5, 10, 50) computed in parallel.
+
+```{r knn-interpolation}
+from_coords <- st_coordinates(st_centroid(interpolate_from))
+to_coords   <- st_coordinates(st_centroid(to_interpolate))
+
+donor_values <- interpolate_from$`TOTAL.VALUE.CALCULATED`
+
+nn_results <- map(K_VALUES, ~ RANN::nn2(from_coords, to_coords, k = .x))
+names(nn_results) <- paste0("k", K_VALUES)
+
+prop_values <- map2_dfc(K_VALUES, nn_results, function(k, nn) {
+  vals <- matrix(donor_values[nn$nn.idx], ncol = k)
+  tibble(!!paste0("prop_value_", k) := rowMeans(vals))
+})
+
+to_interpolate <- bind_cols(to_interpolate, prop_values)
+
+cat("Recipient row count:", nrow(to_interpolate), "\n")
+cat("All prop_value_5 non-NA:",  all(!is.na(to_interpolate$prop_value_5)),  "\n")
+cat("All prop_value_10 non-NA:", all(!is.na(to_interpolate$prop_value_10)), "\n")
+cat("All prop_value_50 non-NA:", all(!is.na(to_interpolate$prop_value_50)), "\n")
+```
+
+## 7  Join interpolated values back to all parcels
+
+```{r join-back}
+to_interp_attrs <- to_interpolate |>
+  st_drop_geometry() |>
+  select(parcel_index, prop_value_5, prop_value_10, prop_value_50)
+
+joined <- parcels |>
+  left_join(to_interp_attrs, by = "parcel_index") |>
+  mutate(
+    interpolate = as.integer(parcel_index %in% to_interpolate$parcel_index),
+    prop_value_5  = coalesce(prop_value_5,  `TOTAL.VALUE.CALCULATED`),
+    prop_value_10 = coalesce(prop_value_10, `TOTAL.VALUE.CALCULATED`),
+    prop_value_50 = coalesce(prop_value_50, `TOTAL.VALUE.CALCULATED`)
+  )
+
+cat("Total parcels in joined output:", nrow(joined), "\n")
+cat("Parcels marked as interpolated:", sum(joined$interpolate == 1), "\n")
+```
+
+## 8  Write interpolated parcels output
+
+```{r write-interpolation-outputs}
+st_write(joined, file.path(out_dir, "interpolated_vals.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+joined |>
+  st_drop_geometry() |>
+  write_csv(file.path(out_dir, "interpolated_parcels_final.csv"))
+```
+
+## 9  Gridded EIF Census enrichment
+
+The Census Bureau's 2024 Gridded EIF release provides privacy-protected
+counts on a fixed 0.01° grid (~1.2 km² per cell). Three datasets joined
+to each mit/app point:
+
+| File | Cross-tab | Variable prefix |
+|---|---|---|
+| `gridded_eif_hu_age_homeval_2024.parquet` | housing units × householder age × income × home value | `hu_` |
+| `gridded_eif_pop_ageracesex_2024.parquet` | population × age × race × sex | `ars_` |
+| `gridded_eif_pop_raceincome_2024.parquet` | population × race × income decile | `ri_` |
+
+Cell-membership join via `floor(coord * 100) / 100` — equivalent to
+spatial intersection but faster.
+
+### 9.1  Download EIF files (one-time)
+
+```{r eif-download}
+for (name in names(eif_files)) {
+  f <- eif_files[[name]]
+  if (!file.exists(f$path)) {
+    message("Downloading ", name, " -> ", f$path)
+    download.file(f$url, f$path, mode = "wb")
+  } else {
+    message("Already present: ", basename(f$path))
+  }
+}
+```
+
+### 9.2  Inspect EIF schemas
+
+Print the column names from each parquet so the join configuration below
+can reference real column names. Update `LAT_COL` / `LON_COL` if the
+schemas use different names than `lat` / `lon`.
+
+```{r eif-inspect-schemas}
+for (name in names(eif_files)) {
+  f <- eif_files[[name]]
+  cat("\n=== ", name, " ===\n")
+  print(arrow::open_dataset(f$path)$schema)
+}
+```
+
+### 9.3  Read EIF parquets (filtered to NC bounding box)
+
+```{r eif-read}
+LAT_COL <- "grid_lat"      # confirmed via topology — likely the column name in parquet too
+LON_COL <- "grid_lon"      # confirm via eif-inspect-schemas
+
+read_eif <- function(path, prefix) {
+  d <- arrow::open_dataset(path) |>
+    filter(
+      .data[[LAT_COL]] >= NC_BBOX$lat_min,
+      .data[[LAT_COL]] <= NC_BBOX$lat_max,
+      .data[[LON_COL]] >= NC_BBOX$lon_min,
+      .data[[LON_COL]] <= NC_BBOX$lon_max
+    ) |>
+    collect()
+
+  # Cell key columns — use parquet's stored center coords directly,
+  # rounded to 3 decimals to avoid float comparison issues on join
+  d <- d |>
+    mutate(
+      eif_lat = round(.data[[LAT_COL]], 3),
+      eif_lon = round(.data[[LON_COL]], 3)
+    )
+
+  data_cols <- setdiff(names(d), c("eif_lat", "eif_lon"))
+  rename_map <- setNames(data_cols, paste0(prefix, "_", data_cols))
+  d |> rename(!!!rename_map)
+}
+
+eif_hu  <- read_eif(eif_files$hu_age_homeval$path, eif_files$hu_age_homeval$prefix)
+eif_ars <- read_eif(eif_files$ageracesex$path,     eif_files$ageracesex$prefix)
+eif_ri  <- read_eif(eif_files$raceincome$path,     eif_files$raceincome$prefix)
+
+cat("EIF cells in NC bounding box:\n")
+cat("  hu_age_homeval:", nrow(eif_hu),  "\n")
+cat("  ageracesex:    ", nrow(eif_ars), "\n")
+cat("  raceincome:    ", nrow(eif_ri),  "\n")
+```
+
+### 9.4  Snap mit/app points to EIF cells
+
+`mits_resolved` and `apps_resolved` were already loaded in Section 1.
+Compute the snapped cell key for each.
+
+```{r eif-snap-cells}
+add_eif_cell <- function(sf_obj) {
+  coords <- sf_obj |> st_transform(4326) |> st_coordinates()
+  sf_obj |>
+    mutate(
+      # 0.01° cell, centers at .005 offsets per eif_grid_topology
+      eif_lon = round(floor(coords[, "X"] * 100) / 100 + 0.005, 3),
+      eif_lat = round(floor(coords[, "Y"] * 100) / 100 + 0.005, 3)
+    )
+}
+
+mits_resolved <- add_eif_cell(mits_resolved)
+apps_resolved <- add_eif_cell(apps_resolved)
+```
+
+### 9.5  Join all three EIF datasets onto mits/apps
+
+```{r eif-join}
+join_eif_all <- function(sf_obj) {
+  sf_obj |>
+    left_join(eif_hu,  by = c("eif_lat", "eif_lon")) |>
+    left_join(eif_ars, by = c("eif_lat", "eif_lon")) |>
+    left_join(eif_ri,  by = c("eif_lat", "eif_lon"))
+}
+
+mits_with_eif <- join_eif_all(mits_resolved)
+apps_with_eif <- join_eif_all(apps_resolved)
+
+# Coverage diagnostics — % of records that got EIF data from each file.
+hu_marker  <- paste0("hu_",  LAT_COL)
+ars_marker <- paste0("ars_", LAT_COL)
+ri_marker  <- paste0("ri_",  LAT_COL)
+
+coverage <- function(df, label) {
+  cat("\n", label, "EIF coverage (cells matched / total records):\n")
+  cat("  hu_age_homeval:",
+      sprintf("%d / %d (%.1f%%)\n",
+              sum(!is.na(df[[hu_marker]])),  nrow(df),
+              100 * sum(!is.na(df[[hu_marker]]))  / nrow(df)))
+  cat("  ageracesex:    ",
+      sprintf("%d / %d (%.1f%%)\n",
+              sum(!is.na(df[[ars_marker]])), nrow(df),
+              100 * sum(!is.na(df[[ars_marker]])) / nrow(df)))
+  cat("  raceincome:    ",
+      sprintf("%d / %d (%.1f%%)\n",
+              sum(!is.na(df[[ri_marker]])),  nrow(df),
+              100 * sum(!is.na(df[[ri_marker]]))  / nrow(df)))
+}
+
+coverage(mits_with_eif, "Mitigations")
+coverage(apps_with_eif, "Applications")
+```
+
+### 9.6  Write enriched outputs
+
+```{r eif-write}
+st_write(mits_with_eif, file.path(out_dir, "mits_with_eif.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(apps_with_eif, file.path(out_dir, "apps_with_eif.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+mits_with_eif |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "mits_with_eif.csv"))
+apps_with_eif |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "apps_with_eif.csv"))
+```
+
+## Summary
+
+```{r summary-table}
+summary_tbl <- tibble(
+  metric = c(
+    "Total parcels",
+    "Recipients (interpolated)",
+    "Donors (used for averaging)",
+    "Median original TOTAL.VALUE.CALCULATED (recipients only)",
+    "Median prop_value_5",
+    "Median prop_value_10",
+    "Median prop_value_50",
+    "Mits enriched with EIF (hu_age_homeval cell match)",
+    "Apps enriched with EIF (hu_age_homeval cell match)"
+  ),
+  value = c(
+    nrow(joined),
+    sum(joined$interpolate == 1),
+    nrow(interpolate_from),
+    median(to_interpolate$`TOTAL.VALUE.CALCULATED`, na.rm = TRUE),
+    median(to_interpolate$prop_value_5,  na.rm = TRUE),
+    median(to_interpolate$prop_value_10, na.rm = TRUE),
+    median(to_interpolate$prop_value_50, na.rm = TRUE),
+    sum(!is.na(mits_with_eif[[hu_marker]])),
+    sum(!is.na(apps_with_eif[[hu_marker]]))
+  )
+)
+
+knitr::kable(summary_tbl, format.args = list(big.mark = ","))
+```
+
+```{r value-comparison}
+to_interpolate |>
+  st_drop_geometry() |>
+  select(parcel_index, original = `TOTAL.VALUE.CALCULATED`,
+         prop_value_5, prop_value_10, prop_value_50) |>
+  pivot_longer(-parcel_index, names_to = "metric", values_to = "value") |>
+  group_by(metric) |>
+  summarise(
+    n      = sum(!is.na(value)),
+    p10    = quantile(value, 0.10, na.rm = TRUE),
+    median = median(value,           na.rm = TRUE),
+    mean   = mean(value,             na.rm = TRUE),
+    p90    = quantile(value, 0.90, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  knitr::kable(
+    format.args = list(big.mark = ",", scientific = FALSE),
+    caption = "Distribution of original vs. interpolated values for recipient parcels"
+  )
+```
+
+## Output schema
+
+**`interpolated_vals.gpkg`** / **`interpolated_parcels_final.csv`** — one row per parcel:
+
+| Column | Source | Notes |
+|---|---|---|
+| (all original parcel columns) | parcels_pri.gpkg | unchanged |
+| `mit_count` | derived | per-parcel count of mits assigned via alt Step 5 |
+| `app_count` | derived | per-parcel count of apps assigned via alt Step 5 |
+| `gov_owned` | derived | 1 if owner name matches gov regex (excluding INC/LLC) |
+| `interpolate` | derived | 1 if parcel was a recipient (had value estimated) |
+| `prop_value_5` | derived | mean `TOTAL.VALUE.CALCULATED` of 5 nearest donors; original if not interpolated |
+| `prop_value_10` | derived | mean of 10 nearest donors; original if not interpolated |
+| `prop_value_50` | derived | mean of 50 nearest donors; original if not interpolated |
+
+**`mits_with_eif.gpkg`** / **`apps_with_eif.gpkg`** — one row per mit/app:
+
+| Column | Source | Notes |
+|---|---|---|
+| (all original alt-resolved columns) | alt Step 5 outputs | unchanged |
+| `eif_lat_floor`, `eif_lon_floor` | derived | snapped 0.01° cell key |
+| `hu_*` columns | EIF hu_age_homeval | housing units, householder age, home value |
+| `ars_*` columns | EIF pop_ageracesex | population × age × race × sex counts |
+| `ri_*` columns | EIF pop_raceincome | population × race × income decile counts |
+
+## Unresolved — confirm before using outputs
+
+- **`LOW_VALUE_THRESHOLD = 25000`** and **`MIN_DONOR_VALUE = 25000`** are
+  heuristic. Sensitivity analysis at $10k and $50k recommended.
+- **`K_VALUES = c(5, 10, 50)`** — three parallel estimates. Drop unused
+  K values once a preferred granularity is selected.
+- **No within-county constraint** on donor matching. Border parcels may
+  pull donors across county lines.
+- **Government-ownership regex** is empirically derived. Spot-check
+  `gov_owned == 1` against `parusedesc` to confirm coverage.
+- **EIF `LAT_COL` / `LON_COL` names** assumed to be `lat` / `lon`.
+  Confirm via `eif-inspect-schemas` chunk and update if different.
+- **EIF year choice** — using 2024 release for all mits/apps regardless
+  of program year. Historical EIF files (1999–2023) are available if
+  you want time-matched demographics for older program records.
+  Defensible methodological choice (current demographics as a baseline)
+  but worth flagging in the methods note.
+- **EIF differential privacy** — per-cell counts are noise-protected.
+  Negligible for averages across many cells, important for per-cell
+  point estimates.
+- **`unassigned` mits/apps** are excluded from per-parcel counts but
+  still appear in the EIF-enriched outputs (with NA `assigned_parcel_index`).
+  Downstream analysis should decide whether to include or exclude these
+  records depending on whether the analytic unit is the mit/app record
+  or the matched parcel.

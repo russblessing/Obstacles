@@ -23,7 +23,7 @@ format:
   jats: default
 
 execute:
-  freeze: false
+  freeze: auto
 
 bibliography: bibliography.bib
 
