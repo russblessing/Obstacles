@@ -81,8 +81,11 @@ parcels <- st_read(parcels_path, quiet = TRUE) |>
     parcel_index, geometry_id, cntyfips, parno, altparno,
     siteadd, scity, szip, mailadd, ownname, parusedesc,
     `LAND.USE.CODE`, luc_tier,
+    `APN.SEQUENCE.NUMBER`,
     `SITUS.HOUSE.NUMBER`, `SITUS.STREET.NAME`,
-    `OWNER.1.FULL.NAME`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`
+    `OWNER.1.FULL.NAME`, `YEAR.BUILT`,
+    `ASSESSED.TOTAL.VALUE`,
+    `IMPROVEMENT.VALUE.CALCULATED`   
   ) |>
   st_transform(32119)
 
@@ -186,6 +189,245 @@ mits_direct |> st_drop_geometry() |>
   write_csv(file.path(out_dir, "alt_mits_direct_review.csv"))
 apps_direct |> st_drop_geometry() |>
   write_csv(file.path(out_dir, "alt_apps_direct_review.csv"))
+```
+
+---
+
+## 6  Resolve: one-row-per-record output
+
+The fan-out outputs above preserve every (input record × parcel) combination
+for inspection. This section produces a deduplicated, one-row-per-input-record
+version suitable for downstream analysis and supervisor-facing counts.
+
+**Assignment method buckets:**
+
+| `assignment_method` | Meaning |
+|---|---|
+| `direct_single_parcel` | Input record intersected exactly one parcel — no judgment needed |
+| `direct_multi_resolved` | Multi-parcel hit (condo, recorder dup) — winner picked by four-level tiebreaker |
+| `nearest_high_addr` | No parcel hit — rescued by address-similarity match within distance cap |
+| `nearest_high_dist` | No parcel hit, no good address match — assigned to nearest high-priority parcel within cap |
+| `unassigned` | No parcel hit, no candidate within cap (out-of-scope records, e.g. western mountain counties) |
+
+> **Methods note — multi-unit buildings:** For apartment complexes and
+> condominium buildings where all candidate parcels share a complex-level site
+> address (e.g. 95 units sharing one street address but distinct APNs),
+> address-similarity is non-discriminating across candidates and the winner is
+> determined by the APN sequence / improvement value tiebreakers. The selected
+> parcel is reproducible across runs but should be interpreted as "a
+> representative unit within the matched building" rather than "the specific
+> unit the record corresponds to." Unit-level disambiguation would require
+> parsing unit numbers from the input record's address and matching against
+> per-unit parcel records, which CoreLogic's `siteadd` field does not
+> consistently provide.
+
+```{r resolve-setup}
+library(stringdist)
+
+norm_addr <- function(x) {
+  coalesce(x, "") |>
+    str_to_lower() |>
+    str_replace_all("[^a-z0-9 ]", " ") |>
+    str_squish()
+}
+
+addr_sim <- function(a, b) {
+  na <- norm_addr(a); nb <- norm_addr(b)
+  ifelse(na == "" | nb == "", 0, stringsim(na, nb, method = "jw"))
+}
+
+# --- Tunables ---------------------------------------------------------------
+SIM_THRESHOLD <- 0.70   # min Jaro-Winkler to call an address match a "real" hit
+DIST_CAP_M    <- 200    # max metres allowed for a distance-only fallback
+K_CANDIDATES  <- 10     # nearest high-priority parcels to evaluate per no-hit
+
+# Columns to preserve from input side even if they share a name with a parcel
+# column. Populate after running check-column-overlaps if genuine input-side
+# fields are being silently dropped by finalize().
+MIT_KEEP_FROM_INPUT <- character()
+APP_KEEP_FROM_INPUT <- character()
+
+# Defined once and never reordered/filtered after this point — Stage 2's
+# st_nn returns row indices into this object, so high_parcels[i, ] must
+# remain valid through reassign_nohit().
+high_parcels <- parcels |> filter(as.integer(luc_tier) >= HIGH_TIER_MIN)
+```
+
+```{r check-column-overlaps}
+# Sanity check: any column names shared between input-side data (mits/apps)
+# and parcels will be silently dropped by finalize() unless added to
+# MIT_KEEP_FROM_INPUT / APP_KEEP_FROM_INPUT in resolve-setup.
+parcel_attr_cols <- names(st_drop_geometry(parcels))
+
+cat("Parcel columns also present in mits_direct (will be dropped from base):\n")
+print(intersect(names(st_drop_geometry(mits_direct)), parcel_attr_cols))
+
+cat("\nParcel columns also present in apps_direct (will be dropped from base):\n")
+print(intersect(names(st_drop_geometry(apps_direct)), parcel_attr_cols))
+```
+
+```{r stage1-multiparcel-pick}
+# Stage 1: For each input record that intersected one or more parcels,
+# pick a single winner. Tiebreaking mirrors canonical Step 5:
+#   1. Jaro-Winkler address similarity (decisive when addresses differ)
+#   2. APN.SEQUENCE.NUMBER ascending (primary recorder entry)
+#   3. luc_tier descending (most specific land use)
+#   4. IMPROVEMENT.VALUE.CALCULATED descending (parcel with structure)
+pick_winner <- function(direct_df, addr_col, id_col) {
+  direct_df |>
+    st_drop_geometry() |>
+    filter(!is.na(parcel_index)) |>
+    mutate(
+      addr_sim  = addr_sim(.data[[addr_col]], siteadd),
+      apn_seq   = suppressWarnings(as.integer(`APN.SEQUENCE.NUMBER`)),
+      improvval = suppressWarnings(as.numeric(`IMPROVEMENT.VALUE.CALCULATED`))
+    ) |>
+    group_by(.data[[id_col]]) |>
+    mutate(n_parcels = n()) |>
+    arrange(
+      desc(addr_sim),
+      apn_seq,
+      desc(as.integer(luc_tier)),
+      desc(improvval)
+    ) |>
+    slice(1) |>
+    ungroup() |>
+    select(all_of(id_col),
+           winner_parcel_index = parcel_index,
+           winner_addr_sim     = addr_sim,
+           winner_apn_seq      = apn_seq,
+           winner_n_parcels    = n_parcels)
+}
+
+mit_winners <- pick_winner(mits_direct, "raw_addr", mit_id_col)
+app_winners <- pick_winner(apps_direct, "address",  app_id_col)
+```
+
+```{r stage2-nohit-reassign}
+# Stage 2: For each no-parcel-hit record, find K nearest high-priority parcels
+# and pick by best address similarity if available, else nearest.
+reassign_nohit <- function(direct_df, addr_col, id_col,
+                           high       = high_parcels,
+                           k          = K_CANDIDATES,
+                           sim_thresh = SIM_THRESHOLD,
+                           dist_cap   = DIST_CAP_M) {
+  nohit <- direct_df |>
+    filter(is.na(parcel_index)) |>
+    distinct(.data[[id_col]], .keep_all = TRUE)
+
+  if (nrow(nohit) == 0) return(tibble())
+
+  nn <- nngeo::st_nn(nohit, high, k = k, returnDist = TRUE, progress = FALSE)
+
+  # Long-format: one row per (input record × K candidates)
+  cand <- tibble(
+    !!id_col       := rep(nohit[[id_col]], each = k),
+    input_addr     = rep(nohit[[addr_col]], each = k),
+    cand_pos       = rep(seq_len(k), nrow(nohit)),
+    cand_row       = unlist(nn$nn),
+    cand_dist_m    = unlist(nn$dist)
+  ) |>
+    mutate(
+      cand_parcel_index = high$parcel_index[cand_row],
+      cand_siteadd      = high$siteadd[cand_row],
+      cand_addr_sim     = addr_sim(input_addr, cand_siteadd)
+    )
+
+  # Pick winner per input record:
+  #   1. best address match if sim >= threshold AND within distance cap
+  #   2. else nearest within distance cap
+  #   3. else unassigned
+  cand |>
+    group_by(.data[[id_col]]) |>
+    summarise(
+      best_addr_sim    = max(cand_addr_sim),
+      best_addr_dist   = cand_dist_m[which.max(cand_addr_sim)],
+      best_addr_parcel = cand_parcel_index[which.max(cand_addr_sim)],
+      nearest_dist     = min(cand_dist_m),
+      nearest_parcel   = cand_parcel_index[which.min(cand_dist_m)],
+      .groups = "drop"
+    ) |>
+    mutate(
+      assigned_parcel_index = case_when(
+        best_addr_sim >= sim_thresh & best_addr_dist <= dist_cap ~ best_addr_parcel,
+        nearest_dist  <= dist_cap                                ~ nearest_parcel,
+        TRUE                                                      ~ NA_integer_
+      ),
+      assignment_method = case_when(
+        best_addr_sim >= sim_thresh & best_addr_dist <= dist_cap ~ "nearest_high_addr",
+        nearest_dist  <= dist_cap                                ~ "nearest_high_dist",
+        TRUE                                                      ~ "unassigned"
+      ),
+      assignment_dist_m = if_else(assignment_method == "nearest_high_addr",
+                                  best_addr_dist, nearest_dist),
+      assignment_addr_sim = if_else(assignment_method == "nearest_high_addr",
+                                    best_addr_sim, NA_real_)
+    )
+}
+
+mit_reassign <- reassign_nohit(mits_direct, "raw_addr", mit_id_col)
+app_reassign <- reassign_nohit(apps_direct, "address",  app_id_col)
+```
+
+```{r final-resolved}
+finalize <- function(direct_df, winners, reassign, id_col,
+                     keep_from_input = character()) {
+  # All parcel-attribute columns that were folded in by the earlier st_join.
+  # Drop them cleanly — the final left_join below re-attaches them via
+  # assigned_parcel_index. Any input-side columns the caller wants to
+  # preserve despite sharing a name with a parcel column are excluded.
+  parcel_cols <- setdiff(names(st_drop_geometry(parcels)), keep_from_input)
+
+  base <- direct_df |>
+    distinct(.data[[id_col]], .keep_all = TRUE) |>
+    select(-any_of(parcel_cols))
+
+  base |>
+    left_join(winners, by = id_col) |>
+    left_join(
+      reassign |> rename(reassign_method = assignment_method),
+      by = id_col
+    ) |>
+    mutate(
+      # left_join (not inner) is load-bearing: records absent from winners
+      # (no parcel hit) get winner_parcel_index = NA, then coalesce falls
+      # through to the Stage 2 assigned_parcel_index.
+      assigned_parcel_index = coalesce(winner_parcel_index, assigned_parcel_index),
+      assignment_method = case_when(
+        !is.na(winner_parcel_index) & winner_n_parcels == 1 ~ "direct_single_parcel",
+        !is.na(winner_parcel_index) & winner_n_parcels >  1 ~ "direct_multi_resolved",
+        !is.na(reassign_method)                              ~ reassign_method,
+        TRUE                                                  ~ "unassigned"
+      )
+    ) |>
+    select(-reassign_method) |>
+    left_join(parcels |> st_drop_geometry(),
+              by = c("assigned_parcel_index" = "parcel_index"))
+}
+
+mits_final <- finalize(mits_direct, mit_winners, mit_reassign, mit_id_col,
+                       keep_from_input = MIT_KEEP_FROM_INPUT)
+apps_final <- finalize(apps_direct, app_winners, app_reassign, app_id_col,
+                       keep_from_input = APP_KEEP_FROM_INPUT)
+
+# Diagnostics
+cat("\n=== Mitigations: assignment method distribution ===\n")
+mits_final |> st_drop_geometry() |> count(assignment_method, sort = TRUE) |> print()
+
+cat("\n=== Applications: assignment method distribution ===\n")
+apps_final |> st_drop_geometry() |> count(assignment_method, sort = TRUE) |> print()
+```
+
+```{r write-resolved}
+st_write(mits_final, file.path(out_dir, "alt_mits_resolved.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(apps_final, file.path(out_dir, "alt_apps_resolved.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+mits_final |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "alt_mits_resolved_review.csv"))
+apps_final |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "alt_apps_resolved_review.csv"))
 ```
 
 ---
@@ -309,18 +551,38 @@ apps_direct |>
 
 ## Output schema
 
+### Fan-out outputs (`alt_mits_direct.gpkg` / `alt_apps_direct.gpkg`)
+
+One row per (input record × intersecting parcel). Use for shared-footprint
+inspection and canonical Step 5 comparison.
+
 Each row of `alt_mits_direct.gpkg` / `alt_apps_direct.gpkg`:
 
 | Column | Source | Notes |
 |---|---|---|
 | *(all original mit/app columns)* | input | unchanged |
-| `parcel_index` … `ASSESSED.TOTAL.VALUE` | parcels | NA when `no_parcel_hit` |
+| `parcel_index` … `IMPROVEMENT.VALUE.CALCULATED` | parcels | NA when `no_parcel_hit` |
 | `luc_tier_num` | derived | `as.integer(luc_tier)` |
 | `match_status` | derived | `matched_high` / `matched_low` / `no_parcel_hit` |
 | `nearest_high_parcel_index` | derived | `parcel_index` of closest high-priority parcel |
 | `dist_to_nearest_high_m` | derived | metres; review only, not used for matching |
 
-Same columns in the CSVs, without geometry.
+### Resolved outputs (`alt_mits_resolved.gpkg` / `alt_apps_resolved.gpkg`)
+
+One row per input record. Use for downstream analysis and supervisor-facing
+counts.
+
+| Column | Source | Notes |
+|---|---|---|
+| *(all original mit/app columns)* | input | unchanged |
+| `assigned_parcel_index` | derived | winner from Stage 1 or Stage 2; NA if unassigned |
+| `assignment_method` | derived | see bucket table in Section 6 |
+| `winner_parcel_index` | Stage 1 | NA for no-hit records |
+| `winner_addr_sim` | Stage 1 | Jaro-Winkler score of winning address match |
+| `winner_n_parcels` | Stage 1 | how many parcels the input point intersected |
+| `assignment_dist_m` | Stage 2 | metres to assigned parcel; NA for Stage 1 records |
+| `assignment_addr_sim` | Stage 2 | Jaro-Winkler score; NA for distance-only assignments |
+| `parcel_index` … `IMPROVEMENT.VALUE.CALCULATED` | parcels | re-joined via `assigned_parcel_index`; NA if unassigned |
 
 ---
 
