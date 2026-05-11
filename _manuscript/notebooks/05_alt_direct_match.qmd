@@ -57,6 +57,8 @@ library(leaflet)
 library(glue)
 library(stringdist)
 library(stringr)
+library(nngeo)
+library(RANN)
 ```
 
 ```{r setup}
@@ -319,15 +321,18 @@ reassign_nohit <- function(direct_df, addr_col, id_col,
 
   if (nrow(nohit) == 0) return(tibble())
 
-  nn <- nngeo::st_nn(nohit, high, k = k, returnDist = TRUE, progress = FALSE)
+  # Extract coordinates for RANN (must be in same CRS — already 32119)
+  nohit_coords <- st_coordinates(nohit)
+  high_coords  <- st_coordinates(high)
 
-  # Long-format: one row per (input record × K candidates)
+  nn <- RANN::nn2(high_coords, nohit_coords, k = k)
+
   cand <- tibble(
-    !!id_col       := rep(nohit[[id_col]], each = k),
-    input_addr     = rep(nohit[[addr_col]], each = k),
-    cand_pos       = rep(seq_len(k), nrow(nohit)),
-    cand_row       = unlist(nn$nn),
-    cand_dist_m    = unlist(nn$dist)
+    !!id_col    := rep(nohit[[id_col]], each = k),
+    input_addr  = rep(nohit[[addr_col]], each = k),
+    cand_pos    = rep(seq_len(k), nrow(nohit)),
+    cand_row    = as.vector(t(nn$nn.idx)),
+    cand_dist_m = as.vector(t(nn$nn.dists))
   ) |>
     mutate(
       cand_parcel_index = high$parcel_index[cand_row],
