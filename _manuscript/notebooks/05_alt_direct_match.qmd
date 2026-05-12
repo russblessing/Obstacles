@@ -322,8 +322,8 @@ reassign_nohit <- function(direct_df, addr_col, id_col,
   if (nrow(nohit) == 0) return(tibble())
 
   # Extract coordinates for RANN (must be in same CRS — already 32119)
-  nohit_coords <- st_coordinates(nohit)
-  high_coords  <- st_coordinates(high)
+  nohit_coords <- st_coordinates(nohit)[, c("X", "Y")]
+  high_coords  <- st_coordinates(high)[, c("X", "Y")]
 
   nn <- RANN::nn2(high_coords, nohit_coords, k = k)
 
