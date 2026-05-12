@@ -251,10 +251,13 @@ K_CANDIDATES  <- 10     # nearest high-priority parcels to evaluate per no-hit
 MIT_KEEP_FROM_INPUT <- character()
 APP_KEEP_FROM_INPUT <- character()
 
-# Defined once and never reordered/filtered after this point — Stage 2's
-# st_nn returns row indices into this object, so high_parcels[i, ] must
-# remain valid through reassign_nohit().
 high_parcels <- parcels |> filter(as.integer(luc_tier) >= HIGH_TIER_MIN)
+
+# Centroid version for RANN KNN. st_coordinates() on polygon geometry returns
+# edge vertices, producing misaligned coordinate arrays; centroids give one
+# point per row, matching the row-index contract for nn$nn.idx.
+# high_parcels and high_centroids share the same row order.
+high_centroids <- high_parcels |> st_centroid()
 ```
 
 ```{r check-column-overlaps}
@@ -312,6 +315,7 @@ app_winners <- pick_winner(apps_direct, "address",  app_id_col)
 # and pick by best address similarity if available, else nearest.
 reassign_nohit <- function(direct_df, addr_col, id_col,
                            high       = high_parcels,
+                           high_pts   = high_centroids,
                            k          = K_CANDIDATES,
                            sim_thresh = SIM_THRESHOLD,
                            dist_cap   = DIST_CAP_M) {
@@ -321,9 +325,8 @@ reassign_nohit <- function(direct_df, addr_col, id_col,
 
   if (nrow(nohit) == 0) return(tibble())
 
-  # Extract coordinates for RANN (must be in same CRS — already 32119)
   nohit_coords <- st_coordinates(nohit)[, c("X", "Y")]
-  high_coords  <- st_coordinates(high)[, c("X", "Y")]
+  high_coords  <- st_coordinates(high_pts)[, c("X", "Y")]   # <-- high_pts, not high
 
   nn <- RANN::nn2(high_coords, nohit_coords, k = k)
 
@@ -593,9 +596,208 @@ counts.
 
 ---
 
-## Unresolved — confirm before using outputs
+## Results
 
-- **`HIGH_TIER_MIN`** is set to `3L` (tiers 3–4: vacant, gov, all residential).
-  Change to `4L` for tier-4-only (1–4 family + site address).
-- **`mit_id_col` / `app_id_col`** default to `"unique_id"`. If the input files
-  don't carry that column, substitute the appropriate HMA/IHP primary key.
+The Step 5 alt direct-match pipeline produces a one-to-one assignment of every
+mit/app record (within the flood study area) to a parcel, where possible. The
+table below summarizes hit rate by assignment method, and the leaflet visualizes
+spatial distribution of every record by outcome.
+
+### Hit-rate summary
+
+```{r results-summary-table}
+library(knitr)
+library(scales)
+
+build_summary <- function(df, side_label) {
+  total <- nrow(df)
+  am <- df |> st_drop_geometry() |> count(assignment_method)
+  get_n <- function(method) {
+    v <- am |> filter(assignment_method == method) |> pull(n)
+    if (length(v) == 0) 0L else v
+  }
+
+  direct_single <- get_n("direct_single_parcel")
+  direct_multi  <- get_n("direct_multi_resolved")
+  stage2_addr   <- get_n("nearest_high_addr")
+  stage2_dist   <- get_n("nearest_high_dist")
+  unassigned    <- get_n("unassigned")
+  assigned      <- total - unassigned
+
+  tibble(
+    Metric = c(
+      "Total records (within HUC-6 study area)",
+      "  Direct hit — single parcel",
+      "  Direct hit — multi-parcel resolved (Stage 1 tiebreaker)",
+      "  Stage 2 rescue — address match",
+      "  Stage 2 rescue — nearest centroid (\u2264 200 m)",
+      "  Unassigned — no high-priority parcel within 200 m",
+      "**Total assigned to a parcel**",
+      "**Hit rate**"
+    ),
+    !!side_label := c(
+      comma(total),
+      comma(direct_single),
+      comma(direct_multi),
+      comma(stage2_addr),
+      comma(stage2_dist),
+      comma(unassigned),
+      comma(assigned),
+      sprintf("%.2f %%", 100 * assigned / total)
+    )
+  )
+}
+
+mit_summary <- build_summary(mits_final, "Mitigations")
+app_summary <- build_summary(apps_final, "Applications")
+
+results_table <- mit_summary |>
+  left_join(app_summary, by = "Metric")
+
+knitr::kable(
+  results_table,
+  align   = c("l", "r", "r"),
+  caption = "Hit rate of mit/app-to-parcel join. Indented rows are subcategories of \"Total records\"; totals at bottom are bolded."
+)
+```
+
+The two-stage pipeline assigns nearly every record to a parcel. Direct intersection
+(Stage 1) handles the bulk of the workload; Stage 2's nearest-centroid rescue
+captures records whose geocoded location fell on or near a non-residential parcel
+(curb, ROW, adjacent commercial) while the intended residential parcel was within
+200 m. The small unassigned residual represents genuine data-coverage limitations
+discussed in the methodology section.
+
+### Spatial distribution
+
+The map below plots every mit and app record by assignment outcome. Successful
+records are clustered at lower zoom levels for performance; unassigned records
+are shown individually in red so they remain visible at any zoom.
+
+```{r results-leaflet}
+library(leaflet)
+
+# Combine mits + apps into a single point dataset with outcome label
+make_map_df <- function(df, side, addr_col) {
+  coords <- df |> st_transform(4326) |> st_coordinates()
+  df |>
+    st_drop_geometry() |>
+    transmute(
+      unique_id,
+      side,
+      label_addr = .data[[addr_col]],
+      assignment_method,
+      lon = coords[, "X"],
+      lat = coords[, "Y"]
+    )
+}
+
+points_for_map <- bind_rows(
+  make_map_df(mits_final, "Mitigation",  "Match_addr"),
+  make_map_df(apps_final, "Application", "address")
+) |>
+  mutate(
+    outcome = case_when(
+      assignment_method == "direct_single_parcel"  ~ "Direct (single hit)",
+      assignment_method == "direct_multi_resolved" ~ "Direct (multi-parcel resolved)",
+      assignment_method == "nearest_high_addr"     ~ "Rescued (address match)",
+      assignment_method == "nearest_high_dist"     ~ "Rescued (nearest centroid)",
+      assignment_method == "unassigned"            ~ "Unassigned"
+    )
+  )
+
+outcome_pal <- colorFactor(
+  palette = c("Direct (single hit)"             = "#1B7837",
+              "Direct (multi-parcel resolved)"  = "#5AAE61",
+              "Rescued (address match)"         = "#2166AC",
+              "Rescued (nearest centroid)"      = "#67A9CF",
+              "Unassigned"                      = "#B2182B"),
+  domain  = points_for_map$outcome
+)
+
+flood_boundary_wgs <- st_read(flood_boundary_path, quiet = TRUE) |>
+  st_transform(4326)
+
+leaflet() |>
+  addProviderTiles(providers$CartoDB.Positron, group = "Light") |>
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") |>
+
+  # Flood study area
+  addPolygons(
+    data        = flood_boundary_wgs,
+    fillColor   = "lightblue",
+    fillOpacity = 0.15,
+    color       = "navy",
+    weight      = 1.5,
+    opacity     = 0.6,
+    group       = "Flood study area"
+  ) |>
+
+  # Assigned records — clustered for performance
+  addCircleMarkers(
+    data           = points_for_map |> filter(outcome != "Unassigned"),
+    lng            = ~lon, lat = ~lat,
+    radius         = 3,
+    color          = ~outcome_pal(outcome),
+    fillOpacity    = 0.7,
+    stroke         = FALSE,
+    label          = ~glue::glue("{side} #{unique_id} — {outcome}"),
+    popup          = ~glue::glue(
+      "<b>{side} #{unique_id}</b><br>",
+      "<b>outcome:</b> {outcome}<br>",
+      "<b>addr:</b> {label_addr}"
+    ),
+    clusterOptions = markerClusterOptions(maxClusterRadius = 40),
+    group          = "Assigned records"
+  ) |>
+
+  # Unassigned records — unclustered and prominent
+  addCircleMarkers(
+    data         = points_for_map |> filter(outcome == "Unassigned"),
+    lng          = ~lon, lat = ~lat,
+    radius       = 6,
+    color        = "#7C0024",
+    fillColor    = "#B2182B",
+    fillOpacity  = 0.9,
+    stroke       = TRUE,
+    weight       = 2,
+    label        = ~glue::glue("{side} #{unique_id} — UNASSIGNED"),
+    popup        = ~glue::glue(
+      "<b>{side} #{unique_id}</b><br>",
+      "<b>UNASSIGNED</b><br>",
+      "<b>addr:</b> {label_addr}"
+    ),
+    group        = "Unassigned records"
+  ) |>
+
+  addLayersControl(
+    baseGroups    = c("Light", "Satellite"),
+    overlayGroups = c("Flood study area", "Assigned records", "Unassigned records"),
+    options       = layersControlOptions(collapsed = FALSE)
+  ) |>
+  addLegend(
+    "bottomright",
+    pal     = outcome_pal,
+    values  = points_for_map$outcome,
+    title   = "Assignment outcome",
+    opacity = 0.85
+  )
+```
+
+**Reading the map:** Direct-hit records (green) and Stage 2 rescues (blue) make
+up the vast majority. Unassigned records (red) are concentrated in:
+
+- Rural eastern NC (Edgecombe County and similar) where rural-route box-number
+  geocodes fell back to road centerlines rather than specific parcels
+- Highway corridors (US-264 near Belhaven, NC-33, US-117) where numbered
+  highway addresses geocoded to ROW parcels
+- Subdivisions where the parcel layer lacks lot-level granularity (e.g., River
+  Bend Drive in Burgaw)
+- Mobile home parks where the parcel data treats the entire mobile home park as one big land parcel rather than multiple unit-level   parceles. (Greenbriar MHP in Wilson County)
+- Inland metro areas (Winston-Salem, Concord, Greenville) where the geocoded
+  point landed in industrial or highway-adjacent zones with no high-priority
+  residential parcel within 200 m
+
+These categories represent genuine data limitations (geocoding precision,
+parcel-layer granularity, and large-parcel centroid distance) rather than
+matching-pipeline failures.
