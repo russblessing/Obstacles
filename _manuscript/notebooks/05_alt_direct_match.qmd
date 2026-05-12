@@ -251,10 +251,13 @@ K_CANDIDATES  <- 10     # nearest high-priority parcels to evaluate per no-hit
 MIT_KEEP_FROM_INPUT <- character()
 APP_KEEP_FROM_INPUT <- character()
 
-# Defined once and never reordered/filtered after this point — Stage 2's
-# st_nn returns row indices into this object, so high_parcels[i, ] must
-# remain valid through reassign_nohit().
 high_parcels <- parcels |> filter(as.integer(luc_tier) >= HIGH_TIER_MIN)
+
+# Centroid version for RANN KNN. st_coordinates() on polygon geometry returns
+# edge vertices, producing misaligned coordinate arrays; centroids give one
+# point per row, matching the row-index contract for nn$nn.idx.
+# high_parcels and high_centroids share the same row order.
+high_centroids <- high_parcels |> st_centroid()
 ```
 
 ```{r check-column-overlaps}
@@ -312,6 +315,7 @@ app_winners <- pick_winner(apps_direct, "address",  app_id_col)
 # and pick by best address similarity if available, else nearest.
 reassign_nohit <- function(direct_df, addr_col, id_col,
                            high       = high_parcels,
+                           high_pts   = high_centroids,
                            k          = K_CANDIDATES,
                            sim_thresh = SIM_THRESHOLD,
                            dist_cap   = DIST_CAP_M) {
@@ -321,9 +325,8 @@ reassign_nohit <- function(direct_df, addr_col, id_col,
 
   if (nrow(nohit) == 0) return(tibble())
 
-  # Extract coordinates for RANN (must be in same CRS — already 32119)
   nohit_coords <- st_coordinates(nohit)[, c("X", "Y")]
-  high_coords  <- st_coordinates(high)[, c("X", "Y")]
+  high_coords  <- st_coordinates(high_pts)[, c("X", "Y")]   # <-- high_pts, not high
 
   nn <- RANN::nn2(high_coords, nohit_coords, k = k)
 
