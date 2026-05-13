@@ -25,10 +25,21 @@ market-comparable value by averaging the recorded values of the nearest
 (k = 5, 10, 50 nearest neighbors).
 
 **EIF census enrichment.** For each mit/app point, attach Census Bureau
-Gridded EIF attributes from the 2024 release at the 0.01° grid cell
-containing that point. Three EIF files joined: housing units / age /
-home value, population × age × race × sex, and population × race ×
-income decile.
+Gridded EIF attributes from three release years (1999, 2020, 2024) at
+the 0.01° grid cell containing that point. Seven EIF files are joined:
+
+- Housing units × householder age × income × home value — 2024 only
+  (no historical version exists; column prefix `hu_2024_`)
+- Population × age × race × sex — 1999, 2020, 2024
+  (prefixes `ars_1999_`, `ars_2020_`, `ars_2024_`)
+- Population × race × income decile — 1999, 2020, 2024
+  (prefixes `ri_1999_`, `ri_2020_`, `ri_2024_`)
+
+The three years cover the bookends and a midpoint of the project's
+1999–2024 disaster history. Year-matched demographics let downstream
+analysis pull contextual demographics from the same year as each
+mit/app's program record (e.g., a 1999 Hurricane Floyd buyout record
+can use `ars_1999_*` columns rather than 2024 baseline demographics).
 
 Both stages consume the **alt Step 5 resolved outputs** as the single source of
 mit/app data. Each record carries an `assigned_parcel_index` (resolved
@@ -43,7 +54,7 @@ to its grid cell.
 - `alt_mits_resolved.gpkg` — point-geometry mits, one row per record,
   resolved to one assigned parcel each (alt Step 5)
 - `alt_apps_resolved.gpkg` — point-geometry apps, same structure (alt Step 5)
-- Three Gridded EIF parquet files (downloaded on first run)
+- Seven Gridded EIF parquet files (downloaded on first run)
 
 **Outputs (written to `out_dir`):**
 
@@ -83,9 +94,17 @@ matching common government-entity keywords (`CITY`, `STATE`, `TOWN`,
 `INC` and `LLC`.
 
 **EIF cell join** uses cell-membership rather than spatial intersection —
-each mit/app point's lat/lon is snapped to its 0.01° grid cell corner
-via `floor(coord * 100) / 100`, then joined to EIF data by the snapped
-coordinates as a key. Equivalent result, much faster than `st_join`.
+each mit/app point's lat/lon is snapped to its 0.01° grid cell centroid
+via `floor(coord * 100) / 100 + 0.005` (cell centers are at `.005` offsets
+per the EIF grid topology), then joined to EIF data by the snapped
+coordinates as a character key. Equivalent result, much faster than `st_join`.
+
+**Stage 2 nearest-neighbor search** uses parcel centroid distance rather
+than point-to-polygon-edge distance for computational reliability. For NC
+residential parcels (~30–80m typical diameter), centroid distance overstates
+edge distance by a similar amount; the 200m distance cap still correctly
+identifies geocoding-artifact rescues. Earlier polygon-distance implementation
+via `nngeo::st_nn` produced misaligned neighbor results and was replaced.
 
 **Caveats** worth noting in the manuscript:
 
@@ -94,10 +113,11 @@ coordinates as a key. Equivalent result, much faster than `st_join`.
 - Three K values (5/10/50) are produced in parallel; downstream
   analysis picks the granularity.
 - EIF counts are differentially-private — approximate per cell.
-- 1.2 km² EIF cells share between adjacent condo buildings.
+- Adjacent buildings within ~1.2 km² of each other share the same EIF cell.
+  For dense urban geometry this means per-cell attributes can't distinguish
+  neighboring properties.
 - Donor pool is statewide; border parcels may reach across counties.
-- Government detection uses owner-name regex (or CoreLogic exemption
-  code if present — see Section 3).
+
 
 ```{r libraries}
 library(sf)
@@ -117,34 +137,47 @@ parcels_path    <- file.path(out_dir, "parcels_pri.gpkg")
 mits_alt_path   <- file.path(out_dir, "alt_mits_resolved.gpkg")
 apps_alt_path   <- file.path(out_dir, "alt_apps_resolved.gpkg")
 
-# Tunables — interpolation
-LOW_VALUE_THRESHOLD <- 25000   # parcels with TOTAL.VALUE.CALCULATED below this
-                                # are flagged as needing interpolation
-MIN_DONOR_VALUE     <- 25000   # minimum recorded value for a donor parcel
+# Tunables — interpolation (unchanged)
+LOW_VALUE_THRESHOLD <- 25000
+MIN_DONOR_VALUE     <- 25000
 K_VALUES            <- c(5, 10, 50)
 
-# Tunables — government ownership regex
+# Tunables — government ownership regex (unchanged)
 GOV_KEYWORDS     <- "\\bCITY\\b|\\bSTATE\\b|\\bTOWN\\b|\\bVILLAGE\\b|\\bCOUNTY\\b|\\bMETROPOLITAN\\b|\\bCTY\\b|\\bST\\b|\\bTWN\\b|\\bVILL\\b|\\bVIL\\b|\\bCNTY\\b|\\bMETRO\\b"
 EXCLUDE_KEYWORDS <- "\\bINC\\b|\\bLLC\\b"
 
-# EIF source files (2024 release)
-eif_files <- list(
-  hu_age_homeval = list(
-    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_hu_age_homeval_2024.parquet",
-    path   = file.path(out_dir, "gridded_eif_hu_age_homeval_2024.parquet"),
-    prefix = "hu"
-  ),
-  ageracesex = list(
-    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_pop_ageracesex_2024.parquet",
-    path   = file.path(out_dir, "gridded_eif_pop_ageracesex_2024.parquet"),
-    prefix = "ars"
-  ),
-  raceincome = list(
-    url    = "https://www2.census.gov/ces/gridded_eif/gridded_eif_pop_raceincome_2024.parquet",
-    path   = file.path(out_dir, "gridded_eif_pop_raceincome_2024.parquet"),
-    prefix = "ri"
-  )
-)
+# EIF source files — multi-year for ageracesex and raceincome,
+# 2024-only for hu_age_homeval (no historical version exists for that file).
+EIF_BASE_URL  <- "https://www2.census.gov/ces/gridded_eif"
+EIF_POP_YEARS <- c(1999, 2020)
+
+build_eif_files <- function() {
+  files <- list()
+
+  # Population × age × race × sex — multiple years
+  for (yr in EIF_POP_YEARS) {
+    name <- paste0("ageracesex_", yr)
+    files[[name]] <- list(
+      url    = file.path(EIF_BASE_URL, sprintf("gridded_eif_pop_ageracesex_%d.parquet", yr)),
+      path   = file.path(out_dir,      sprintf("gridded_eif_pop_ageracesex_%d.parquet", yr)),
+      prefix = paste0("ars_", yr)
+    )
+  }
+
+  # Population × race × income decile — multiple years
+  for (yr in EIF_POP_YEARS) {
+    name <- paste0("raceincome_", yr)
+    files[[name]] <- list(
+      url    = file.path(EIF_BASE_URL, sprintf("gridded_eif_pop_raceincome_%d.parquet", yr)),
+      path   = file.path(out_dir,      sprintf("gridded_eif_pop_raceincome_%d.parquet", yr)),
+      prefix = paste0("ri_", yr)
+    )
+  }
+
+  files
+}
+
+eif_files <- build_eif_files()
 
 # NC bounding box (WGS84) with small buffer for cells crossing the boundary
 NC_BBOX <- list(lat_min = 33.7, lat_max = 36.7,
@@ -271,6 +304,7 @@ st_write(interpolate_from, file.path(out_dir, "interpolate_from.gpkg"),
          delete_dsn = TRUE, quiet = TRUE)
 ```
 
+
 ## 6  K-nearest-neighbor interpolation
 
 For each recipient parcel, find the K nearest donor parcels by centroid
@@ -332,17 +366,17 @@ joined |>
 
 ## 9  Gridded EIF Census enrichment
 
-The Census Bureau's 2024 Gridded EIF release provides privacy-protected
-counts on a fixed 0.01° grid (~1.2 km² per cell). Three datasets joined
-to each mit/app point:
+The Census Bureau Gridded EIF provides privacy-protected counts on a
+fixed 0.01° grid (~1.2 km² per cell). Seven files across three years
+are joined to each mit/app point:
 
-| File | Cross-tab | Variable prefix |
-|---|---|---|
-| `gridded_eif_hu_age_homeval_2024.parquet` | housing units × householder age × income × home value | `hu_` |
-| `gridded_eif_pop_ageracesex_2024.parquet` | population × age × race × sex | `ars_` |
-| `gridded_eif_pop_raceincome_2024.parquet` | population × race × income decile | `ri_` |
+| File | Cross-tab | Prefix | Years |
+|---|---|---|---|
+| `gridded_eif_hu_age_homeval_2024.parquet` | housing units × householder age × income × home value | `hu_2024_` | 2024 only |
+| `gridded_eif_pop_ageracesex_{year}.parquet` | population × age × race × sex | `ars_{year}_` | 1999, 2020, 2024 |
+| `gridded_eif_pop_raceincome_{year}.parquet` | population × race × income decile | `ri_{year}_` | 1999, 2020, 2024 |
 
-Cell-membership join via `floor(coord * 100) / 100` — equivalent to
+Cell-membership join via `floor(coord * 100) / 100 + 0.005` — equivalent to
 spatial intersection but faster.
 
 ### 9.1  Download EIF files (one-time)
@@ -351,8 +385,15 @@ spatial intersection but faster.
 for (name in names(eif_files)) {
   f <- eif_files[[name]]
   if (!file.exists(f$path)) {
-    message("Downloading ", name, " -> ", f$path)
-    download.file(f$url, f$path, mode = "wb")
+    message("Downloading ", name, " -> ", basename(f$path))
+    tryCatch(
+      download.file(f$url, f$path, mode = "wb"),
+      error = function(e) {
+        stop("EIF download failed for ", name, ": ", conditionMessage(e),
+             "\nIf HPC egress is restricted, download manually via wget ",
+             "from a login node and place at ", f$path)
+      }
+    )
   } else {
     message("Already present: ", basename(f$path))
   }
@@ -360,10 +401,6 @@ for (name in names(eif_files)) {
 ```
 
 ### 9.2  Inspect EIF schemas
-
-Print the column names from each parquet so the join configuration below
-can reference real column names. Update `LAT_COL` / `LON_COL` if the
-schemas use different names than `lat` / `lon`.
 
 ```{r eif-inspect-schemas}
 for (name in names(eif_files)) {
@@ -376,53 +413,73 @@ for (name in names(eif_files)) {
 ### 9.3  Read EIF parquets (filtered to NC bounding box)
 
 ```{r eif-read}
-LAT_COL <- "grid_lat"      # confirmed via topology — likely the column name in parquet too
-LON_COL <- "grid_lon"      # confirm via eif-inspect-schemas
+LAT_COL <- "grid_lat"
+LON_COL <- "grid_lon"
 
 read_eif <- function(path, prefix) {
   d <- arrow::open_dataset(path) |>
-    filter(
-      .data[[LAT_COL]] >= NC_BBOX$lat_min,
-      .data[[LAT_COL]] <= NC_BBOX$lat_max,
-      .data[[LON_COL]] >= NC_BBOX$lon_min,
-      .data[[LON_COL]] <= NC_BBOX$lon_max
-    ) |>
     collect()
 
-  # Cell key columns — use parquet's stored center coords directly,
-  # rounded to 3 decimals to avoid float comparison issues on join
   d <- d |>
     mutate(
-      eif_lat = round(.data[[LAT_COL]], 3),
-      eif_lon = round(.data[[LON_COL]], 3)
-    )
+      grid_lat_num = as.numeric(.data[[LAT_COL]]),
+      grid_lon_num = as.numeric(.data[[LON_COL]])
+    ) |>
+    filter(
+      grid_lat_num >= NC_BBOX$lat_min,
+      grid_lat_num <= NC_BBOX$lat_max,
+      grid_lon_num >= NC_BBOX$lon_min,
+      grid_lon_num <= NC_BBOX$lon_max
+    ) |>
+    mutate(
+      eif_lat = round(grid_lat_num, 3),
+      eif_lon = round(grid_lon_num, 3)
+    ) |>
+    select(-grid_lat_num, -grid_lon_num, -any_of(c(LAT_COL, LON_COL)))
 
-  data_cols <- setdiff(names(d), c("eif_lat", "eif_lon"))
-  rename_map <- setNames(data_cols, paste0(prefix, "_", data_cols))
-  d |> rename(!!!rename_map)
+  # Identify demographic grouping columns (everything except cell key and counts)
+  count_cols <- c("n_noise", "n_noise_postprocessed")
+  group_cols <- setdiff(names(d), c("eif_lat", "eif_lon", count_cols))
+
+  # Pivot to wide: one row per cell, columns named {prefix}_{group}_{count}
+  if (length(group_cols) > 0) {
+    d <- d |>
+      unite("_group_key", all_of(group_cols), sep = "__", remove = TRUE) |>
+      pivot_wider(
+        id_cols     = c("eif_lat", "eif_lon"),
+        names_from  = "_group_key",
+        values_from = all_of(count_cols),
+        names_glue  = paste0(prefix, "_{.value}__{.name}")
+      )
+  } else {
+    d <- d |>
+      rename_with(~ paste0(prefix, "_", .x), all_of(count_cols))
+  }
+
+  d
 }
 
-eif_hu  <- read_eif(eif_files$hu_age_homeval$path, eif_files$hu_age_homeval$prefix)
-eif_ars <- read_eif(eif_files$ageracesex$path,     eif_files$ageracesex$prefix)
-eif_ri  <- read_eif(eif_files$raceincome$path,     eif_files$raceincome$prefix)
+eif_data <- setNames(
+  map(eif_files, function(f) read_eif(f$path, f$prefix)),
+  names(eif_files)
+)
 
-cat("EIF cells in NC bounding box:\n")
-cat("  hu_age_homeval:", nrow(eif_hu),  "\n")
-cat("  ageracesex:    ", nrow(eif_ars), "\n")
-cat("  raceincome:    ", nrow(eif_ri),  "\n")
+cat("EIF cells in NC bounding box (by dataset):\n")
+for (nm in names(eif_data)) {
+  cat(sprintf("  %-30s %s rows, %d columns\n",
+              nm,
+              format(nrow(eif_data[[nm]]), big.mark = ","),
+              ncol(eif_data[[nm]])))
+}
 ```
 
 ### 9.4  Snap mit/app points to EIF cells
-
-`mits_resolved` and `apps_resolved` were already loaded in Section 1.
-Compute the snapped cell key for each.
 
 ```{r eif-snap-cells}
 add_eif_cell <- function(sf_obj) {
   coords <- sf_obj |> st_transform(4326) |> st_coordinates()
   sf_obj |>
     mutate(
-      # 0.01° cell, centers at .005 offsets per eif_grid_topology
       eif_lon = round(floor(coords[, "X"] * 100) / 100 + 0.005, 3),
       eif_lat = round(floor(coords[, "Y"] * 100) / 100 + 0.005, 3)
     )
@@ -432,38 +489,31 @@ mits_resolved <- add_eif_cell(mits_resolved)
 apps_resolved <- add_eif_cell(apps_resolved)
 ```
 
-### 9.5  Join all three EIF datasets onto mits/apps
+### 9.5  Join all EIF datasets onto mits/apps
 
 ```{r eif-join}
 join_eif_all <- function(sf_obj) {
-  sf_obj |>
-    left_join(eif_hu,  by = c("eif_lat", "eif_lon")) |>
-    left_join(eif_ars, by = c("eif_lat", "eif_lon")) |>
-    left_join(eif_ri,  by = c("eif_lat", "eif_lon"))
+  result <- sf_obj
+  for (nm in names(eif_data)) {
+    result <- left_join(result, eif_data[[nm]], by = c("eif_lat", "eif_lon"))
+  }
+  result
 }
 
 mits_with_eif <- join_eif_all(mits_resolved)
 apps_with_eif <- join_eif_all(apps_resolved)
 
-# Coverage diagnostics — % of records that got EIF data from each file.
-hu_marker  <- paste0("hu_",  LAT_COL)
-ars_marker <- paste0("ars_", LAT_COL)
-ri_marker  <- paste0("ri_",  LAT_COL)
-
+# Coverage diagnostics
 coverage <- function(df, label) {
   cat("\n", label, "EIF coverage (cells matched / total records):\n")
-  cat("  hu_age_homeval:",
-      sprintf("%d / %d (%.1f%%)\n",
-              sum(!is.na(df[[hu_marker]])),  nrow(df),
-              100 * sum(!is.na(df[[hu_marker]]))  / nrow(df)))
-  cat("  ageracesex:    ",
-      sprintf("%d / %d (%.1f%%)\n",
-              sum(!is.na(df[[ars_marker]])), nrow(df),
-              100 * sum(!is.na(df[[ars_marker]])) / nrow(df)))
-  cat("  raceincome:    ",
-      sprintf("%d / %d (%.1f%%)\n",
-              sum(!is.na(df[[ri_marker]])),  nrow(df),
-              100 * sum(!is.na(df[[ri_marker]]))  / nrow(df)))
+  for (nm in names(eif_files)) {
+    pfx <- eif_files[[nm]]$prefix
+    marker <- names(df)[startsWith(names(df), paste0(pfx, "_"))][1]
+    if (!is.na(marker)) {
+      n <- sum(!is.na(df[[marker]]))
+      cat(sprintf("  %-30s %d / %d (%.1f%%)\n", nm, n, nrow(df), 100 * n / nrow(df)))
+    }
+  }
 }
 
 coverage(mits_with_eif, "Mitigations")
@@ -487,6 +537,14 @@ apps_with_eif |> st_drop_geometry() |>
 ## Summary
 
 ```{r summary-table}
+hu_marker <- paste0("hu_2024_", LAT_COL)
+
+eif_coverage <- sapply(names(eif_files), function(nm) {
+  pfx    <- eif_files[[nm]]$prefix
+  marker <- names(mits_with_eif)[startsWith(names(mits_with_eif), paste0(pfx, "_"))][1]
+  if (!is.na(marker)) sum(!is.na(mits_with_eif[[marker]])) else NA_integer_
+})
+
 summary_tbl <- tibble(
   metric = c(
     "Total parcels",
@@ -496,8 +554,7 @@ summary_tbl <- tibble(
     "Median prop_value_5",
     "Median prop_value_10",
     "Median prop_value_50",
-    "Mits enriched with EIF (hu_age_homeval cell match)",
-    "Apps enriched with EIF (hu_age_homeval cell match)"
+    paste0("Mits with EIF cell match — ", names(eif_files))
   ),
   value = c(
     nrow(joined),
@@ -507,8 +564,7 @@ summary_tbl <- tibble(
     median(to_interpolate$prop_value_5,  na.rm = TRUE),
     median(to_interpolate$prop_value_10, na.rm = TRUE),
     median(to_interpolate$prop_value_50, na.rm = TRUE),
-    sum(!is.na(mits_with_eif[[hu_marker]])),
-    sum(!is.na(apps_with_eif[[hu_marker]]))
+    eif_coverage
   )
 )
 
@@ -525,8 +581,8 @@ to_interpolate |>
   summarise(
     n      = sum(!is.na(value)),
     p10    = quantile(value, 0.10, na.rm = TRUE),
-    median = median(value,           na.rm = TRUE),
-    mean   = mean(value,             na.rm = TRUE),
+    median = median(value,         na.rm = TRUE),
+    mean   = mean(value,           na.rm = TRUE),
     p90    = quantile(value, 0.90, na.rm = TRUE),
     .groups = "drop"
   ) |>
@@ -547,7 +603,7 @@ to_interpolate |>
 | `app_count` | derived | per-parcel count of apps assigned via alt Step 5 |
 | `gov_owned` | derived | 1 if owner name matches gov regex (excluding INC/LLC) |
 | `interpolate` | derived | 1 if parcel was a recipient (had value estimated) |
-| `prop_value_5` | derived | mean `TOTAL.VALUE.CALCULATED` of 5 nearest donors; original if not interpolated |
+| `prop_value_5` | derived | mean of 5 nearest donors; original if not interpolated |
 | `prop_value_10` | derived | mean of 10 nearest donors; original if not interpolated |
 | `prop_value_50` | derived | mean of 50 nearest donors; original if not interpolated |
 
@@ -556,10 +612,10 @@ to_interpolate |>
 | Column | Source | Notes |
 |---|---|---|
 | (all original alt-resolved columns) | alt Step 5 outputs | unchanged |
-| `eif_lat_floor`, `eif_lon_floor` | derived | snapped 0.01° cell key |
-| `hu_*` columns | EIF hu_age_homeval | housing units, householder age, home value |
-| `ars_*` columns | EIF pop_ageracesex | population × age × race × sex counts |
-| `ri_*` columns | EIF pop_raceincome | population × race × income decile counts |
+| `eif_lat`, `eif_lon` | derived | snapped 0.01° cell-center key |
+| `hu_2024_*` columns | EIF hu_age_homeval 2024 | housing units, householder age, home value |
+| `ars_1999_*`, `ars_2020_*`, `ars_2024_*` columns | EIF pop_ageracesex (3 years) | population × age × race × sex |
+| `ri_1999_*`, `ri_2020_*`, `ri_2024_*` columns | EIF pop_raceincome (3 years) | population × race × income decile |
 
 ## Unresolved — confirm before using outputs
 
@@ -571,13 +627,9 @@ to_interpolate |>
   pull donors across county lines.
 - **Government-ownership regex** is empirically derived. Spot-check
   `gov_owned == 1` against `parusedesc` to confirm coverage.
-- **EIF `LAT_COL` / `LON_COL` names** assumed to be `lat` / `lon`.
-  Confirm via `eif-inspect-schemas` chunk and update if different.
-- **EIF year choice** — using 2024 release for all mits/apps regardless
-  of program year. Historical EIF files (1999–2023) are available if
-  you want time-matched demographics for older program records.
-  Defensible methodological choice (current demographics as a baseline)
-  but worth flagging in the methods note.
+- **EIF `LAT_COL` / `LON_COL`** are set to `"grid_lat"` / `"grid_lon"` per the
+  Gridded EIF topology file (CES-WP-24-74). Verified via the
+  `eif-inspect-schemas` chunk at runtime.
 - **EIF differential privacy** — per-cell counts are noise-protected.
   Negligible for averages across many cells, important for per-cell
   point estimates.
