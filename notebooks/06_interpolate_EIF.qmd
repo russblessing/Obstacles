@@ -410,50 +410,52 @@ for (name in names(eif_files)) {
 }
 ```
 
-### 9.3  Read EIF parquets (filtered to NC bounding box)
+### 9.3  Load EIF grid topology
 
-```{r eif-read}
-LAT_COL <- "grid_lat"
-LON_COL <- "grid_lon"
+The topology file is the authoritative cell registry — it defines all valid
+land cells on the 0.01° grid, including cells with zero population (absent
+from the parquets). Joining mits/apps to the topology lets us distinguish
+**why** a record has NA EIF columns:
 
-read_eif <- function(path, prefix) {
-  d <- arrow::open_dataset(path) |>
-    collect()
+- `valid_cell == TRUE` & EIF columns non-NA → populated cell, matched ✓  
+- `valid_cell == TRUE` & EIF columns NA → valid land cell, zero/suppressed population  
+- `valid_cell == FALSE` → water, outside-US, or geocoding error  
 
-  d <- d |>
-    mutate(
-      grid_lat_num = as.numeric(.data[[LAT_COL]]),
-      grid_lon_num = as.numeric(.data[[LON_COL]])
-    ) |>
-    filter(
-      grid_lat_num >= NC_BBOX$lat_min,
-      grid_lat_num <= NC_BBOX$lat_max,
-      grid_lon_num >= NC_BBOX$lon_min,
-      grid_lon_num <= NC_BBOX$lon_max
-    ) |>
-    mutate(
-      eif_lat = round(grid_lat_num, 3),
-      eif_lon = round(grid_lon_num, 3)
-    ) |>
-    select(-grid_lat_num, -grid_lon_num)
+```{r eif-load-topology}
+topo_path <- file.path(out_dir, "eif_grid_topology.rda")
 
-  data_cols  <- setdiff(names(d), c("eif_lat", "eif_lon"))
-  rename_map <- setNames(data_cols, paste0(prefix, "_", data_cols))
-  d |> rename(!!!rename_map)
+if (!file.exists(topo_path)) {
+  message("Downloading EIF grid topology...")
+  download.file(
+    "https://www2.census.gov/ces/gridded_eif/eif_grid_topology.rda",
+    topo_path, mode = "wb"
+  )
 }
 
-eif_data <- setNames(
-  map(eif_files, function(f) read_eif(f$path, f$prefix)),
-  names(eif_files)
-)
+local({
+  e <- new.env()
+  load(topo_path, envir = e)
+  topo_obj <- get(ls(e)[1], envir = e)
+  # SpatialGridDataFrame -> data frame of cell-center coordinates
+  topo_df <<- as.data.frame(topo_obj) |>
+    dplyr::select(grid_lon, grid_lat) |>
+    dplyr::mutate(
+      eif_lat = round(as.numeric(grid_lat), 3),
+      eif_lon = round(as.numeric(grid_lon), 3)
+    ) |>
+    dplyr::select(eif_lat, eif_lon) |>
+    dplyr::distinct()
+})
 
-cat("EIF cells in NC bounding box (by dataset):\n")
-for (nm in names(eif_data)) {
-  cat(sprintf("  %-30s %s rows, %d columns\n",
-              nm,
-              format(nrow(eif_data[[nm]]), big.mark = ","),
-              ncol(eif_data[[nm]])))
-}
+# Restrict to NC bounding box to keep the join fast
+topo_nc <- topo_df |>
+  dplyr::filter(
+    eif_lat >= NC_BBOX$lat_min, eif_lat <= NC_BBOX$lat_max,
+    eif_lon >= NC_BBOX$lon_min, eif_lon <= NC_BBOX$lon_max
+  ) |>
+  dplyr::mutate(valid_cell = TRUE)
+
+cat("NC topology cells:", nrow(topo_nc), "\n")
 ```
 
 ### 9.4  Snap mit/app points to EIF cells
@@ -470,15 +472,136 @@ add_eif_cell <- function(sf_obj) {
 
 mits_resolved <- add_eif_cell(mits_resolved)
 apps_resolved <- add_eif_cell(apps_resolved)
+
+# Join topology to flag valid land cells (TRUE) vs water/invalid (FALSE/NA)
+mits_resolved <- mits_resolved |>
+  left_join(topo_nc, by = c("eif_lat", "eif_lon")) |>
+  mutate(valid_cell = replace_na(valid_cell, FALSE))
+
+apps_resolved <- apps_resolved |>
+  left_join(topo_nc, by = c("eif_lat", "eif_lon")) |>
+  mutate(valid_cell = replace_na(valid_cell, FALSE))
+
+cat("Mits — valid topology cell:   ", sum(mits_resolved$valid_cell), "/", nrow(mits_resolved), "\n")
+cat("Mits — invalid/water cell:    ", sum(!mits_resolved$valid_cell), "\n")
+cat("Apps — valid topology cell:   ", sum(apps_resolved$valid_cell), "/", nrow(apps_resolved), "\n")
+cat("Apps — invalid/water cell:    ", sum(!apps_resolved$valid_cell), "\n")
 ```
 
-### 9.5  Join all EIF datasets onto mits/apps
+### 9.5  Snap unmatched records to nearest populated EIF cell (per year)
+
+Records that land on a valid topology cell but have no population data in a
+given year's parquet (zero/DP-suppressed) are snapped to the nearest cell
+that *does* have population data for that year. Year-specific keys are stored
+in separate columns (`eif_lat_{year}`, `eif_lon_{year}`) so each parquet join
+uses the most appropriate cell. The base `eif_lat`/`eif_lon` columns (original
+snapped position) are preserved for reference.
+
+```{r eif-snap-nearest}
+# Build sf point layers from populated EIF cell keys (one per year)
+eif_cells_sf <- map(names(eif_files), function(nm) {
+  f <- eif_files[[nm]]
+  arrow::open_dataset(f$path) |>
+    dplyr::collect() |>
+    dplyr::mutate(
+      eif_lat = round(as.numeric(grid_lat), 3),
+      eif_lon = round(as.numeric(grid_lon), 3)
+    ) |>
+    dplyr::filter(
+      eif_lat >= NC_BBOX$lat_min, eif_lat <= NC_BBOX$lat_max,
+      eif_lon >= NC_BBOX$lon_min, eif_lon <= NC_BBOX$lon_max
+    ) |>
+    dplyr::select(eif_lat, eif_lon) |>
+    dplyr::distinct() |>
+    sf::st_as_sf(coords = c("eif_lon", "eif_lat"), crs = 4326, remove = FALSE)
+}) |>
+  set_names(names(eif_files))
+
+# For each dataset, snap unmatched records to nearest populated cell
+snap_to_nearest <- function(sf_obj, populated_sf, lat_col, lon_col) {
+  # identify unmatched: no row in populated_sf for this cell
+  pop_keys <- paste(
+    sf::st_coordinates(populated_sf)[, "Y"],
+    sf::st_coordinates(populated_sf)[, "X"]
+  )
+  obj_keys <- paste(
+    sf::st_drop_geometry(sf_obj)[[lat_col]],
+    sf::st_drop_geometry(sf_obj)[[lon_col]]
+  )
+  unmatched_idx <- which(!obj_keys %in% pop_keys)
+
+  if (length(unmatched_idx) == 0) {
+    cat("  No unmatched records — skipping nearest-neighbor snap\n")
+    return(sf_obj)
+  }
+
+  nearest_idx <- sf::st_nearest_feature(
+    sf_obj[unmatched_idx, ] |> sf::st_transform(4326),
+    populated_sf
+  )
+  nearest_coords <- sf::st_coordinates(populated_sf)[nearest_idx, ]
+
+  sf_obj[[lon_col]][unmatched_idx] <- round(nearest_coords[, "X"], 3)
+  sf_obj[[lat_col]][unmatched_idx] <- round(nearest_coords[, "Y"], 3)
+
+  cat("  Snapped", length(unmatched_idx), "unmatched records to nearest populated cell\n")
+  sf_obj
+}
+
+# Apply per dataset, writing into year-specific key columns
+add_year_keys <- function(sf_obj, label) {
+  cat(label, "nearest-neighbor snapping:\n")
+  result <- sf_obj
+
+  for (nm in names(eif_files)) {
+    yr      <- eif_files[[nm]]$prefix          # e.g. "ars_1999"
+    lat_col <- paste0("eif_lat_", yr)
+    lon_col <- paste0("eif_lon_", yr)
+
+    # Initialise year-specific key columns from base keys
+    result[[lat_col]] <- result$eif_lat
+    result[[lon_col]] <- result$eif_lon
+
+    cat(" ", nm, "->", lat_col, "/", lon_col, ":")
+    result <- snap_to_nearest(result, eif_cells_sf[[nm]], lat_col, lon_col)
+  }
+  result
+}
+
+mits_resolved <- add_year_keys(mits_resolved, "Mits")
+apps_resolved <- add_year_keys(apps_resolved, "Apps")
+```
+
+### 9.6  Join all EIF datasets onto mits/apps
 
 ```{r eif-join}
 join_eif_all <- function(sf_obj) {
   result <- sf_obj
-  for (nm in names(eif_data)) {
-    result <- left_join(result, eif_data[[nm]], by = c("eif_lat", "eif_lon"))
+  for (nm in names(eif_files)) {
+    f       <- eif_files[[nm]]
+    yr      <- f$prefix
+    lat_col <- paste0("eif_lat_", yr)
+    lon_col <- paste0("eif_lon_", yr)
+
+    eif_tbl <- arrow::open_dataset(f$path) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        eif_lat = round(as.numeric(grid_lat), 3),
+        eif_lon = round(as.numeric(grid_lon), 3)
+      ) |>
+      dplyr::filter(
+        eif_lat >= NC_BBOX$lat_min, eif_lat <= NC_BBOX$lat_max,
+        eif_lon >= NC_BBOX$lon_min, eif_lon <= NC_BBOX$lon_max
+      ) |>
+      dplyr::select(-grid_lat, -grid_lon) |>
+      dplyr::rename_with(~ paste0(yr, "_", .), !starts_with("eif_"))
+
+    # Join on year-specific keys, then drop them
+    result <- result |>
+      dplyr::left_join(
+        eif_tbl |> dplyr::rename(!!lat_col := eif_lat, !!lon_col := eif_lon),
+        by = c(lat_col, lon_col)
+      )
   }
   result
 }
@@ -486,14 +609,22 @@ join_eif_all <- function(sf_obj) {
 mits_with_eif <- join_eif_all(mits_resolved)
 apps_with_eif <- join_eif_all(apps_resolved)
 
-# Coverage diagnostics
+# Coverage diagnostics — should now show 100% match for all datasets
 coverage <- function(df, label) {
-  cat("\n", label, "EIF coverage (cells matched / total records):\n")
+  cat("\n", label, "EIF coverage:\n")
+  cat(sprintf("  %-35s %d\n", "Total records", nrow(df)))
+  cat(sprintf("  %-35s %d  (%.1f%%)\n", "Valid topology cell",
+              sum(df$valid_cell), 100 * mean(df$valid_cell)))
+  cat(sprintf("  %-35s %d  (%.1f%%)\n", "Invalid/water cell",
+              sum(!df$valid_cell), 100 * mean(!df$valid_cell)))
+  cat("\n  Per-dataset match rates (after nearest-neighbor fill):\n")
   for (nm in names(eif_files)) {
-    marker <- paste0(eif_files[[nm]]$prefix, "_", LAT_COL)
-    if (marker %in% names(df)) {
-      n <- sum(!is.na(df[[marker]]))
-      cat(sprintf("  %-30s %d / %d (%.1f%%)\n", nm, n, nrow(df), 100 * n / nrow(df)))
+    yr     <- eif_files[[nm]]$prefix
+    marker <- names(df)[startsWith(names(df), paste0(yr, "_"))][1]
+    if (!is.na(marker)) {
+      n_matched <- sum(!is.na(df[[marker]]))
+      cat(sprintf("  %-30s matched: %d (%.1f%%)\n",
+                  nm, n_matched, 100 * n_matched / nrow(df)))
     }
   }
 }
@@ -501,29 +632,15 @@ coverage <- function(df, label) {
 coverage(mits_with_eif, "Mitigations")
 coverage(apps_with_eif, "Applications")
 ```
-
-### 9.6  Write enriched outputs
-
-```{r eif-write}
-st_write(mits_with_eif, file.path(out_dir, "mits_with_eif.gpkg"),
-         delete_dsn = TRUE, quiet = TRUE)
-st_write(apps_with_eif, file.path(out_dir, "apps_with_eif.gpkg"),
-         delete_dsn = TRUE, quiet = TRUE)
-
-mits_with_eif |> st_drop_geometry() |>
-  write_csv(file.path(out_dir, "mits_with_eif.csv"))
-apps_with_eif |> st_drop_geometry() |>
-  write_csv(file.path(out_dir, "apps_with_eif.csv"))
-```
-
 ## Summary
 
 ```{r summary-table}
 hu_marker <- paste0("hu_2024_", LAT_COL)
 
 eif_coverage <- sapply(names(eif_files), function(nm) {
-  marker <- paste0(eif_files[[nm]]$prefix, "_", LAT_COL)
-  if (marker %in% names(mits_with_eif)) sum(!is.na(mits_with_eif[[marker]])) else NA_integer_
+  pfx    <- eif_files[[nm]]$prefix
+  marker <- names(mits_with_eif)[startsWith(names(mits_with_eif), paste0(pfx, "_"))][1]
+  if (!is.na(marker)) sum(!is.na(mits_with_eif[[marker]])) else NA_integer_
 })
 
 summary_tbl <- tibble(
@@ -593,7 +710,9 @@ to_interpolate |>
 | Column | Source | Notes |
 |---|---|---|
 | (all original alt-resolved columns) | alt Step 5 outputs | unchanged |
-| `eif_lat`, `eif_lon` | derived | snapped 0.01° cell-center key |
+| `eif_lat`, `eif_lon` | derived | original snapped 0.01° cell-center (base position) |
+| `valid_cell` | topology join | `TRUE` = valid land cell per EIF topology; `FALSE` = water/outside-US or geocoding error |
+| `eif_lat_{prefix}`, `eif_lon_{prefix}` | nearest-neighbor fill | year-specific cell keys; equal to base keys for matched cells, snapped to nearest populated cell otherwise (one pair per EIF dataset, e.g. `eif_lat_ars_1999`) |
 | `hu_2024_*` columns | EIF hu_age_homeval 2024 | housing units, householder age, home value |
 | `ars_1999_*`, `ars_2020_*`, `ars_2024_*` columns | EIF pop_ageracesex (3 years) | population × age × race × sex |
 | `ri_1999_*`, `ri_2020_*`, `ri_2024_*` columns | EIF pop_raceincome (3 years) | population × race × income decile |
