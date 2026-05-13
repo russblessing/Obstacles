@@ -497,29 +497,46 @@ in separate columns (`eif_lat_{year}`, `eif_lon_{year}`) so each parquet join
 uses the most appropriate cell. The base `eif_lat`/`eif_lon` columns (original
 snapped position) are preserved for reference.
 
-```{r eif-snap-nearest}
-# Build sf point layers from populated EIF cell keys (one per year)
-eif_cells_sf <- map(names(eif_files), function(nm) {
+```{r eif-build-nc-tables}
+# Pre-build NC-filtered tables ONCE per dataset using Arrow pushdown —
+# avoids loading the full national parquet into memory multiple times.
+# Each table is kept as a plain data frame; sf conversion for the
+# nearest-neighbour search is done on the keys-only subset.
+
+eif_nc_tables <- map(names(eif_files), function(nm) {
   f <- eif_files[[nm]]
   arrow::open_dataset(f$path) |>
+    dplyr::filter(
+      as.numeric(grid_lat) >= NC_BBOX$lat_min,
+      as.numeric(grid_lat) <= NC_BBOX$lat_max,
+      as.numeric(grid_lon) >= NC_BBOX$lon_min,
+      as.numeric(grid_lon) <= NC_BBOX$lon_max
+    ) |>
     dplyr::collect() |>
     dplyr::mutate(
       eif_lat = round(as.numeric(grid_lat), 3),
       eif_lon = round(as.numeric(grid_lon), 3)
     ) |>
-    dplyr::filter(
-      eif_lat >= NC_BBOX$lat_min, eif_lat <= NC_BBOX$lat_max,
-      eif_lon >= NC_BBOX$lon_min, eif_lon <= NC_BBOX$lon_max
-    ) |>
-    dplyr::select(eif_lat, eif_lon) |>
-    dplyr::distinct() |>
-    sf::st_as_sf(coords = c("eif_lon", "eif_lat"), crs = 4326, remove = FALSE)
+    dplyr::select(-grid_lat, -grid_lon)
 }) |>
   set_names(names(eif_files))
 
+# Keys-only sf layers for nearest-neighbour search (tiny memory footprint)
+eif_cells_sf <- map(eif_nc_tables, function(tbl) {
+  tbl |>
+    dplyr::select(eif_lat, eif_lon) |>
+    dplyr::distinct() |>
+    sf::st_as_sf(coords = c("eif_lon", "eif_lat"), crs = 4326, remove = FALSE)
+})
+
+cat("NC EIF cell counts per dataset:\n")
+walk2(names(eif_cells_sf), eif_cells_sf,
+      ~ cat(sprintf("  %-30s %d cells\n", .x, nrow(.y))))
+```
+
+```{r eif-snap-nearest}
 # For each dataset, snap unmatched records to nearest populated cell
 snap_to_nearest <- function(sf_obj, populated_sf, lat_col, lon_col) {
-  # identify unmatched: no row in populated_sf for this cell
   pop_keys <- paste(
     sf::st_coordinates(populated_sf)[, "Y"],
     sf::st_coordinates(populated_sf)[, "X"]
@@ -554,11 +571,10 @@ add_year_keys <- function(sf_obj, label) {
   result <- sf_obj
 
   for (nm in names(eif_files)) {
-    yr      <- eif_files[[nm]]$prefix          # e.g. "ars_1999"
+    yr      <- eif_files[[nm]]$prefix
     lat_col <- paste0("eif_lat_", yr)
     lon_col <- paste0("eif_lon_", yr)
 
-    # Initialise year-specific key columns from base keys
     result[[lat_col]] <- result$eif_lat
     result[[lon_col]] <- result$eif_lon
 
@@ -575,28 +591,17 @@ apps_resolved <- add_year_keys(apps_resolved, "Apps")
 ### 9.6  Join all EIF datasets onto mits/apps
 
 ```{r eif-join}
+# Reuse the pre-built NC tables — no further collect() calls needed.
 join_eif_all <- function(sf_obj) {
   result <- sf_obj
   for (nm in names(eif_files)) {
-    f       <- eif_files[[nm]]
-    yr      <- f$prefix
+    yr      <- eif_files[[nm]]$prefix
     lat_col <- paste0("eif_lat_", yr)
     lon_col <- paste0("eif_lon_", yr)
 
-    eif_tbl <- arrow::open_dataset(f$path) |>
-      dplyr::collect() |>
-      dplyr::mutate(
-        eif_lat = round(as.numeric(grid_lat), 3),
-        eif_lon = round(as.numeric(grid_lon), 3)
-      ) |>
-      dplyr::filter(
-        eif_lat >= NC_BBOX$lat_min, eif_lat <= NC_BBOX$lat_max,
-        eif_lon >= NC_BBOX$lon_min, eif_lon <= NC_BBOX$lon_max
-      ) |>
-      dplyr::select(-grid_lat, -grid_lon) |>
+    eif_tbl <- eif_nc_tables[[nm]] |>
       dplyr::rename_with(~ paste0(yr, "_", .), !starts_with("eif_"))
 
-    # Join on year-specific keys, then drop them
     result <- result |>
       dplyr::left_join(
         eif_tbl |> dplyr::rename(!!lat_col := eif_lat, !!lon_col := eif_lon),
@@ -609,7 +614,11 @@ join_eif_all <- function(sf_obj) {
 mits_with_eif <- join_eif_all(mits_resolved)
 apps_with_eif <- join_eif_all(apps_resolved)
 
-# Coverage diagnostics — should now show 100% match for all datasets
+# Free the NC tables now that joins are done
+rm(eif_nc_tables, eif_cells_sf)
+gc()
+
+# Coverage diagnostics
 coverage <- function(df, label) {
   cat("\n", label, "EIF coverage:\n")
   cat(sprintf("  %-35s %d\n", "Total records", nrow(df)))
