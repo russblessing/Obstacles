@@ -521,21 +521,42 @@ split_cols <- function(df) {
 # Pivot long -> one summary row per cell; prefix all value columns.
 aggregate_eif_wide <- function(d, prefix) {
   cols <- split_cols(d)
-  if (length(cols$key) == 0 || length(cols$val) == 0) {
-    # Already one row per cell, or no recognisable value columns — just prefix.
+
+  # Guard: if no value columns recognized, warn loudly and return keys-only.
+  # This usually means split_cols's regex didn't match the parquet column
+  # naming. Inspect schema and update val_pat in split_cols.
+  if (length(cols$val) == 0) {
+    warning(sprintf(
+      "aggregate_eif_wide('%s'): no value columns identified. ",
+      prefix
+    ), "Available columns: ", paste(names(d), collapse = ", "))
+    return(
+      d |> dplyr::select(eif_lat, eif_lon) |> dplyr::distinct()
+    )
+  }
+
+  if (length(cols$key) == 0) {
+    # No categorical keys to pivot over — already 1 row per cell.
+    # Just prefix the value columns.
     d |>
-      select(eif_lat, eif_lon, any_of(cols$val)) |>
-      rename_with(~ paste0(prefix, "_", .), -c(eif_lat, eif_lon))
+      dplyr::select(eif_lat, eif_lon, dplyr::all_of(cols$val)) |>
+      dplyr::rename_with(
+        ~ paste0(prefix, "_", .x),
+        dplyr::all_of(cols$val)
+      )
   } else {
     d |>
-      pivot_wider(
+      tidyr::pivot_wider(
         id_cols     = c(eif_lat, eif_lon),
-        names_from  = all_of(cols$key),
-        values_from = all_of(cols$val),
+        names_from  = dplyr::all_of(cols$key),
+        values_from = dplyr::all_of(cols$val),
         names_sep   = "_",
-        values_fn   = sum        # handles any residual duplication
+        values_fn   = sum
       ) |>
-      rename_with(~ paste0(prefix, "_", .), -c(eif_lat, eif_lon))
+      dplyr::rename_with(
+        ~ paste0(prefix, "_", .x),
+        -c(eif_lat, eif_lon)
+      )
   }
 }
 
