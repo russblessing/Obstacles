@@ -365,7 +365,7 @@ joined |>
 ## 9  Gridded EIF Census enrichment
 
 The Census Bureau Gridded EIF provides privacy-protected counts on a
-fixed 0.01° grid (~1.2 km² per cell). Seven files across three years
+fixed 0.01° grid (~1.2 km² per cell). Four files across two years
 are joined to each mit/app point:
 
 | File | Cross-tab | Prefix | Years |
@@ -511,7 +511,7 @@ cat("Unique EIF cells needed:", nrow(needed_cells), "\n")
 split_cols <- function(df) {
   exclude_pat <- "^(eif_lat|eif_lon|grid_lat|grid_lon)"
   candidate   <- names(df)[!grepl(exclude_pat, names(df))]
-  val_pat  <- "count|value|n_raw|n_pp|pop|hu_|_raw|_pp|estimate|moe"
+  val_pat  <- "^n_|count|value|pop|hu_|estimate|moe|_noise|_postprocessed"
   val_cols <- candidate[grepl(val_pat, candidate, ignore.case = TRUE) &
                           sapply(df[candidate], is.numeric)]
   key_cols <- setdiff(candidate, val_cols)
@@ -831,7 +831,6 @@ to_interpolate |>
 | `eif_lat`, `eif_lon` | derived | original snapped 0.01° cell-center (base position) |
 | `valid_cell` | topology join | `TRUE` = valid land cell per EIF topology; `FALSE` = water/outside-US or geocoding error |
 | `eif_lat_{prefix}`, `eif_lon_{prefix}` | nearest-neighbor fill | year-specific cell keys; equal to base keys for matched cells, snapped to nearest populated cell otherwise (one pair per EIF dataset, e.g. `eif_lat_ars_1999`) |
-| `hu_2024_*` columns | EIF hu_age_homeval 2024 | housing units, householder age, home value |
 | `ars_1999_*`, `ars_2020_*` columns | EIF pop_ageracesex (1999 + 2020) | population × age × race × sex |
 | `ri_1999_*`, `ri_2020_*` columns | EIF pop_raceincome (1999 + 2020) | population × race × income decile |
 
