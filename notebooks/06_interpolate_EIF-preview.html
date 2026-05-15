@@ -228,10 +228,10 @@
   <ul class="collapse">
   <li><a href="#download-eif-files-one-time" id="toc-download-eif-files-one-time" class="nav-link" data-scroll-target="#download-eif-files-one-time">9.1 Download EIF files (one-time)</a></li>
   <li><a href="#inspect-eif-schemas" id="toc-inspect-eif-schemas" class="nav-link" data-scroll-target="#inspect-eif-schemas">9.2 Inspect EIF schemas</a></li>
-  <li><a href="#read-eif-parquets-filtered-to-nc-bounding-box" id="toc-read-eif-parquets-filtered-to-nc-bounding-box" class="nav-link" data-scroll-target="#read-eif-parquets-filtered-to-nc-bounding-box">9.3 Read EIF parquets (filtered to NC bounding box)</a></li>
+  <li><a href="#load-eif-grid-topology" id="toc-load-eif-grid-topology" class="nav-link" data-scroll-target="#load-eif-grid-topology">9.3 Load EIF grid topology</a></li>
   <li><a href="#snap-mitapp-points-to-eif-cells" id="toc-snap-mitapp-points-to-eif-cells" class="nav-link" data-scroll-target="#snap-mitapp-points-to-eif-cells">9.4 Snap mit/app points to EIF cells</a></li>
-  <li><a href="#join-all-eif-datasets-onto-mitsapps" id="toc-join-all-eif-datasets-onto-mitsapps" class="nav-link" data-scroll-target="#join-all-eif-datasets-onto-mitsapps">9.5 Join all EIF datasets onto mits/apps</a></li>
-  <li><a href="#write-enriched-outputs" id="toc-write-enriched-outputs" class="nav-link" data-scroll-target="#write-enriched-outputs">9.6 Write enriched outputs</a></li>
+  <li><a href="#snap-unmatched-records-to-nearest-populated-eif-cell-per-year" id="toc-snap-unmatched-records-to-nearest-populated-eif-cell-per-year" class="nav-link" data-scroll-target="#snap-unmatched-records-to-nearest-populated-eif-cell-per-year">9.5 Snap unmatched records to nearest populated EIF cell (per year)</a></li>
+  <li><a href="#join-all-eif-datasets-onto-mitsapps" id="toc-join-all-eif-datasets-onto-mitsapps" class="nav-link" data-scroll-target="#join-all-eif-datasets-onto-mitsapps">9.6 Join all EIF datasets onto mits/apps</a></li>
   </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   <li><a href="#output-schema" id="toc-output-schema" class="nav-link" data-scroll-target="#output-schema">Output schema</a></li>
@@ -247,20 +247,19 @@
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>This notebook does two related things:</p>
 <p><strong>Property value interpolation.</strong> For parcels matched to a mitigation or application record but carrying an unreliable <code>TOTAL.VALUE.CALCULATED</code> (vacant land, government-owned, anomalously low values), estimate a market-comparable value by averaging the recorded values of the nearest 1–4 family residential donor parcels. Three estimates per recipient (k = 5, 10, 50 nearest neighbors).</p>
-<p><strong>EIF census enrichment.</strong> For each mit/app point, attach Census Bureau Gridded EIF attributes from three release years (1999, 2020, 2024) at the 0.01° grid cell containing that point. Seven EIF files are joined:</p>
+<p><strong>EIF census enrichment.</strong> For each mit/app point, attach Census Bureau Gridded EIF attributes from two release years (1999 and 2020) at the 0.01° grid cell containing that point. Four EIF files are joined:</p>
 <ul>
-<li>Housing units × householder age × income × home value — 2024 only (no historical version exists; column prefix <code>hu_2024_</code>)</li>
-<li>Population × age × race × sex — 1999, 2020, 2024 (prefixes <code>ars_1999_</code>, <code>ars_2020_</code>, <code>ars_2024_</code>)</li>
-<li>Population × race × income decile — 1999, 2020, 2024 (prefixes <code>ri_1999_</code>, <code>ri_2020_</code>, <code>ri_2024_</code>)</li>
+<li>Population × age × race × sex — 1999 and 2020 (prefixes <code>ars_1999_</code>, <code>ars_2020_</code>)</li>
+<li>Population × race × income decile — 1999 and 2020 (prefixes <code>ri_1999_</code>, <code>ri_2020_</code>)</li>
 </ul>
-<p>The three years cover the bookends and a midpoint of the project’s 1999–2024 disaster history. Year-matched demographics let downstream analysis pull contextual demographics from the same year as each mit/app’s program record (e.g., a 1999 Hurricane Floyd buyout record can use <code>ars_1999_*</code> columns rather than 2024 baseline demographics).</p>
+<p>The 1999 and 2020 baselines bracket the project’s main disaster history window, letting downstream analysis pull contextual demographics from a year close to each mit/app’s program record (e.g., a 1999 Hurricane Floyd buyout record can use <code>ars_1999_*</code> columns; later records can use the 2020 baseline).</p>
 <p>Both stages consume the <strong>alt Step 5 resolved outputs</strong> as the single source of mit/app data. Each record carries an <code>assigned_parcel_index</code> (resolved to one parcel per record, no fan-out) and a point geometry. The interpolation uses <code>assigned_parcel_index</code> to count mits/apps per parcel; the EIF enrichment uses the point geometry to snap each record to its grid cell.</p>
 <p><strong>Inputs:</strong></p>
 <ul>
 <li><code>parcels_pri.gpkg</code> — parcels with priority scoring (canonical Step 5)</li>
 <li><code>alt_mits_resolved.gpkg</code> — point-geometry mits, one row per record, resolved to one assigned parcel each (alt Step 5)</li>
 <li><code>alt_apps_resolved.gpkg</code> — point-geometry apps, same structure (alt Step 5)</li>
-<li>Seven Gridded EIF parquet files (downloaded on first run)</li>
+<li>Four Gridded EIF parquet files (downloaded on first run)</li>
 </ul>
 <p><strong>Outputs (written to <code>out_dir</code>):</strong></p>
 <ul>
@@ -736,22 +735,16 @@ App assignment_method distribution:</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>gridded_eif_hu_age_homeval_2024.parquet</code></td>
-<td>housing units × householder age × income × home value</td>
-<td><code>hu_2024_</code></td>
-<td>2024 only</td>
-</tr>
-<tr class="even">
 <td><code>gridded_eif_pop_ageracesex_{year}.parquet</code></td>
 <td>population × age × race × sex</td>
 <td><code>ars_{year}_</code></td>
-<td>1999, 2020, 2024</td>
+<td>1999, 2020</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>gridded_eif_pop_raceincome_{year}.parquet</code></td>
 <td>population × race × income decile</td>
 <td><code>ri_{year}_</code></td>
-<td>1999, 2020, 2024</td>
+<td>1999, 2020</td>
 </tr>
 </tbody>
 </table>
@@ -845,81 +838,61 @@ n_noise_postprocessed: double</code></pre>
 </div>
 </div></div>
 </section>
-<section id="read-eif-parquets-filtered-to-nc-bounding-box" class="level3">
-<h3 class="anchored" data-anchor-id="read-eif-parquets-filtered-to-nc-bounding-box">9.3 Read EIF parquets (filtered to NC bounding box)</h3>
+<section id="load-eif-grid-topology" class="level3">
+<h3 class="anchored" data-anchor-id="load-eif-grid-topology">9.3 Load EIF grid topology</h3>
+<p>The topology file is the authoritative cell registry — it defines all valid land cells on the 0.01° grid, including cells with zero population (absent from the parquets). Joining mits/apps to the topology lets us distinguish <strong>why</strong> a record has NA EIF columns:</p>
+<ul>
+<li><code>valid_cell == TRUE</code> &amp; EIF columns non-NA → populated cell, matched ✓<br>
+</li>
+<li><code>valid_cell == TRUE</code> &amp; EIF columns NA → valid land cell, zero/suppressed population<br>
+</li>
+<li><code>valid_cell == FALSE</code> → water, outside-US, or geocoding error</li>
+</ul>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [14]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>LAT_COL <span class="ot">&lt;-</span> <span class="st">"grid_lat"</span></span>
-<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>LON_COL <span class="ot">&lt;-</span> <span class="st">"grid_lon"</span></span>
-<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>read_eif <span class="ot">&lt;-</span> <span class="cf">function</span>(path, prefix) {</span>
-<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">open_dataset</span>(path) <span class="sc">|&gt;</span></span>
-<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">collect</span>()</span>
-<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span></span>
-<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">grid_lat_num =</span> <span class="fu">as.numeric</span>(.data[[LAT_COL]]),</span>
-<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">grid_lon_num =</span> <span class="fu">as.numeric</span>(.data[[LON_COL]])</span>
-<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(</span>
-<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>      grid_lat_num <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lat_min,</span>
-<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>      grid_lat_num <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lat_max,</span>
-<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>      grid_lon_num <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lon_min,</span>
-<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a>      grid_lon_num <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lon_max</span>
-<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lat =</span> <span class="fu">round</span>(grid_lat_num, <span class="dv">3</span>),</span>
-<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lon =</span> <span class="fu">round</span>(grid_lon_num, <span class="dv">3</span>)</span>
-<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>grid_lat_num, <span class="sc">-</span>grid_lon_num, <span class="sc">-</span><span class="fu">any_of</span>(<span class="fu">c</span>(LAT_COL, LON_COL)))</span>
-<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-25"><a href="#cb66-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Identify demographic grouping columns (everything except cell key and counts)</span></span>
-<span id="cb66-26"><a href="#cb66-26" aria-hidden="true" tabindex="-1"></a>  count_cols <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"n_noise"</span>, <span class="st">"n_noise_postprocessed"</span>)</span>
-<span id="cb66-27"><a href="#cb66-27" aria-hidden="true" tabindex="-1"></a>  group_cols <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(<span class="fu">names</span>(d), <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>, count_cols))</span>
-<span id="cb66-28"><a href="#cb66-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-29"><a href="#cb66-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Pivot to wide: one row per cell, columns named {prefix}_{group}_{count}</span></span>
-<span id="cb66-30"><a href="#cb66-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(group_cols) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
-<span id="cb66-31"><a href="#cb66-31" aria-hidden="true" tabindex="-1"></a>    d <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span></span>
-<span id="cb66-32"><a href="#cb66-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">unite</span>(<span class="st">"_group_key"</span>, <span class="fu">all_of</span>(group_cols), <span class="at">sep =</span> <span class="st">"__"</span>, <span class="at">remove =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb66-33"><a href="#cb66-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">pivot_wider</span>(</span>
-<span id="cb66-34"><a href="#cb66-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">id_cols     =</span> <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>),</span>
-<span id="cb66-35"><a href="#cb66-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_from  =</span> <span class="st">"_group_key"</span>,</span>
-<span id="cb66-36"><a href="#cb66-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_from =</span> <span class="fu">all_of</span>(count_cols),</span>
-<span id="cb66-37"><a href="#cb66-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_glue  =</span> <span class="fu">paste0</span>(prefix, <span class="st">"_{.value}__{.name}"</span>)</span>
-<span id="cb66-38"><a href="#cb66-38" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb66-39"><a href="#cb66-39" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb66-40"><a href="#cb66-40" aria-hidden="true" tabindex="-1"></a>    d <span class="ot">&lt;-</span> d <span class="sc">|&gt;</span></span>
-<span id="cb66-41"><a href="#cb66-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename_with</span>(<span class="sc">~</span> <span class="fu">paste0</span>(prefix, <span class="st">"_"</span>, .x), <span class="fu">all_of</span>(count_cols))</span>
-<span id="cb66-42"><a href="#cb66-42" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb66-43"><a href="#cb66-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-44"><a href="#cb66-44" aria-hidden="true" tabindex="-1"></a>  d</span>
-<span id="cb66-45"><a href="#cb66-45" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb66-46"><a href="#cb66-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-47"><a href="#cb66-47" aria-hidden="true" tabindex="-1"></a>eif_data <span class="ot">&lt;-</span> <span class="fu">setNames</span>(</span>
-<span id="cb66-48"><a href="#cb66-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(eif_files, <span class="cf">function</span>(f) <span class="fu">read_eif</span>(f<span class="sc">$</span>path, f<span class="sc">$</span>prefix)),</span>
-<span id="cb66-49"><a href="#cb66-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(eif_files)</span>
-<span id="cb66-50"><a href="#cb66-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb66-51"><a href="#cb66-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb66-52"><a href="#cb66-52" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"EIF cells in NC bounding box (by dataset):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>topo_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"eif_grid_topology.rda"</span>)</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(topo_path)) {</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Downloading EIF grid topology..."</span>)</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">download.file</span>(</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://www2.census.gov/ces/gridded_eif/eif_grid_topology.rda"</span>,</span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>    topo_path, <span class="at">mode =</span> <span class="st">"wb"</span></span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>  e <span class="ot">&lt;-</span> <span class="fu">new.env</span>()</span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">load</span>(topo_path, <span class="at">envir =</span> e)</span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>  topo_obj <span class="ot">&lt;-</span> <span class="fu">get</span>(<span class="fu">ls</span>(e)[<span class="dv">1</span>], <span class="at">envir =</span> e)</span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># SpatialGridDataFrame -&gt; data frame of cell-center coordinates</span></span>
+<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>  topo_df <span class="ot">&lt;&lt;-</span> <span class="fu">as.data.frame</span>(topo_obj) <span class="sc">|&gt;</span></span>
+<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(grid_lon, grid_lat) <span class="sc">|&gt;</span></span>
+<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lat =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(grid_lat), <span class="dv">3</span>),</span>
+<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lon =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(grid_lon), <span class="dv">3</span>)</span>
+<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(eif_lat, eif_lon) <span class="sc">|&gt;</span></span>
+<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">distinct</span>()</span>
+<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>EIF cells in NC bounding box (by dataset):</code></pre>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required namespace: sp</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_data)) {</span>
-<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-30s %s rows, %d columns</span><span class="sc">\n</span><span class="st">"</span>,</span>
-<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>              nm,</span>
-<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">format</span>(<span class="fu">nrow</span>(eif_data[[nm]]), <span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>              <span class="fu">ncol</span>(eif_data[[nm]])))</span>
-<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Restrict to NC bounding box to keep the join fast</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>topo_nc <span class="ot">&lt;-</span> topo_df <span class="sc">|&gt;</span></span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    eif_lat <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lat_min, eif_lat <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lat_max,</span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a>    eif_lon <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lon_min, eif_lon <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lon_max</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">valid_cell =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"NC topology cells:"</span>, <span class="fu">nrow</span>(topo_nc), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  ageracesex_1999                146,468 rows, 128 columns
-  ageracesex_2020                165,061 rows, 118 columns
-  raceincome_1999                146,468 rows, 134 columns
-  raceincome_2020                165,061 rows, 134 columns</code></pre>
+<pre><code>NC topology cells: 235558 </code></pre>
 </div>
 </div></div>
 </section>
@@ -938,118 +911,487 @@ n_noise_postprocessed: double</code></pre>
 <span id="cb70-8"><a href="#cb70-8" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb70-9"><a href="#cb70-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb70-10"><a href="#cb70-10" aria-hidden="true" tabindex="-1"></a>mits_resolved <span class="ot">&lt;-</span> <span class="fu">add_eif_cell</span>(mits_resolved)</span>
-<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>apps_resolved <span class="ot">&lt;-</span> <span class="fu">add_eif_cell</span>(apps_resolved)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb70-11"><a href="#cb70-11" aria-hidden="true" tabindex="-1"></a>apps_resolved <span class="ot">&lt;-</span> <span class="fu">add_eif_cell</span>(apps_resolved)</span>
+<span id="cb70-12"><a href="#cb70-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-13"><a href="#cb70-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Join topology to flag valid land cells (TRUE) vs water/invalid (FALSE/NA)</span></span>
+<span id="cb70-14"><a href="#cb70-14" aria-hidden="true" tabindex="-1"></a>mits_resolved <span class="ot">&lt;-</span> mits_resolved <span class="sc">|&gt;</span></span>
+<span id="cb70-15"><a href="#cb70-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(topo_nc, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb70-16"><a href="#cb70-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">valid_cell =</span> <span class="fu">replace_na</span>(valid_cell, <span class="cn">FALSE</span>))</span>
+<span id="cb70-17"><a href="#cb70-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-18"><a href="#cb70-18" aria-hidden="true" tabindex="-1"></a>apps_resolved <span class="ot">&lt;-</span> apps_resolved <span class="sc">|&gt;</span></span>
+<span id="cb70-19"><a href="#cb70-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(topo_nc, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb70-20"><a href="#cb70-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">valid_cell =</span> <span class="fu">replace_na</span>(valid_cell, <span class="cn">FALSE</span>))</span>
+<span id="cb70-21"><a href="#cb70-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-22"><a href="#cb70-22" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mits — valid topology cell:   "</span>, <span class="fu">sum</span>(mits_resolved<span class="sc">$</span>valid_cell), <span class="st">"/"</span>, <span class="fu">nrow</span>(mits_resolved), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mits — valid topology cell:    8799 / 8801 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mits — invalid/water cell:    "</span>, <span class="fu">sum</span>(<span class="sc">!</span>mits_resolved<span class="sc">$</span>valid_cell), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mits — invalid/water cell:     2 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Apps — valid topology cell:   "</span>, <span class="fu">sum</span>(apps_resolved<span class="sc">$</span>valid_cell), <span class="st">"/"</span>, <span class="fu">nrow</span>(apps_resolved), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Apps — valid topology cell:    23225 / 23232 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Apps — invalid/water cell:    "</span>, <span class="fu">sum</span>(<span class="sc">!</span>apps_resolved<span class="sc">$</span>valid_cell), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Apps — invalid/water cell:     7 </code></pre>
+</div>
 </div></div>
 </section>
-<section id="join-all-eif-datasets-onto-mitsapps" class="level3">
-<h3 class="anchored" data-anchor-id="join-all-eif-datasets-onto-mitsapps">9.5 Join all EIF datasets onto mits/apps</h3>
+<section id="snap-unmatched-records-to-nearest-populated-eif-cell-per-year" class="level3">
+<h3 class="anchored" data-anchor-id="snap-unmatched-records-to-nearest-populated-eif-cell-per-year">9.5 Snap unmatched records to nearest populated EIF cell (per year)</h3>
+<p>Records that land on a valid topology cell but have no population data in a given year’s parquet (zero/DP-suppressed) are snapped to the nearest cell that <em>does</em> have population data for that year. Year-specific keys are stored in separate columns (<code>eif_lat_{year}</code>, <code>eif_lon_{year}</code>) so each parquet join uses the most appropriate cell. The base <code>eif_lat</code>/<code>eif_lon</code> columns (original snapped position) are preserved for reference.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [16]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>join_eif_all <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_obj) {</span>
-<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> sf_obj</span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_data)) {</span>
-<span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>    result <span class="ot">&lt;-</span> <span class="fu">left_join</span>(result, eif_data[[nm]], <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>))</span>
-<span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>  result</span>
-<span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>mits_with_eif <span class="ot">&lt;-</span> <span class="fu">join_eif_all</span>(mits_resolved)</span>
-<span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>apps_with_eif <span class="ot">&lt;-</span> <span class="fu">join_eif_all</span>(apps_resolved)</span>
-<span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-12"><a href="#cb71-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Coverage diagnostics</span></span>
-<span id="cb71-13"><a href="#cb71-13" aria-hidden="true" tabindex="-1"></a>coverage <span class="ot">&lt;-</span> <span class="cf">function</span>(df, label) {</span>
-<span id="cb71-14"><a href="#cb71-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, label, <span class="st">"EIF coverage (cells matched / total records):</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb71-15"><a href="#cb71-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_files)) {</span>
-<span id="cb71-16"><a href="#cb71-16" aria-hidden="true" tabindex="-1"></a>    pfx <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
-<span id="cb71-17"><a href="#cb71-17" aria-hidden="true" tabindex="-1"></a>    marker <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="fu">startsWith</span>(<span class="fu">names</span>(df), <span class="fu">paste0</span>(pfx, <span class="st">"_"</span>))][<span class="dv">1</span>]</span>
-<span id="cb71-18"><a href="#cb71-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(marker)) {</span>
-<span id="cb71-19"><a href="#cb71-19" aria-hidden="true" tabindex="-1"></a>      n <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(df[[marker]]))</span>
-<span id="cb71-20"><a href="#cb71-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-30s %d / %d (%.1f%%)</span><span class="sc">\n</span><span class="st">"</span>, nm, n, <span class="fu">nrow</span>(df), <span class="dv">100</span> <span class="sc">*</span> n <span class="sc">/</span> <span class="fu">nrow</span>(df)))</span>
-<span id="cb71-21"><a href="#cb71-21" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb71-22"><a href="#cb71-22" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb71-23"><a href="#cb71-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb71-24"><a href="#cb71-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb71-25"><a href="#cb71-25" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage</span>(mits_with_eif, <span class="st">"Mitigations"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cells actually referenced by any mit or app — typically a small fraction</span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a><span class="co"># of all NC cells, so filtering early massively reduces working-set size.</span></span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>needed_cells <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>  mits_resolved <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span> <span class="fu">select</span>(eif_lat, eif_lon),</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>  apps_resolved <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span> <span class="fu">select</span>(eif_lat, eif_lon)</span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> <span class="fu">distinct</span>()</span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-8"><a href="#cb78-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Unique EIF cells needed:"</span>, <span class="fu">nrow</span>(needed_cells), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>
- Mitigations EIF coverage (cells matched / total records):
-  ageracesex_1999                7018 / 8801 (79.7%)
-  ageracesex_2020                7990 / 8801 (90.8%)
-  raceincome_1999                6838 / 8801 (77.7%)
-  raceincome_2020                685 / 8801 (7.8%)</code></pre>
+<pre><code>Unique EIF cells needed: 2866 </code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage</span>(apps_with_eif, <span class="st">"Applications"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------------------------------</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Schema-adaptive helper: identify categorical (key) vs numeric (value) cols.</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a><span class="co"># EIF coord columns and any already-derived eif_* keys are excluded.</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------------------------------</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>split_cols <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>  exclude_pat <span class="ot">&lt;-</span> <span class="st">"^(eif_lat|eif_lon|grid_lat|grid_lon)"</span></span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>  candidate   <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="sc">!</span><span class="fu">grepl</span>(exclude_pat, <span class="fu">names</span>(df))]</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>  val_pat  <span class="ot">&lt;-</span> <span class="st">"count|value|n_raw|n_pp|pop|hu_|_raw|_pp|estimate|moe"</span></span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>  val_cols <span class="ot">&lt;-</span> candidate[<span class="fu">grepl</span>(val_pat, candidate, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">&amp;</span></span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">sapply</span>(df[candidate], is.numeric)]</span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>  key_cols <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(candidate, val_cols)</span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">key =</span> key_cols, <span class="at">val =</span> val_cols)</span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Pivot long -&gt; one summary row per cell; prefix all value columns.</span></span>
+<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a>aggregate_eif_wide <span class="ot">&lt;-</span> <span class="cf">function</span>(d, prefix) {</span>
+<span id="cb80-17"><a href="#cb80-17" aria-hidden="true" tabindex="-1"></a>  cols <span class="ot">&lt;-</span> <span class="fu">split_cols</span>(d)</span>
+<span id="cb80-18"><a href="#cb80-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-19"><a href="#cb80-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Guard: if no value columns recognized, warn loudly and return keys-only.</span></span>
+<span id="cb80-20"><a href="#cb80-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># This usually means split_cols's regex didn't match the parquet column</span></span>
+<span id="cb80-21"><a href="#cb80-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># naming. Inspect schema and update val_pat in split_cols.</span></span>
+<span id="cb80-22"><a href="#cb80-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(cols<span class="sc">$</span>val) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb80-23"><a href="#cb80-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(<span class="fu">sprintf</span>(</span>
+<span id="cb80-24"><a href="#cb80-24" aria-hidden="true" tabindex="-1"></a>      <span class="st">"aggregate_eif_wide('%s'): no value columns identified. "</span>,</span>
+<span id="cb80-25"><a href="#cb80-25" aria-hidden="true" tabindex="-1"></a>      prefix</span>
+<span id="cb80-26"><a href="#cb80-26" aria-hidden="true" tabindex="-1"></a>    ), <span class="st">"Available columns: "</span>, <span class="fu">paste</span>(<span class="fu">names</span>(d), <span class="at">collapse =</span> <span class="st">", "</span>))</span>
+<span id="cb80-27"><a href="#cb80-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(</span>
+<span id="cb80-28"><a href="#cb80-28" aria-hidden="true" tabindex="-1"></a>      d <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">select</span>(eif_lat, eif_lon) <span class="sc">|&gt;</span> dplyr<span class="sc">::</span><span class="fu">distinct</span>()</span>
+<span id="cb80-29"><a href="#cb80-29" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb80-30"><a href="#cb80-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb80-31"><a href="#cb80-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-32"><a href="#cb80-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(cols<span class="sc">$</span>key) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb80-33"><a href="#cb80-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># No categorical keys to pivot over — already 1 row per cell.</span></span>
+<span id="cb80-34"><a href="#cb80-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Just prefix the value columns.</span></span>
+<span id="cb80-35"><a href="#cb80-35" aria-hidden="true" tabindex="-1"></a>    d <span class="sc">|&gt;</span></span>
+<span id="cb80-36"><a href="#cb80-36" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">select</span>(eif_lat, eif_lon, dplyr<span class="sc">::</span><span class="fu">all_of</span>(cols<span class="sc">$</span>val)) <span class="sc">|&gt;</span></span>
+<span id="cb80-37"><a href="#cb80-37" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">rename_with</span>(</span>
+<span id="cb80-38"><a href="#cb80-38" aria-hidden="true" tabindex="-1"></a>        <span class="sc">~</span> <span class="fu">paste0</span>(prefix, <span class="st">"_"</span>, .x),</span>
+<span id="cb80-39"><a href="#cb80-39" aria-hidden="true" tabindex="-1"></a>        dplyr<span class="sc">::</span><span class="fu">all_of</span>(cols<span class="sc">$</span>val)</span>
+<span id="cb80-40"><a href="#cb80-40" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb80-41"><a href="#cb80-41" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb80-42"><a href="#cb80-42" aria-hidden="true" tabindex="-1"></a>    d <span class="sc">|&gt;</span></span>
+<span id="cb80-43"><a href="#cb80-43" aria-hidden="true" tabindex="-1"></a>      tidyr<span class="sc">::</span><span class="fu">pivot_wider</span>(</span>
+<span id="cb80-44"><a href="#cb80-44" aria-hidden="true" tabindex="-1"></a>        <span class="at">id_cols     =</span> <span class="fu">c</span>(eif_lat, eif_lon),</span>
+<span id="cb80-45"><a href="#cb80-45" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_from  =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(cols<span class="sc">$</span>key),</span>
+<span id="cb80-46"><a href="#cb80-46" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_from =</span> dplyr<span class="sc">::</span><span class="fu">all_of</span>(cols<span class="sc">$</span>val),</span>
+<span id="cb80-47"><a href="#cb80-47" aria-hidden="true" tabindex="-1"></a>        <span class="at">names_sep   =</span> <span class="st">"_"</span>,</span>
+<span id="cb80-48"><a href="#cb80-48" aria-hidden="true" tabindex="-1"></a>        <span class="at">values_fn   =</span> sum</span>
+<span id="cb80-49"><a href="#cb80-49" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">|&gt;</span></span>
+<span id="cb80-50"><a href="#cb80-50" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">rename_with</span>(</span>
+<span id="cb80-51"><a href="#cb80-51" aria-hidden="true" tabindex="-1"></a>        <span class="sc">~</span> <span class="fu">paste0</span>(prefix, <span class="st">"_"</span>, .x),</span>
+<span id="cb80-52"><a href="#cb80-52" aria-hidden="true" tabindex="-1"></a>        <span class="sc">-</span><span class="fu">c</span>(eif_lat, eif_lon)</span>
+<span id="cb80-53"><a href="#cb80-53" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb80-54"><a href="#cb80-54" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb80-55"><a href="#cb80-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb80-56"><a href="#cb80-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-57"><a href="#cb80-57" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------------------------------</span></span>
+<span id="cb80-58"><a href="#cb80-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Process each EIF file:</span></span>
+<span id="cb80-59"><a href="#cb80-59" aria-hidden="true" tabindex="-1"></a><span class="co">#   Arrow bbox pushdown -&gt; collect NC rows -&gt; filter to needed cells -&gt;</span></span>
+<span id="cb80-60"><a href="#cb80-60" aria-hidden="true" tabindex="-1"></a><span class="co">#   aggregate to one row per cell -&gt; release raw data.</span></span>
+<span id="cb80-61"><a href="#cb80-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Sequential to keep peak memory bounded.</span></span>
+<span id="cb80-62"><a href="#cb80-62" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------------------------------------</span></span>
+<span id="cb80-63"><a href="#cb80-63" aria-hidden="true" tabindex="-1"></a>process_one_eif <span class="ot">&lt;-</span> <span class="cf">function</span>(nm, needed_cells) {</span>
+<span id="cb80-64"><a href="#cb80-64" aria-hidden="true" tabindex="-1"></a>  f      <span class="ot">&lt;-</span> eif_files[[nm]]</span>
+<span id="cb80-65"><a href="#cb80-65" aria-hidden="true" tabindex="-1"></a>  prefix <span class="ot">&lt;-</span> f<span class="sc">$</span>prefix</span>
+<span id="cb80-66"><a href="#cb80-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Processing"</span>, nm, <span class="st">"(prefix:"</span>, prefix, <span class="st">")... "</span>)</span>
+<span id="cb80-67"><a href="#cb80-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-68"><a href="#cb80-68" aria-hidden="true" tabindex="-1"></a>  raw <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">open_dataset</span>(f<span class="sc">$</span>path) <span class="sc">|&gt;</span></span>
+<span id="cb80-69"><a href="#cb80-69" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb80-70"><a href="#cb80-70" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lat) <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lat_min,</span>
+<span id="cb80-71"><a href="#cb80-71" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lat) <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lat_max,</span>
+<span id="cb80-72"><a href="#cb80-72" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lon) <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lon_min,</span>
+<span id="cb80-73"><a href="#cb80-73" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lon) <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lon_max</span>
+<span id="cb80-74"><a href="#cb80-74" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb80-75"><a href="#cb80-75" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">collect</span>() <span class="sc">|&gt;</span></span>
+<span id="cb80-76"><a href="#cb80-76" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb80-77"><a href="#cb80-77" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lat =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(grid_lat), <span class="dv">3</span>),</span>
+<span id="cb80-78"><a href="#cb80-78" aria-hidden="true" tabindex="-1"></a>      <span class="at">eif_lon =</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(grid_lon), <span class="dv">3</span>)</span>
+<span id="cb80-79"><a href="#cb80-79" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb80-80"><a href="#cb80-80" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>grid_lat, <span class="sc">-</span>grid_lon)</span>
+<span id="cb80-81"><a href="#cb80-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-82"><a href="#cb80-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"NC rows:"</span>, <span class="fu">nrow</span>(raw), <span class="st">"| "</span>)</span>
+<span id="cb80-83"><a href="#cb80-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-84"><a href="#cb80-84" aria-hidden="true" tabindex="-1"></a>  raw_needed <span class="ot">&lt;-</span> raw <span class="sc">|&gt;</span> <span class="fu">inner_join</span>(needed_cells, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"eif_lat"</span>, <span class="st">"eif_lon"</span>))</span>
+<span id="cb80-85"><a href="#cb80-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"needed-cell rows:"</span>, <span class="fu">nrow</span>(raw_needed), <span class="st">"| "</span>)</span>
+<span id="cb80-86"><a href="#cb80-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-87"><a href="#cb80-87" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Sanity check: rows/cell BEFORE aggregation — confirms long vs wide format</span></span>
+<span id="cb80-88"><a href="#cb80-88" aria-hidden="true" tabindex="-1"></a>  rpc <span class="ot">&lt;-</span> raw_needed <span class="sc">|&gt;</span> <span class="fu">count</span>(eif_lat, eif_lon) <span class="sc">|&gt;</span> <span class="fu">pull</span>(n) <span class="sc">|&gt;</span> <span class="fu">median</span>()</span>
+<span id="cb80-89"><a href="#cb80-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"median rows/cell:"</span>, rpc, <span class="st">"| "</span>)</span>
+<span id="cb80-90"><a href="#cb80-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-91"><a href="#cb80-91" aria-hidden="true" tabindex="-1"></a>  summary_tbl <span class="ot">&lt;-</span> <span class="fu">aggregate_eif_wide</span>(raw_needed, prefix)</span>
+<span id="cb80-92"><a href="#cb80-92" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"summary rows:"</span>, <span class="fu">nrow</span>(summary_tbl), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb80-93"><a href="#cb80-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-94"><a href="#cb80-94" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span>(raw, raw_needed); <span class="fu">gc</span>()</span>
+<span id="cb80-95"><a href="#cb80-95" aria-hidden="true" tabindex="-1"></a>  summary_tbl</span>
+<span id="cb80-96"><a href="#cb80-96" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb80-97"><a href="#cb80-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-98"><a href="#cb80-98" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify Arrow can push down the numeric-cast bbox filter before running all files.</span></span>
+<span id="cb80-99"><a href="#cb80-99" aria-hidden="true" tabindex="-1"></a><span class="co"># If this takes &gt; 30s or returns millions of rows, the filter is not pushing down —</span></span>
+<span id="cb80-100"><a href="#cb80-100" aria-hidden="true" tabindex="-1"></a><span class="co"># in that case switch process_one_eif to collect() first, then filter().</span></span>
+<span id="cb80-101"><a href="#cb80-101" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
+<span id="cb80-102"><a href="#cb80-102" aria-hidden="true" tabindex="-1"></a>  test_q <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">open_dataset</span>(eif_files[[<span class="dv">1</span>]]<span class="sc">$</span>path) <span class="sc">|&gt;</span></span>
+<span id="cb80-103"><a href="#cb80-103" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(</span>
+<span id="cb80-104"><a href="#cb80-104" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lat) <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lat_min,</span>
+<span id="cb80-105"><a href="#cb80-105" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lat) <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lat_max,</span>
+<span id="cb80-106"><a href="#cb80-106" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lon) <span class="sc">&gt;=</span> NC_BBOX<span class="sc">$</span>lon_min,</span>
+<span id="cb80-107"><a href="#cb80-107" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(grid_lon) <span class="sc">&lt;=</span> NC_BBOX<span class="sc">$</span>lon_max</span>
+<span id="cb80-108"><a href="#cb80-108" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb80-109"><a href="#cb80-109" aria-hidden="true" tabindex="-1"></a>  elapsed <span class="ot">&lt;-</span> <span class="fu">system.time</span>({ n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(dplyr<span class="sc">::</span><span class="fu">collect</span>(test_q)) })</span>
+<span id="cb80-110"><a href="#cb80-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Arrow filter test: %d rows in %.1fs</span><span class="sc">\n</span><span class="st">"</span>, n, elapsed[<span class="st">"elapsed"</span>]))</span>
+<span id="cb80-111"><a href="#cb80-111" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (elapsed[<span class="st">"elapsed"</span>] <span class="sc">&gt;</span> <span class="dv">30</span>)</span>
+<span id="cb80-112"><a href="#cb80-112" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(<span class="st">"Arrow pushdown may not be working — consider collect()-first fallback"</span>)</span>
+<span id="cb80-113"><a href="#cb80-113" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Arrow filter test: 1053678 rows in 5.3s</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a>eif_nc_tables <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="fu">names</span>(eif_files), process_one_eif,</span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">needed_cells =</span> needed_cells) <span class="sc">|&gt;</span></span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_names</span>(<span class="fu">names</span>(eif_files))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
- Applications EIF coverage (cells matched / total records):
-  ageracesex_1999                15245 / 23232 (65.6%)
-  ageracesex_2020                21224 / 23232 (91.4%)
-  raceincome_1999                17290 / 23232 (74.4%)
-  raceincome_2020                1981 / 23232 (8.5%)</code></pre>
+Processing ageracesex_1999 (prefix: ars_1999 )... NC rows: 1053678 | needed-cell rows: 29624 | median rows/cell: 9 | </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in aggregate_eif_wide(raw_needed, prefix):
+aggregate_eif_wide('ars_1999'): no value columns identified. Available columns:
+age_group, race_ethnicity, sex, n_noise, n_noise_postprocessed, eif_lat,
+eif_lon</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>summary rows: 2599 
+
+Processing ageracesex_2020 (prefix: ars_2020 )... NC rows: 1708057 | needed-cell rows: 41820 | median rows/cell: 14 | </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in aggregate_eif_wide(raw_needed, prefix):
+aggregate_eif_wide('ars_2020'): no value columns identified. Available columns:
+age_group, race_ethnicity, sex, n_noise, n_noise_postprocessed, eif_lat,
+eif_lon</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>summary rows: 2732 
+
+Processing raceincome_1999 (prefix: ri_1999 )... NC rows: 1121420 | needed-cell rows: 34469 | median rows/cell: 10 | </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in aggregate_eif_wide(raw_needed, prefix):
+aggregate_eif_wide('ri_1999'): no value columns identified. Available columns:
+income_decile, race_ethnicity, n_noise, n_noise_postprocessed, eif_lat, eif_lon</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>summary rows: 2599 
+
+Processing raceincome_2020 (prefix: ri_2020 )... NC rows: 1885194 | needed-cell rows: 50720 | median rows/cell: 14 | </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in aggregate_eif_wide(raw_needed, prefix):
+aggregate_eif_wide('ri_2020'): no value columns identified. Available columns:
+income_decile, race_ethnicity, n_noise, n_noise_postprocessed, eif_lat, eif_lon</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>summary rows: 2732 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb92"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm 1 row per cell in every summary (0 duplicate keys = join is 1:1)</span></span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(<span class="fu">names</span>(eif_nc_tables), eif_nc_tables, <span class="cf">function</span>(nm, s) {</span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a>  dups <span class="ot">&lt;-</span> <span class="fu">nrow</span>(s) <span class="sc">-</span> <span class="fu">nrow</span>(<span class="fu">distinct</span>(s, eif_lat, eif_lon))</span>
+<span id="cb92-4"><a href="#cb92-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-30s %d cells, %d duplicate keys</span><span class="sc">\n</span><span class="st">"</span>, nm, <span class="fu">nrow</span>(s), dups))</span>
+<span id="cb92-5"><a href="#cb92-5" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  ageracesex_1999                2599 cells, 0 duplicate keys
+  ageracesex_2020                2732 cells, 0 duplicate keys
+  raceincome_1999                2599 cells, 0 duplicate keys
+  raceincome_2020                2732 cells, 0 duplicate keys</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb94"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Keys-only sf layers for nearest-neighbour search (unchanged from before)</span></span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a>eif_cells_sf <span class="ot">&lt;-</span> <span class="fu">map</span>(eif_nc_tables, <span class="cf">function</span>(tbl) {</span>
+<span id="cb94-3"><a href="#cb94-3" aria-hidden="true" tabindex="-1"></a>  tbl <span class="sc">|&gt;</span></span>
+<span id="cb94-4"><a href="#cb94-4" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">select</span>(eif_lat, eif_lon) <span class="sc">|&gt;</span></span>
+<span id="cb94-5"><a href="#cb94-5" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">distinct</span>() <span class="sc">|&gt;</span></span>
+<span id="cb94-6"><a href="#cb94-6" aria-hidden="true" tabindex="-1"></a>    sf<span class="sc">::</span><span class="fu">st_as_sf</span>(<span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"eif_lon"</span>, <span class="st">"eif_lat"</span>), <span class="at">crs =</span> <span class="dv">4326</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb94-7"><a href="#cb94-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb94-8"><a href="#cb94-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb94-9"><a href="#cb94-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">NC EIF cell counts per dataset:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+NC EIF cell counts per dataset:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(<span class="fu">names</span>(eif_cells_sf), eif_cells_sf,</span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-30s %d cells</span><span class="sc">\n</span><span class="st">"</span>, .x, <span class="fu">nrow</span>(.y))))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  ageracesex_1999                2599 cells
+  ageracesex_2020                2732 cells
+  raceincome_1999                2599 cells
+  raceincome_2020                2732 cells</code></pre>
 </div>
 </div></div>
-</section>
-<section id="write-enriched-outputs" class="level3">
-<h3 class="anchored" data-anchor-id="write-enriched-outputs">9.6 Write enriched outputs</h3>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [17]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(mits_with_eif, <span class="fu">file.path</span>(out_dir, <span class="st">"mits_with_eif.gpkg"</span>),</span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="fu">st_write</span>(apps_with_eif, <span class="fu">file.path</span>(out_dir, <span class="st">"apps_with_eif.gpkg"</span>),</span>
-<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>mits_with_eif <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mits_with_eif.csv"</span>))</span>
-<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>apps_with_eif <span class="sc">|&gt;</span> <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"apps_with_eif.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For each dataset, snap unmatched records to nearest populated cell</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a>snap_to_nearest <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_obj, populated_sf, lat_col, lon_col) {</span>
+<span id="cb98-3"><a href="#cb98-3" aria-hidden="true" tabindex="-1"></a>  pop_coords <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_coordinates</span>(populated_sf)</span>
+<span id="cb98-4"><a href="#cb98-4" aria-hidden="true" tabindex="-1"></a>  pop_keys <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">round</span>(pop_coords[, <span class="st">"Y"</span>], <span class="dv">3</span>),</span>
+<span id="cb98-5"><a href="#cb98-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">round</span>(pop_coords[, <span class="st">"X"</span>], <span class="dv">3</span>))</span>
+<span id="cb98-6"><a href="#cb98-6" aria-hidden="true" tabindex="-1"></a>  obj_keys <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">round</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(sf_obj)[[lat_col]], <span class="dv">3</span>),</span>
+<span id="cb98-7"><a href="#cb98-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">round</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(sf_obj)[[lon_col]], <span class="dv">3</span>))</span>
+<span id="cb98-8"><a href="#cb98-8" aria-hidden="true" tabindex="-1"></a>  unmatched_idx <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="sc">!</span>obj_keys <span class="sc">%in%</span> pop_keys)</span>
+<span id="cb98-9"><a href="#cb98-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-10"><a href="#cb98-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(unmatched_idx) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb98-11"><a href="#cb98-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"  No unmatched records — skipping nearest-neighbor snap</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb98-12"><a href="#cb98-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(sf_obj)</span>
+<span id="cb98-13"><a href="#cb98-13" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb98-14"><a href="#cb98-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-15"><a href="#cb98-15" aria-hidden="true" tabindex="-1"></a>  nearest_idx <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_nearest_feature</span>(</span>
+<span id="cb98-16"><a href="#cb98-16" aria-hidden="true" tabindex="-1"></a>    sf_obj[unmatched_idx, ] <span class="sc">|&gt;</span> sf<span class="sc">::</span><span class="fu">st_transform</span>(<span class="dv">4326</span>),</span>
+<span id="cb98-17"><a href="#cb98-17" aria-hidden="true" tabindex="-1"></a>    populated_sf</span>
+<span id="cb98-18"><a href="#cb98-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb98-19"><a href="#cb98-19" aria-hidden="true" tabindex="-1"></a>  nearest_coords <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_coordinates</span>(populated_sf)[nearest_idx, ]</span>
+<span id="cb98-20"><a href="#cb98-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-21"><a href="#cb98-21" aria-hidden="true" tabindex="-1"></a>  sf_obj[[lon_col]][unmatched_idx] <span class="ot">&lt;-</span> <span class="fu">round</span>(nearest_coords[, <span class="st">"X"</span>], <span class="dv">3</span>)</span>
+<span id="cb98-22"><a href="#cb98-22" aria-hidden="true" tabindex="-1"></a>  sf_obj[[lat_col]][unmatched_idx] <span class="ot">&lt;-</span> <span class="fu">round</span>(nearest_coords[, <span class="st">"Y"</span>], <span class="dv">3</span>)</span>
+<span id="cb98-23"><a href="#cb98-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-24"><a href="#cb98-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"  Snapped"</span>, <span class="fu">length</span>(unmatched_idx), <span class="st">"unmatched records to nearest populated cell</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb98-25"><a href="#cb98-25" aria-hidden="true" tabindex="-1"></a>  sf_obj</span>
+<span id="cb98-26"><a href="#cb98-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb98-27"><a href="#cb98-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-28"><a href="#cb98-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply per dataset, writing into year-specific key columns</span></span>
+<span id="cb98-29"><a href="#cb98-29" aria-hidden="true" tabindex="-1"></a>add_year_keys <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_obj, label) {</span>
+<span id="cb98-30"><a href="#cb98-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(label, <span class="st">"nearest-neighbor snapping:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb98-31"><a href="#cb98-31" aria-hidden="true" tabindex="-1"></a>  result <span class="ot">&lt;-</span> sf_obj</span>
+<span id="cb98-32"><a href="#cb98-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-33"><a href="#cb98-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_files)) {</span>
+<span id="cb98-34"><a href="#cb98-34" aria-hidden="true" tabindex="-1"></a>    yr      <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
+<span id="cb98-35"><a href="#cb98-35" aria-hidden="true" tabindex="-1"></a>    lat_col <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"eif_lat_"</span>, yr)</span>
+<span id="cb98-36"><a href="#cb98-36" aria-hidden="true" tabindex="-1"></a>    lon_col <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"eif_lon_"</span>, yr)</span>
+<span id="cb98-37"><a href="#cb98-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-38"><a href="#cb98-38" aria-hidden="true" tabindex="-1"></a>    result[[lat_col]] <span class="ot">&lt;-</span> result<span class="sc">$</span>eif_lat</span>
+<span id="cb98-39"><a href="#cb98-39" aria-hidden="true" tabindex="-1"></a>    result[[lon_col]] <span class="ot">&lt;-</span> result<span class="sc">$</span>eif_lon</span>
+<span id="cb98-40"><a href="#cb98-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-41"><a href="#cb98-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">" "</span>, nm, <span class="st">"-&gt;"</span>, lat_col, <span class="st">"/"</span>, lon_col, <span class="st">":"</span>)</span>
+<span id="cb98-42"><a href="#cb98-42" aria-hidden="true" tabindex="-1"></a>    result <span class="ot">&lt;-</span> <span class="fu">snap_to_nearest</span>(result, eif_cells_sf[[nm]], lat_col, lon_col)</span>
+<span id="cb98-43"><a href="#cb98-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb98-44"><a href="#cb98-44" aria-hidden="true" tabindex="-1"></a>  result</span>
+<span id="cb98-45"><a href="#cb98-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb98-46"><a href="#cb98-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb98-47"><a href="#cb98-47" aria-hidden="true" tabindex="-1"></a>mits_resolved <span class="ot">&lt;-</span> <span class="fu">add_year_keys</span>(mits_resolved, <span class="st">"Mits"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mits nearest-neighbor snapping:
+  ageracesex_1999 -&gt; eif_lat_ars_1999 / eif_lon_ars_1999 :  Snapped 283 unmatched records to nearest populated cell
+  ageracesex_2020 -&gt; eif_lat_ars_2020 / eif_lon_ars_2020 :  Snapped 335 unmatched records to nearest populated cell
+  raceincome_1999 -&gt; eif_lat_ri_1999 / eif_lon_ri_1999 :  Snapped 283 unmatched records to nearest populated cell
+  raceincome_2020 -&gt; eif_lat_ri_2020 / eif_lon_ri_2020 :  Snapped 335 unmatched records to nearest populated cell</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>apps_resolved <span class="ot">&lt;-</span> <span class="fu">add_year_keys</span>(apps_resolved, <span class="st">"Apps"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Apps nearest-neighbor snapping:
+  ageracesex_1999 -&gt; eif_lat_ars_1999 / eif_lon_ars_1999 :  Snapped 940 unmatched records to nearest populated cell
+  ageracesex_2020 -&gt; eif_lat_ars_2020 / eif_lon_ars_2020 :  Snapped 727 unmatched records to nearest populated cell
+  raceincome_1999 -&gt; eif_lat_ri_1999 / eif_lon_ri_1999 :  Snapped 940 unmatched records to nearest populated cell
+  raceincome_2020 -&gt; eif_lat_ri_2020 / eif_lon_ri_2020 :  Snapped 727 unmatched records to nearest populated cell</code></pre>
+</div>
+</div></div>
+</section>
+<section id="join-all-eif-datasets-onto-mitsapps" class="level3">
+<h3 class="anchored" data-anchor-id="join-all-eif-datasets-onto-mitsapps">9.6 Join all EIF datasets onto mits/apps</h3>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop geometry before joining — sf objects with hundreds of columns are</span></span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a><span class="co"># extremely memory-expensive on every left_join. Re-attach at the end.</span></span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>join_eif_all <span class="ot">&lt;-</span> <span class="cf">function</span>(sf_obj) {</span>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>  geom      <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_geometry</span>(sf_obj)</span>
+<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a>  result    <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(sf_obj)</span>
+<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_files)) {</span>
+<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a>    yr      <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
+<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a>    lat_col <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"eif_lat_"</span>, yr)</span>
+<span id="cb102-10"><a href="#cb102-10" aria-hidden="true" tabindex="-1"></a>    lon_col <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"eif_lon_"</span>, yr)</span>
+<span id="cb102-11"><a href="#cb102-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-12"><a href="#cb102-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Columns are already prefixed by aggregate_eif_wide (e.g. ars_1999_*).</span></span>
+<span id="cb102-13"><a href="#cb102-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Only rename the cell-key columns to match the year-specific join keys.</span></span>
+<span id="cb102-14"><a href="#cb102-14" aria-hidden="true" tabindex="-1"></a>    result <span class="ot">&lt;-</span> result <span class="sc">|&gt;</span></span>
+<span id="cb102-15"><a href="#cb102-15" aria-hidden="true" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">left_join</span>(</span>
+<span id="cb102-16"><a href="#cb102-16" aria-hidden="true" tabindex="-1"></a>        eif_nc_tables[[nm]] <span class="sc">|&gt;</span></span>
+<span id="cb102-17"><a href="#cb102-17" aria-hidden="true" tabindex="-1"></a>          dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="sc">!!</span><span class="at">lat_col :=</span> eif_lat, <span class="sc">!!</span><span class="at">lon_col :=</span> eif_lon),</span>
+<span id="cb102-18"><a href="#cb102-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">by =</span> <span class="fu">c</span>(lat_col, lon_col)</span>
+<span id="cb102-19"><a href="#cb102-19" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb102-20"><a href="#cb102-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb102-21"><a href="#cb102-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-22"><a href="#cb102-22" aria-hidden="true" tabindex="-1"></a>  sf<span class="sc">::</span><span class="fu">st_sf</span>(result, <span class="at">geometry =</span> geom)</span>
+<span id="cb102-23"><a href="#cb102-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb102-24"><a href="#cb102-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-25"><a href="#cb102-25" aria-hidden="true" tabindex="-1"></a>mits_with_eif <span class="ot">&lt;-</span> <span class="fu">join_eif_all</span>(mits_resolved)</span>
+<span id="cb102-26"><a href="#cb102-26" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells   70574660 3769.1  140102304  7482.3  140102304  7482.3
+Vcells 1191861552 9093.2 2082292176 15886.7 1760132002 13428.8</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>apps_with_eif <span class="ot">&lt;-</span> <span class="fu">join_eif_all</span>(apps_resolved)</span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells   70496517 3765.0  140102304  7482.3  140102304  7482.3
+Vcells 1193834286 9108.3 2082292176 15886.7 1760132002 13428.8</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb106"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Free the NC tables now that joins are done</span></span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(eif_nc_tables, eif_cells_sf)</span>
+<span id="cb106-3"><a href="#cb106-3" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells   70475028 3763.8  140102304  7482.3  140102304  7482.3
+Vcells 1193759382 9107.7 2082292176 15886.7 1760132002 13428.8</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb108"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Coverage diagnostics</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>coverage <span class="ot">&lt;-</span> <span class="cf">function</span>(df, label) {</span>
+<span id="cb108-3"><a href="#cb108-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, label, <span class="st">"EIF coverage:</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb108-4"><a href="#cb108-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-35s %d</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"Total records"</span>, <span class="fu">nrow</span>(df)))</span>
+<span id="cb108-5"><a href="#cb108-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-35s %d  (%.1f%%)</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"Valid topology cell"</span>,</span>
+<span id="cb108-6"><a href="#cb108-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">sum</span>(df<span class="sc">$</span>valid_cell), <span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(df<span class="sc">$</span>valid_cell)))</span>
+<span id="cb108-7"><a href="#cb108-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-35s %d  (%.1f%%)</span><span class="sc">\n</span><span class="st">"</span>, <span class="st">"Invalid/water cell"</span>,</span>
+<span id="cb108-8"><a href="#cb108-8" aria-hidden="true" tabindex="-1"></a>              <span class="fu">sum</span>(<span class="sc">!</span>df<span class="sc">$</span>valid_cell), <span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(<span class="sc">!</span>df<span class="sc">$</span>valid_cell)))</span>
+<span id="cb108-9"><a href="#cb108-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">  Per-dataset match rates (after nearest-neighbor fill):</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb108-10"><a href="#cb108-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (nm <span class="cf">in</span> <span class="fu">names</span>(eif_files)) {</span>
+<span id="cb108-11"><a href="#cb108-11" aria-hidden="true" tabindex="-1"></a>    yr     <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
+<span id="cb108-12"><a href="#cb108-12" aria-hidden="true" tabindex="-1"></a>    marker <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="fu">startsWith</span>(<span class="fu">names</span>(df), <span class="fu">paste0</span>(yr, <span class="st">"_"</span>))][<span class="dv">1</span>]</span>
+<span id="cb108-13"><a href="#cb108-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(marker)) {</span>
+<span id="cb108-14"><a href="#cb108-14" aria-hidden="true" tabindex="-1"></a>      n_matched <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(df[[marker]]))</span>
+<span id="cb108-15"><a href="#cb108-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"  %-30s matched: %d (%.1f%%)</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb108-16"><a href="#cb108-16" aria-hidden="true" tabindex="-1"></a>                  nm, n_matched, <span class="dv">100</span> <span class="sc">*</span> n_matched <span class="sc">/</span> <span class="fu">nrow</span>(df)))</span>
+<span id="cb108-17"><a href="#cb108-17" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb108-18"><a href="#cb108-18" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb108-19"><a href="#cb108-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb108-20"><a href="#cb108-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb108-21"><a href="#cb108-21" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage</span>(mits_with_eif, <span class="st">"Mitigations"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ Mitigations EIF coverage:
+  Total records                       8801
+  Valid topology cell                 8799  (100.0%)
+  Invalid/water cell                  2  (0.0%)
+
+  Per-dataset match rates (after nearest-neighbor fill):</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb110"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb110-1"><a href="#cb110-1" aria-hidden="true" tabindex="-1"></a><span class="fu">coverage</span>(apps_with_eif, <span class="st">"Applications"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ Applications EIF coverage:
+  Total records                       23232
+  Valid topology cell                 23225  (100.0%)
+  Invalid/water cell                  7  (0.0%)
+
+  Per-dataset match rates (after nearest-neighbor fill):</code></pre>
+</div>
 </div></div>
 </section>
 </section>
 <section id="summary" class="level2">
 <h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a>hu_marker <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"hu_2024_"</span>, LAT_COL)</span>
-<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>eif_coverage <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">names</span>(eif_files), <span class="cf">function</span>(nm) {</span>
-<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>  pfx    <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
-<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>  marker <span class="ot">&lt;-</span> <span class="fu">names</span>(mits_with_eif)[<span class="fu">startsWith</span>(<span class="fu">names</span>(mits_with_eif), <span class="fu">paste0</span>(pfx, <span class="st">"_"</span>))][<span class="dv">1</span>]</span>
-<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(marker)) <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(mits_with_eif[[marker]])) <span class="cf">else</span> <span class="cn">NA_integer_</span></span>
-<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(</span>
-<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Total parcels"</span>,</span>
-<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Recipients (interpolated)"</span>,</span>
-<span id="cb76-13"><a href="#cb76-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Donors (used for averaging)"</span>,</span>
-<span id="cb76-14"><a href="#cb76-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median original TOTAL.VALUE.CALCULATED (recipients only)"</span>,</span>
-<span id="cb76-15"><a href="#cb76-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_5"</span>,</span>
-<span id="cb76-16"><a href="#cb76-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_10"</span>,</span>
-<span id="cb76-17"><a href="#cb76-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_50"</span>,</span>
-<span id="cb76-18"><a href="#cb76-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"Mits with EIF cell match — "</span>, <span class="fu">names</span>(eif_files))</span>
-<span id="cb76-19"><a href="#cb76-19" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb76-20"><a href="#cb76-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
-<span id="cb76-21"><a href="#cb76-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(joined),</span>
-<span id="cb76-22"><a href="#cb76-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(joined<span class="sc">$</span>interpolate <span class="sc">==</span> <span class="dv">1</span>),</span>
-<span id="cb76-23"><a href="#cb76-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(interpolate_from),</span>
-<span id="cb76-24"><a href="#cb76-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span><span class="st">`</span><span class="at">TOTAL.VALUE.CALCULATED</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb76-25"><a href="#cb76-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_5,  <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb76-26"><a href="#cb76-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_10, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb76-27"><a href="#cb76-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_50, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb76-28"><a href="#cb76-28" aria-hidden="true" tabindex="-1"></a>    eif_coverage</span>
-<span id="cb76-29"><a href="#cb76-29" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb76-30"><a href="#cb76-30" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb76-31"><a href="#cb76-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb76-32"><a href="#cb76-32" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a>eif_coverage <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">names</span>(eif_files), <span class="cf">function</span>(nm) {</span>
+<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a>  pfx    <span class="ot">&lt;-</span> eif_files[[nm]]<span class="sc">$</span>prefix</span>
+<span id="cb112-3"><a href="#cb112-3" aria-hidden="true" tabindex="-1"></a>  marker <span class="ot">&lt;-</span> <span class="fu">names</span>(mits_with_eif)[<span class="fu">startsWith</span>(<span class="fu">names</span>(mits_with_eif), <span class="fu">paste0</span>(pfx, <span class="st">"_"</span>))][<span class="dv">1</span>]</span>
+<span id="cb112-4"><a href="#cb112-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(marker)) <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(mits_with_eif[[marker]])) <span class="cf">else</span> <span class="cn">NA_integer_</span></span>
+<span id="cb112-5"><a href="#cb112-5" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb112-6"><a href="#cb112-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb112-7"><a href="#cb112-7" aria-hidden="true" tabindex="-1"></a>summary_tbl <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb112-8"><a href="#cb112-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric =</span> <span class="fu">c</span>(</span>
+<span id="cb112-9"><a href="#cb112-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Total parcels"</span>,</span>
+<span id="cb112-10"><a href="#cb112-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Recipients (interpolated)"</span>,</span>
+<span id="cb112-11"><a href="#cb112-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Donors (used for averaging)"</span>,</span>
+<span id="cb112-12"><a href="#cb112-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median original TOTAL.VALUE.CALCULATED (recipients only)"</span>,</span>
+<span id="cb112-13"><a href="#cb112-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_5"</span>,</span>
+<span id="cb112-14"><a href="#cb112-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_10"</span>,</span>
+<span id="cb112-15"><a href="#cb112-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Median prop_value_50"</span>,</span>
+<span id="cb112-16"><a href="#cb112-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(<span class="st">"Mits with EIF cell match — "</span>, <span class="fu">names</span>(eif_files))</span>
+<span id="cb112-17"><a href="#cb112-17" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb112-18"><a href="#cb112-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">value =</span> <span class="fu">c</span>(</span>
+<span id="cb112-19"><a href="#cb112-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(joined),</span>
+<span id="cb112-20"><a href="#cb112-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(joined<span class="sc">$</span>interpolate <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb112-21"><a href="#cb112-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(interpolate_from),</span>
+<span id="cb112-22"><a href="#cb112-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span><span class="st">`</span><span class="at">TOTAL.VALUE.CALCULATED</span><span class="st">`</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb112-23"><a href="#cb112-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_5,  <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb112-24"><a href="#cb112-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_10, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb112-25"><a href="#cb112-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">median</span>(to_interpolate<span class="sc">$</span>prop_value_50, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb112-26"><a href="#cb112-26" aria-hidden="true" tabindex="-1"></a>    eif_coverage</span>
+<span id="cb112-27"><a href="#cb112-27" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb112-28"><a href="#cb112-28" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb112-29"><a href="#cb112-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb112-30"><a href="#cb112-30" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(summary_tbl, <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1090,45 +1432,45 @@ n_noise_postprocessed: double</code></pre>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mits with EIF cell match — ageracesex_1999</td>
-<td style="text-align: right;">7,018.0</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Mits with EIF cell match — ageracesex_2020</td>
-<td style="text-align: right;">7,990.0</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mits with EIF cell match — raceincome_1999</td>
-<td style="text-align: right;">6,838.0</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Mits with EIF cell match — raceincome_2020</td>
-<td style="text-align: right;">685.0</td>
+<td style="text-align: right;">NA</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div></div>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [20]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>to_interpolate <span class="sc">|&gt;</span></span>
-<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, <span class="at">original =</span> <span class="st">`</span><span class="at">TOTAL.VALUE.CALCULATED</span><span class="st">`</span>,</span>
-<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>         prop_value_5, prop_value_10, prop_value_50) <span class="sc">|&gt;</span></span>
-<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>parcel_index, <span class="at">names_to =</span> <span class="st">"metric"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(metric) <span class="sc">|&gt;</span></span>
-<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n      =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)),</span>
-<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">p10    =</span> <span class="fu">quantile</span>(value, <span class="fl">0.10</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb77-10"><a href="#cb77-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">median =</span> <span class="fu">median</span>(value,         <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb77-11"><a href="#cb77-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean   =</span> <span class="fu">mean</span>(value,           <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb77-12"><a href="#cb77-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">p90    =</span> <span class="fu">quantile</span>(value, <span class="fl">0.90</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb77-13"><a href="#cb77-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
-<span id="cb77-14"><a href="#cb77-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb77-15"><a href="#cb77-15" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb77-16"><a href="#cb77-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>, <span class="at">scientific =</span> <span class="cn">FALSE</span>),</span>
-<span id="cb77-17"><a href="#cb77-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Distribution of original vs. interpolated values for recipient parcels"</span></span>
-<span id="cb77-18"><a href="#cb77-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb113"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb113-1"><a href="#cb113-1" aria-hidden="true" tabindex="-1"></a>to_interpolate <span class="sc">|&gt;</span></span>
+<span id="cb113-2"><a href="#cb113-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb113-3"><a href="#cb113-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, <span class="at">original =</span> <span class="st">`</span><span class="at">TOTAL.VALUE.CALCULATED</span><span class="st">`</span>,</span>
+<span id="cb113-4"><a href="#cb113-4" aria-hidden="true" tabindex="-1"></a>         prop_value_5, prop_value_10, prop_value_50) <span class="sc">|&gt;</span></span>
+<span id="cb113-5"><a href="#cb113-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>parcel_index, <span class="at">names_to =</span> <span class="st">"metric"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb113-6"><a href="#cb113-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(metric) <span class="sc">|&gt;</span></span>
+<span id="cb113-7"><a href="#cb113-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb113-8"><a href="#cb113-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n      =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)),</span>
+<span id="cb113-9"><a href="#cb113-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">p10    =</span> <span class="fu">quantile</span>(value, <span class="fl">0.10</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb113-10"><a href="#cb113-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">median =</span> <span class="fu">median</span>(value,         <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb113-11"><a href="#cb113-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean   =</span> <span class="fu">mean</span>(value,           <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb113-12"><a href="#cb113-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">p90    =</span> <span class="fu">quantile</span>(value, <span class="fl">0.90</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb113-13"><a href="#cb113-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb113-14"><a href="#cb113-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb113-15"><a href="#cb113-15" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb113-16"><a href="#cb113-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>, <span class="at">scientific =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb113-17"><a href="#cb113-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="st">"Distribution of original vs. interpolated values for recipient parcels"</span></span>
+<span id="cb113-18"><a href="#cb113-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1263,7 +1605,17 @@ n_noise_postprocessed: double</code></pre>
 <tr class="even">
 <td><code>eif_lat</code>, <code>eif_lon</code></td>
 <td>derived</td>
-<td>snapped 0.01° cell-center key</td>
+<td>original snapped 0.01° cell-center (base position)</td>
+</tr>
+<tr class="odd">
+<td><code>valid_cell</code></td>
+<td>topology join</td>
+<td><code>TRUE</code> = valid land cell per EIF topology; <code>FALSE</code> = water/outside-US or geocoding error</td>
+</tr>
+<tr class="even">
+<td><code>eif_lat_{prefix}</code>, <code>eif_lon_{prefix}</code></td>
+<td>nearest-neighbor fill</td>
+<td>year-specific cell keys; equal to base keys for matched cells, snapped to nearest populated cell otherwise (one pair per EIF dataset, e.g.&nbsp;<code>eif_lat_ars_1999</code>)</td>
 </tr>
 <tr class="odd">
 <td><code>hu_2024_*</code> columns</td>
@@ -1271,13 +1623,13 @@ n_noise_postprocessed: double</code></pre>
 <td>housing units, householder age, home value</td>
 </tr>
 <tr class="even">
-<td><code>ars_1999_*</code>, <code>ars_2020_*</code>, <code>ars_2024_*</code> columns</td>
-<td>EIF pop_ageracesex (3 years)</td>
+<td><code>ars_1999_*</code>, <code>ars_2020_*</code> columns</td>
+<td>EIF pop_ageracesex (1999 + 2020)</td>
 <td>population × age × race × sex</td>
 </tr>
 <tr class="odd">
-<td><code>ri_1999_*</code>, <code>ri_2020_*</code>, <code>ri_2024_*</code> columns</td>
-<td>EIF pop_raceincome (3 years)</td>
+<td><code>ri_1999_*</code>, <code>ri_2020_*</code> columns</td>
+<td>EIF pop_raceincome (1999 + 2020)</td>
 <td>population × race × income decile</td>
 </tr>
 </tbody>

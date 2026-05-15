@@ -200,7 +200,7 @@ than CoreLogic's literal numeric subgroupings:
   exempt government) and elevated to `match_priority = "high"` for
   the hindsight analysis — a mit/app record landing on a 602 parcel
   is a confirmed historical buyout, the strongest possible match signal.
-  
+
 ```{r score-parcels}
 #| eval: true
 
