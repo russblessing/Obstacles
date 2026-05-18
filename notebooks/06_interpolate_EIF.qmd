@@ -890,3 +890,219 @@ to_interpolate |>
   Downstream analysis should decide whether to include or exclude these
   records depending on whether the analytic unit is the mit/app record
   or the matched parcel.
+
+## Section 10: Analysis-ready summary outputs
+
+The full wide outputs (`mits_with_eif.gpkg`, `apps_with_eif.gpkg`) carry 531 and
+549 columns respectively — one column per EIF demographic combination. This section
+derives per-cell racial composition percentages and income shares from the postprocessed
+counts, then writes slim analysis-ready files (~30–60 cols) alongside the full-fidelity
+intermediates.
+
+Race tokens in the EIF data are bare labels (`White`, `Black`, `Hispanic`, `Asian`,
+`AIAN`), not Census "Non-Hispanic" prefixed strings. Income deciles are encoded as
+integers 1–10 in the column name (`ri_{year}_n_noise_postprocessed_{decile}_{Race}`);
+decile 0 is a suppressed/unclassifiable bucket and is excluded from income aggregates.
+
+```{r eif-inspect-suffix-tokens}
+library(stringr)
+
+# Verify actual suffix tokens before aggregating
+for (yr in c(1999, 2020)) {
+  cat("\n=== ars_", yr, " sample postprocessed cols ===\n", sep = "")
+  print(head(grep(paste0("^ars_", yr, "_n_noise_postprocessed_"),
+                  names(mits_with_eif), value = TRUE), 10))
+
+  cat("\n=== ri_", yr, " sample postprocessed cols ===\n", sep = "")
+  print(head(grep(paste0("^ri_", yr, "_n_noise_postprocessed_"),
+                  names(mits_with_eif), value = TRUE), 10))
+}
+```
+
+```{r eif-derive-summaries}
+summarize_eif <- function(df, years = c(1999, 2020)) {
+  result    <- df
+  df_plain  <- sf::st_drop_geometry(df)
+
+  # Race tokens exactly as encoded in column names (bare labels, no NH prefix)
+  race_pats <- c(
+    white    = "_White(?:_[MF])?$",
+    black    = "_Black(?:_[MF])?$",
+    hispanic = "_Hispanic(?:_[MF])?$",
+    asian    = "_Asian(?:_[MF])?$",
+    aian     = "_AIAN(?:_[MF])?$"
+  )
+
+  for (yr in years) {
+
+    # ── ars: population × age × race × sex → race aggregates ────────────────
+    ars_pp <- grep(paste0("^ars_", yr, "_n_noise_postprocessed_"),
+                   names(df_plain), value = TRUE)
+
+    pop_total <- rowSums(df_plain[, ars_pp, drop = FALSE], na.rm = TRUE)
+    result[[paste0("pop_total_", yr)]] <- pop_total
+
+    for (race_name in names(race_pats)) {
+      pat  <- race_pats[[race_name]]
+      cols <- ars_pp[grepl(pat, ars_pp, perl = TRUE)]
+      race_pop <- if (length(cols) > 0)
+        rowSums(df_plain[, cols, drop = FALSE], na.rm = TRUE)
+      else
+        rep(NA_real_, nrow(df_plain))
+
+      result[[paste0("pct_", race_name, "_", yr)]] <-
+        ifelse(pop_total > 0, race_pop / pop_total, NA_real_)
+    }
+
+    # ── ri: population × race × income decile → income aggregates ───────────
+    ri_pp <- grep(paste0("^ri_", yr, "_n_noise_postprocessed_"),
+                  names(df_plain), value = TRUE)
+
+    if (length(ri_pp) > 0) {
+      ri_total <- rowSums(df_plain[, ri_pp, drop = FALSE], na.rm = TRUE)
+
+      # Decile 1 = bottom, decile 10 = top; decile 0 excluded (suppressed bucket)
+      low_cols  <- ri_pp[grepl("_postprocessed_1_",  ri_pp, fixed = TRUE)]
+      high_cols <- ri_pp[grepl("_postprocessed_10_", ri_pp, fixed = TRUE)]
+
+      result[[paste0("pct_low_income_",  yr)]] <-
+        ifelse(ri_total > 0,
+               rowSums(df_plain[, low_cols,  drop = FALSE], na.rm = TRUE) / ri_total,
+               NA_real_)
+      result[[paste0("pct_high_income_", yr)]] <-
+        ifelse(ri_total > 0,
+               rowSums(df_plain[, high_cols, drop = FALSE], na.rm = TRUE) / ri_total,
+               NA_real_)
+    }
+  }
+
+  result
+}
+
+mits_summary <- summarize_eif(mits_with_eif)
+apps_summary <- summarize_eif(apps_with_eif)
+```
+
+```{r eif-summary-inventory}
+summary_cols <- grep("^(pop_total_|pct_)", names(mits_summary), value = TRUE)
+
+cat("Summary columns derived (", length(summary_cols), "):\n", sep = "")
+print(summary_cols)
+
+cat("\npct_white_1999 distribution:\n")
+print(summary(sf::st_drop_geometry(mits_summary)$pct_white_1999))
+
+cat("\npct_black_2020 distribution:\n")
+print(summary(sf::st_drop_geometry(mits_summary)$pct_black_2020))
+
+cat("\npct_low_income_1999 distribution:\n")
+print(summary(sf::st_drop_geometry(mits_summary)$pct_low_income_1999))
+
+# Sanity: pop_total should be non-zero for all records (post-snap)
+cat("\npop_total_1999 zero or NA count:", 
+    sum(sf::st_drop_geometry(mits_summary)$pop_total_1999 == 0 | 
+        is.na(sf::st_drop_geometry(mits_summary)$pop_total_1999)), "\n")
+cat("pop_total_2020 zero or NA count:", 
+    sum(sf::st_drop_geometry(mits_summary)$pop_total_2020 == 0 | 
+        is.na(sf::st_drop_geometry(mits_summary)$pop_total_2020)), "\n")
+```
+
+```{r eif-write-slim}
+slim_cols_pattern <- paste(c(
+  # Record + parcel identifiers
+  "^unique_id$",
+  "^assigned_parcel_index$",
+  "^assignment_method$",
+
+  # Mit/app address and disaster fields
+  "^address$",
+  "^raw_addr$",
+  "^Match_addr$",
+  "^street_address$",
+  "^city$",
+  "^City$",
+  "^county$",
+  "^County$",
+  "^Postal$",
+  "^zip$",
+  "^latitude$",
+  "^longitude$",
+  "^disas_code",
+  "^disas_program$",
+  "^disas_year$",
+  "^project_type$",
+  "^project_status$",
+  "^FileEvent",
+  "^Filename$",
+  "^Eventyear",
+  "^Year$",
+  "^year_conflict$",
+  "^mhp_flag$",
+  "^address_quality$",
+
+  # Parcel attributes
+  "^parcel_index$",
+  "^geometry_id$",
+  "^cntyfips$",
+  "^parno$",
+  "^siteadd$",
+  "^ownname$",
+  "^parusedesc$",
+  "^LAND\\.USE\\.CODE$",
+  "^luc_tier$",
+  "^OWNER\\.1\\.FULL\\.NAME$",
+  "^YEAR\\.BUILT$",
+  "^ASSESSED\\.TOTAL\\.VALUE$",
+  "^IMPROVEMENT\\.VALUE\\.CALCULATED$",
+
+  # EIF cell traceability
+  "^eif_lat$",
+  "^eif_lon$",
+  "^valid_cell$",
+  "^eif_lat_(ars|ri)_",
+  "^eif_lon_(ars|ri)_",
+
+  # Derived summary columns
+  "^pop_total_",
+  "^pct_"
+), collapse = "|")
+
+slim <- function(df) dplyr::select(df, dplyr::matches(slim_cols_pattern))
+
+mits_slim <- slim(mits_summary)
+apps_slim <- slim(apps_summary)
+
+cat("Mits slim: ", ncol(mits_slim), " cols (down from ", ncol(mits_with_eif), ")\n", sep = "")
+cat("Apps slim: ", ncol(apps_slim), " cols (down from ", ncol(apps_with_eif), ")\n", sep = "")
+cat("Mits rows: ", nrow(mits_slim), " | Apps rows: ", nrow(apps_slim), "\n", sep = "")
+
+sf::st_write(mits_slim, file.path(out_dir, "mits_with_eif_summary.gpkg"),
+             delete_dsn = TRUE, quiet = TRUE)
+sf::st_write(apps_slim, file.path(out_dir, "apps_with_eif_summary.gpkg"),
+             delete_dsn = TRUE, quiet = TRUE)
+
+mits_slim |> sf::st_drop_geometry() |>
+  readr::write_csv(file.path(out_dir, "mits_with_eif_summary.csv"))
+apps_slim |> sf::st_drop_geometry() |>
+  readr::write_csv(file.path(out_dir, "apps_with_eif_summary.csv"))
+
+cat("Written:\n")
+cat("  mits_with_eif_summary.gpkg / .csv\n")
+cat("  apps_with_eif_summary.gpkg / .csv\n")
+```
+
+### Output schema — slim files
+
+**`mits_with_eif_summary.gpkg`** / **`apps_with_eif_summary.gpkg`** — analysis-ready,
+one row per mit/app:
+
+| Column | Source | Notes |
+|---|---|---|
+| `unique_id`, `assigned_parcel_index`, `assignment_method` | alt Step 5 | record + parcel identifiers |
+| (address + disaster fields) | input data | cross-reference only |
+| `parno`, `siteadd`, `ownname`, `LAND.USE.CODE`, `luc_tier`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`, etc. | parcels_pri.gpkg | property context |
+| `eif_lat`, `eif_lon`, `valid_cell` | EIF topology | base cell + valid-cell flag |
+| `eif_lat_{prefix}`, `eif_lon_{prefix}` | nearest-neighbor fill | year-specific cell keys (4 pairs) |
+| `pop_total_1999`, `pop_total_2020` | derived | sum of all postprocessed counts per cell per year |
+| `pct_white_{year}`, `pct_black_{year}`, `pct_hispanic_{year}`, `pct_asian_{year}`, `pct_aian_{year}` | derived | race share of total, per year (5 categories × 2 years = 10 cols) |
+| `pct_low_income_{year}`, `pct_high_income_{year}` | derived | bottom (decile 1) and top (decile 10) income shares, per year (2 × 2 = 4 cols) |

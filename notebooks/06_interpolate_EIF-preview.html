@@ -236,6 +236,10 @@
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   <li><a href="#output-schema" id="toc-output-schema" class="nav-link" data-scroll-target="#output-schema">Output schema</a></li>
   <li><a href="#unresolved-confirm-before-using-outputs" id="toc-unresolved-confirm-before-using-outputs" class="nav-link" data-scroll-target="#unresolved-confirm-before-using-outputs">Unresolved — confirm before using outputs</a></li>
+  <li><a href="#section-10-analysis-ready-summary-outputs" id="toc-section-10-analysis-ready-summary-outputs" class="nav-link" data-scroll-target="#section-10-analysis-ready-summary-outputs">Section 10: Analysis-ready summary outputs</a>
+  <ul class="collapse">
+  <li><a href="#output-schema-slim-files" id="toc-output-schema-slim-files" class="nav-link" data-scroll-target="#output-schema-slim-files">Output schema — slim files</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -1085,7 +1089,7 @@ n_noise_postprocessed: double</code></pre>
 <span id="cb80-113"><a href="#cb80-113" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Arrow filter test: 1053678 rows in 3.9s</code></pre>
+<pre><code>Arrow filter test: 1053678 rows in 6.5s</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
@@ -1249,9 +1253,9 @@ NC EIF cell counts per dataset:</code></pre>
 <span id="cb94-26"><a href="#cb94-26" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>             used (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells   70590802 3770  140082657  7481.3  140082657  7481.3
-Vcells 1197079429 9133 2082297048 15886.7 1760126155 13428.7</code></pre>
+<pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells   70591203 3770.0  186781072  9975.2  186781072  9975.2
+Vcells 1197084009 9133.1 1735204916 13238.6 1724906035 13160.0</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
@@ -1260,8 +1264,8 @@ Vcells 1197079429 9133 2082297048 15886.7 1760126155 13428.7</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells   70513111 3765.9  140082657  7481.3  140082657  7481.3
-Vcells 1209554631 9228.2 2082297048 15886.7 1760126155 13428.7</code></pre>
+Ncells   70513512 3765.9  186781072  9975.2  186781072  9975.2
+Vcells 1209559212 9228.3 1735204916 13238.6 1724906035 13160.0</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
@@ -1271,8 +1275,8 @@ Vcells 1209554631 9228.2 2082297048 15886.7 1760126155 13428.7</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells   70491142 3764.7  140082657  7481.3  140082657  7481.3
-Vcells 1208273005 9218.4 2082297048 15886.7 1760126155 13428.7</code></pre>
+Ncells   70491543 3764.7  186781072  9975.2  186781072  9975.2
+Vcells 1208277586 9218.5 1735204916 13238.6 1724906035 13160.0</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show / hide code</summary>
@@ -1667,6 +1671,413 @@ Vcells 1208273005 9218.4 2082297048 15886.7 1760126155 13428.7</code></pre>
 <li><strong>EIF differential privacy</strong> — per-cell counts are noise-protected. Negligible for averages across many cells, important for per-cell point estimates.</li>
 <li><strong><code>unassigned</code> mits/apps</strong> are excluded from per-parcel counts but still appear in the EIF-enriched outputs (with NA <code>assigned_parcel_index</code>). Downstream analysis should decide whether to include or exclude these records depending on whether the analytic unit is the mit/app record or the matched parcel.</li>
 </ul>
+</section>
+<section id="section-10-analysis-ready-summary-outputs" class="level2">
+<h2 class="anchored" data-anchor-id="section-10-analysis-ready-summary-outputs">Section 10: Analysis-ready summary outputs</h2>
+<p>The full wide outputs (<code>mits_with_eif.gpkg</code>, <code>apps_with_eif.gpkg</code>) carry 531 and 549 columns respectively — one column per EIF demographic combination. This section derives per-cell racial composition percentages and income shares from the postprocessed counts, then writes slim analysis-ready files (~30–60 cols) alongside the full-fidelity intermediates.</p>
+<p>Race tokens in the EIF data are bare labels (<code>White</code>, <code>Black</code>, <code>Hispanic</code>, <code>Asian</code>, <code>AIAN</code>), not Census “Non-Hispanic” prefixed strings. Income deciles are encoded as integers 1–10 in the column name (<code>ri_{year}_n_noise_postprocessed_{decile}_{Race}</code>); decile 0 is a suppressed/unclassifiable bucket and is excluded from income aggregates.</p>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb112-3"><a href="#cb112-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify actual suffix tokens before aggregating</span></span>
+<span id="cb112-4"><a href="#cb112-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (yr <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">1999</span>, <span class="dv">2020</span>)) {</span>
+<span id="cb112-5"><a href="#cb112-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">=== ars_"</span>, yr, <span class="st">" sample postprocessed cols ===</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span>
+<span id="cb112-6"><a href="#cb112-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">grep</span>(<span class="fu">paste0</span>(<span class="st">"^ars_"</span>, yr, <span class="st">"_n_noise_postprocessed_"</span>),</span>
+<span id="cb112-7"><a href="#cb112-7" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">names</span>(mits_with_eif), <span class="at">value =</span> <span class="cn">TRUE</span>), <span class="dv">10</span>))</span>
+<span id="cb112-8"><a href="#cb112-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb112-9"><a href="#cb112-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">=== ri_"</span>, yr, <span class="st">" sample postprocessed cols ===</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span>
+<span id="cb112-10"><a href="#cb112-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">head</span>(<span class="fu">grep</span>(<span class="fu">paste0</span>(<span class="st">"^ri_"</span>, yr, <span class="st">"_n_noise_postprocessed_"</span>),</span>
+<span id="cb112-11"><a href="#cb112-11" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">names</span>(mits_with_eif), <span class="at">value =</span> <span class="cn">TRUE</span>), <span class="dv">10</span>))</span>
+<span id="cb112-12"><a href="#cb112-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+=== ars_1999 sample postprocessed cols ===
+ [1] "ars_1999_n_noise_postprocessed_19-65_Black_M"           
+ [2] "ars_1999_n_noise_postprocessed_19-65_White_F"           
+ [3] "ars_1999_n_noise_postprocessed_Under 18_White_F"        
+ [4] "ars_1999_n_noise_postprocessed_Over 65_White_M"         
+ [5] "ars_1999_n_noise_postprocessed_19-65_White_M"           
+ [6] "ars_1999_n_noise_postprocessed_Over 65_White_F"         
+ [7] "ars_1999_n_noise_postprocessed_Under 18_Other/Unknown_M"
+ [8] "ars_1999_n_noise_postprocessed_Under 18_White_M"        
+ [9] "ars_1999_n_noise_postprocessed_19-65_Hispanic_M"        
+[10] "ars_1999_n_noise_postprocessed_19-65_Hispanic_F"        
+
+=== ri_1999 sample postprocessed cols ===
+ [1] "ri_1999_n_noise_postprocessed_2_White"        
+ [2] "ri_1999_n_noise_postprocessed_9_White"        
+ [3] "ri_1999_n_noise_postprocessed_10_White"       
+ [4] "ri_1999_n_noise_postprocessed_1_Hispanic"     
+ [5] "ri_1999_n_noise_postprocessed_6_Other/Unknown"
+ [6] "ri_1999_n_noise_postprocessed_1_White"        
+ [7] "ri_1999_n_noise_postprocessed_3_White"        
+ [8] "ri_1999_n_noise_postprocessed_4_White"        
+ [9] "ri_1999_n_noise_postprocessed_6_White"        
+[10] "ri_1999_n_noise_postprocessed_7_White"        
+
+=== ars_2020 sample postprocessed cols ===
+ [1] "ars_2020_n_noise_postprocessed_19-65_White_F"        
+ [2] "ars_2020_n_noise_postprocessed_19-65_White_M"        
+ [3] "ars_2020_n_noise_postprocessed_Over 65_White_F"      
+ [4] "ars_2020_n_noise_postprocessed_Over 65_White_M"      
+ [5] "ars_2020_n_noise_postprocessed_19-65_Hispanic_F"     
+ [6] "ars_2020_n_noise_postprocessed_19-65_Other/Unknown_F"
+ [7] "ars_2020_n_noise_postprocessed_19-65_Other/Unknown_M"
+ [8] "ars_2020_n_noise_postprocessed_Under 18_White_F"     
+ [9] "ars_2020_n_noise_postprocessed_19-65_Hispanic_M"     
+[10] "ars_2020_n_noise_postprocessed_19-65_Black_M"        
+
+=== ri_2020 sample postprocessed cols ===
+ [1] "ri_2020_n_noise_postprocessed_1_White" 
+ [2] "ri_2020_n_noise_postprocessed_4_White" 
+ [3] "ri_2020_n_noise_postprocessed_7_White" 
+ [4] "ri_2020_n_noise_postprocessed_8_White" 
+ [5] "ri_2020_n_noise_postprocessed_9_White" 
+ [6] "ri_2020_n_noise_postprocessed_10_White"
+ [7] "ri_2020_n_noise_postprocessed_2_White" 
+ [8] "ri_2020_n_noise_postprocessed_3_White" 
+ [9] "ri_2020_n_noise_postprocessed_8_AIAN"  
+[10] "ri_2020_n_noise_postprocessed_3_Black" </code></pre>
+</div>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [23]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>summarize_eif <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">years =</span> <span class="fu">c</span>(<span class="dv">1999</span>, <span class="dv">2020</span>)) {</span>
+<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a>  result    <span class="ot">&lt;-</span> df</span>
+<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a>  df_plain  <span class="ot">&lt;-</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(df)</span>
+<span id="cb114-4"><a href="#cb114-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-5"><a href="#cb114-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Race tokens exactly as encoded in column names (bare labels, no NH prefix)</span></span>
+<span id="cb114-6"><a href="#cb114-6" aria-hidden="true" tabindex="-1"></a>  race_pats <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb114-7"><a href="#cb114-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">white    =</span> <span class="st">"_White(?:_[MF])?$"</span>,</span>
+<span id="cb114-8"><a href="#cb114-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">black    =</span> <span class="st">"_Black(?:_[MF])?$"</span>,</span>
+<span id="cb114-9"><a href="#cb114-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">hispanic =</span> <span class="st">"_Hispanic(?:_[MF])?$"</span>,</span>
+<span id="cb114-10"><a href="#cb114-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">asian    =</span> <span class="st">"_Asian(?:_[MF])?$"</span>,</span>
+<span id="cb114-11"><a href="#cb114-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">aian     =</span> <span class="st">"_AIAN(?:_[MF])?$"</span></span>
+<span id="cb114-12"><a href="#cb114-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb114-13"><a href="#cb114-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-14"><a href="#cb114-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (yr <span class="cf">in</span> years) {</span>
+<span id="cb114-15"><a href="#cb114-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-16"><a href="#cb114-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ── ars: population × age × race × sex → race aggregates ────────────────</span></span>
+<span id="cb114-17"><a href="#cb114-17" aria-hidden="true" tabindex="-1"></a>    ars_pp <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="fu">paste0</span>(<span class="st">"^ars_"</span>, yr, <span class="st">"_n_noise_postprocessed_"</span>),</span>
+<span id="cb114-18"><a href="#cb114-18" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">names</span>(df_plain), <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb114-19"><a href="#cb114-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-20"><a href="#cb114-20" aria-hidden="true" tabindex="-1"></a>    pop_total <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(df_plain[, ars_pp, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb114-21"><a href="#cb114-21" aria-hidden="true" tabindex="-1"></a>    result[[<span class="fu">paste0</span>(<span class="st">"pop_total_"</span>, yr)]] <span class="ot">&lt;-</span> pop_total</span>
+<span id="cb114-22"><a href="#cb114-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-23"><a href="#cb114-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (race_name <span class="cf">in</span> <span class="fu">names</span>(race_pats)) {</span>
+<span id="cb114-24"><a href="#cb114-24" aria-hidden="true" tabindex="-1"></a>      pat  <span class="ot">&lt;-</span> race_pats[[race_name]]</span>
+<span id="cb114-25"><a href="#cb114-25" aria-hidden="true" tabindex="-1"></a>      cols <span class="ot">&lt;-</span> ars_pp[<span class="fu">grepl</span>(pat, ars_pp, <span class="at">perl =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb114-26"><a href="#cb114-26" aria-hidden="true" tabindex="-1"></a>      race_pop <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(cols) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb114-27"><a href="#cb114-27" aria-hidden="true" tabindex="-1"></a>        <span class="fu">rowSums</span>(df_plain[, cols, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb114-28"><a href="#cb114-28" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span></span>
+<span id="cb114-29"><a href="#cb114-29" aria-hidden="true" tabindex="-1"></a>        <span class="fu">rep</span>(<span class="cn">NA_real_</span>, <span class="fu">nrow</span>(df_plain))</span>
+<span id="cb114-30"><a href="#cb114-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-31"><a href="#cb114-31" aria-hidden="true" tabindex="-1"></a>      result[[<span class="fu">paste0</span>(<span class="st">"pct_"</span>, race_name, <span class="st">"_"</span>, yr)]] <span class="ot">&lt;-</span></span>
+<span id="cb114-32"><a href="#cb114-32" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ifelse</span>(pop_total <span class="sc">&gt;</span> <span class="dv">0</span>, race_pop <span class="sc">/</span> pop_total, <span class="cn">NA_real_</span>)</span>
+<span id="cb114-33"><a href="#cb114-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb114-34"><a href="#cb114-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-35"><a href="#cb114-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ── ri: population × race × income decile → income aggregates ───────────</span></span>
+<span id="cb114-36"><a href="#cb114-36" aria-hidden="true" tabindex="-1"></a>    ri_pp <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="fu">paste0</span>(<span class="st">"^ri_"</span>, yr, <span class="st">"_n_noise_postprocessed_"</span>),</span>
+<span id="cb114-37"><a href="#cb114-37" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">names</span>(df_plain), <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb114-38"><a href="#cb114-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-39"><a href="#cb114-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">length</span>(ri_pp) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb114-40"><a href="#cb114-40" aria-hidden="true" tabindex="-1"></a>      ri_total <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(df_plain[, ri_pp, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb114-41"><a href="#cb114-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-42"><a href="#cb114-42" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Decile 1 = bottom, decile 10 = top; decile 0 excluded (suppressed bucket)</span></span>
+<span id="cb114-43"><a href="#cb114-43" aria-hidden="true" tabindex="-1"></a>      low_cols  <span class="ot">&lt;-</span> ri_pp[<span class="fu">grepl</span>(<span class="st">"_postprocessed_1_"</span>,  ri_pp, <span class="at">fixed =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb114-44"><a href="#cb114-44" aria-hidden="true" tabindex="-1"></a>      high_cols <span class="ot">&lt;-</span> ri_pp[<span class="fu">grepl</span>(<span class="st">"_postprocessed_10_"</span>, ri_pp, <span class="at">fixed =</span> <span class="cn">TRUE</span>)]</span>
+<span id="cb114-45"><a href="#cb114-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-46"><a href="#cb114-46" aria-hidden="true" tabindex="-1"></a>      result[[<span class="fu">paste0</span>(<span class="st">"pct_low_income_"</span>,  yr)]] <span class="ot">&lt;-</span></span>
+<span id="cb114-47"><a href="#cb114-47" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ifelse</span>(ri_total <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb114-48"><a href="#cb114-48" aria-hidden="true" tabindex="-1"></a>               <span class="fu">rowSums</span>(df_plain[, low_cols,  <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> ri_total,</span>
+<span id="cb114-49"><a href="#cb114-49" aria-hidden="true" tabindex="-1"></a>               <span class="cn">NA_real_</span>)</span>
+<span id="cb114-50"><a href="#cb114-50" aria-hidden="true" tabindex="-1"></a>      result[[<span class="fu">paste0</span>(<span class="st">"pct_high_income_"</span>, yr)]] <span class="ot">&lt;-</span></span>
+<span id="cb114-51"><a href="#cb114-51" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ifelse</span>(ri_total <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb114-52"><a href="#cb114-52" aria-hidden="true" tabindex="-1"></a>               <span class="fu">rowSums</span>(df_plain[, high_cols, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">/</span> ri_total,</span>
+<span id="cb114-53"><a href="#cb114-53" aria-hidden="true" tabindex="-1"></a>               <span class="cn">NA_real_</span>)</span>
+<span id="cb114-54"><a href="#cb114-54" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb114-55"><a href="#cb114-55" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb114-56"><a href="#cb114-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-57"><a href="#cb114-57" aria-hidden="true" tabindex="-1"></a>  result</span>
+<span id="cb114-58"><a href="#cb114-58" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb114-59"><a href="#cb114-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb114-60"><a href="#cb114-60" aria-hidden="true" tabindex="-1"></a>mits_summary <span class="ot">&lt;-</span> <span class="fu">summarize_eif</span>(mits_with_eif)</span>
+<span id="cb114-61"><a href="#cb114-61" aria-hidden="true" tabindex="-1"></a>apps_summary <span class="ot">&lt;-</span> <span class="fu">summarize_eif</span>(apps_with_eif)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [24]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb115"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a>summary_cols <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"^(pop_total_|pct_)"</span>, <span class="fu">names</span>(mits_summary), <span class="at">value =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Summary columns derived ("</span>, <span class="fu">length</span>(summary_cols), <span class="st">"):</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Summary columns derived (16):</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(summary_cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "pop_total_1999"       "pct_white_1999"       "pct_black_1999"      
+ [4] "pct_hispanic_1999"    "pct_asian_1999"       "pct_aian_1999"       
+ [7] "pct_low_income_1999"  "pct_high_income_1999" "pop_total_2020"      
+[10] "pct_white_2020"       "pct_black_2020"       "pct_hispanic_2020"   
+[13] "pct_asian_2020"       "pct_aian_2020"        "pct_low_income_2020" 
+[16] "pct_high_income_2020"</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">pct_white_1999 distribution:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+pct_white_1999 distribution:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb121"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pct_white_1999))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.1033  0.5440  0.4759  0.8051  1.0000 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb123"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">pct_black_2020 distribution:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+pct_black_2020 distribution:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb125"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pct_black_2020))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.1591  0.4212  0.4470  0.7569  1.0000 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb127"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb127-1"><a href="#cb127-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">pct_low_income_1999 distribution:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+pct_low_income_1999 distribution:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb129"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb129-1"><a href="#cb129-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">summary</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pct_low_income_1999))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.1059  0.2147  0.2305  0.3367  1.0000 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb131"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb131-1"><a href="#cb131-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity: pop_total should be non-zero for all records (post-snap)</span></span>
+<span id="cb131-2"><a href="#cb131-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">pop_total_1999 zero or NA count:"</span>, </span>
+<span id="cb131-3"><a href="#cb131-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pop_total_1999 <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> </span>
+<span id="cb131-4"><a href="#cb131-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">is.na</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pop_total_1999)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+pop_total_1999 zero or NA count: 0 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb133"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb133-1"><a href="#cb133-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"pop_total_2020 zero or NA count:"</span>, </span>
+<span id="cb133-2"><a href="#cb133-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pop_total_2020 <span class="sc">==</span> <span class="dv">0</span> <span class="sc">|</span> </span>
+<span id="cb133-3"><a href="#cb133-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">is.na</span>(sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(mits_summary)<span class="sc">$</span>pop_total_2020)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>pop_total_2020 zero or NA count: 0 </code></pre>
+</div>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [25]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb135"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb135-1"><a href="#cb135-1" aria-hidden="true" tabindex="-1"></a>slim_cols_pattern <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">c</span>(</span>
+<span id="cb135-2"><a href="#cb135-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Record + parcel identifiers</span></span>
+<span id="cb135-3"><a href="#cb135-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^unique_id$"</span>,</span>
+<span id="cb135-4"><a href="#cb135-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^assigned_parcel_index$"</span>,</span>
+<span id="cb135-5"><a href="#cb135-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^assignment_method$"</span>,</span>
+<span id="cb135-6"><a href="#cb135-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-7"><a href="#cb135-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Mit/app address and disaster fields</span></span>
+<span id="cb135-8"><a href="#cb135-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^address$"</span>,</span>
+<span id="cb135-9"><a href="#cb135-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^raw_addr$"</span>,</span>
+<span id="cb135-10"><a href="#cb135-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^Match_addr$"</span>,</span>
+<span id="cb135-11"><a href="#cb135-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^street_address$"</span>,</span>
+<span id="cb135-12"><a href="#cb135-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^city$"</span>,</span>
+<span id="cb135-13"><a href="#cb135-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^City$"</span>,</span>
+<span id="cb135-14"><a href="#cb135-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^county$"</span>,</span>
+<span id="cb135-15"><a href="#cb135-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^County$"</span>,</span>
+<span id="cb135-16"><a href="#cb135-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^Postal$"</span>,</span>
+<span id="cb135-17"><a href="#cb135-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^zip$"</span>,</span>
+<span id="cb135-18"><a href="#cb135-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^latitude$"</span>,</span>
+<span id="cb135-19"><a href="#cb135-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^longitude$"</span>,</span>
+<span id="cb135-20"><a href="#cb135-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^disas_code"</span>,</span>
+<span id="cb135-21"><a href="#cb135-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^disas_program$"</span>,</span>
+<span id="cb135-22"><a href="#cb135-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^disas_year$"</span>,</span>
+<span id="cb135-23"><a href="#cb135-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^project_type$"</span>,</span>
+<span id="cb135-24"><a href="#cb135-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^project_status$"</span>,</span>
+<span id="cb135-25"><a href="#cb135-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^FileEvent"</span>,</span>
+<span id="cb135-26"><a href="#cb135-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^Filename$"</span>,</span>
+<span id="cb135-27"><a href="#cb135-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^Eventyear"</span>,</span>
+<span id="cb135-28"><a href="#cb135-28" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^Year$"</span>,</span>
+<span id="cb135-29"><a href="#cb135-29" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^year_conflict$"</span>,</span>
+<span id="cb135-30"><a href="#cb135-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^mhp_flag$"</span>,</span>
+<span id="cb135-31"><a href="#cb135-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^address_quality$"</span>,</span>
+<span id="cb135-32"><a href="#cb135-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-33"><a href="#cb135-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Parcel attributes</span></span>
+<span id="cb135-34"><a href="#cb135-34" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^parcel_index$"</span>,</span>
+<span id="cb135-35"><a href="#cb135-35" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^geometry_id$"</span>,</span>
+<span id="cb135-36"><a href="#cb135-36" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^cntyfips$"</span>,</span>
+<span id="cb135-37"><a href="#cb135-37" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^parno$"</span>,</span>
+<span id="cb135-38"><a href="#cb135-38" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^siteadd$"</span>,</span>
+<span id="cb135-39"><a href="#cb135-39" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^ownname$"</span>,</span>
+<span id="cb135-40"><a href="#cb135-40" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^parusedesc$"</span>,</span>
+<span id="cb135-41"><a href="#cb135-41" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^LAND</span><span class="sc">\\</span><span class="st">.USE</span><span class="sc">\\</span><span class="st">.CODE$"</span>,</span>
+<span id="cb135-42"><a href="#cb135-42" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^luc_tier$"</span>,</span>
+<span id="cb135-43"><a href="#cb135-43" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^OWNER</span><span class="sc">\\</span><span class="st">.1</span><span class="sc">\\</span><span class="st">.FULL</span><span class="sc">\\</span><span class="st">.NAME$"</span>,</span>
+<span id="cb135-44"><a href="#cb135-44" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^YEAR</span><span class="sc">\\</span><span class="st">.BUILT$"</span>,</span>
+<span id="cb135-45"><a href="#cb135-45" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^ASSESSED</span><span class="sc">\\</span><span class="st">.TOTAL</span><span class="sc">\\</span><span class="st">.VALUE$"</span>,</span>
+<span id="cb135-46"><a href="#cb135-46" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^IMPROVEMENT</span><span class="sc">\\</span><span class="st">.VALUE</span><span class="sc">\\</span><span class="st">.CALCULATED$"</span>,</span>
+<span id="cb135-47"><a href="#cb135-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-48"><a href="#cb135-48" aria-hidden="true" tabindex="-1"></a>  <span class="co"># EIF cell traceability</span></span>
+<span id="cb135-49"><a href="#cb135-49" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^eif_lat$"</span>,</span>
+<span id="cb135-50"><a href="#cb135-50" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^eif_lon$"</span>,</span>
+<span id="cb135-51"><a href="#cb135-51" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^valid_cell$"</span>,</span>
+<span id="cb135-52"><a href="#cb135-52" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^eif_lat_(ars|ri)_"</span>,</span>
+<span id="cb135-53"><a href="#cb135-53" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^eif_lon_(ars|ri)_"</span>,</span>
+<span id="cb135-54"><a href="#cb135-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-55"><a href="#cb135-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Derived summary columns</span></span>
+<span id="cb135-56"><a href="#cb135-56" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^pop_total_"</span>,</span>
+<span id="cb135-57"><a href="#cb135-57" aria-hidden="true" tabindex="-1"></a>  <span class="st">"^pct_"</span></span>
+<span id="cb135-58"><a href="#cb135-58" aria-hidden="true" tabindex="-1"></a>), <span class="at">collapse =</span> <span class="st">"|"</span>)</span>
+<span id="cb135-59"><a href="#cb135-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-60"><a href="#cb135-60" aria-hidden="true" tabindex="-1"></a>slim <span class="ot">&lt;-</span> <span class="cf">function</span>(df) dplyr<span class="sc">::</span><span class="fu">select</span>(df, dplyr<span class="sc">::</span><span class="fu">matches</span>(slim_cols_pattern))</span>
+<span id="cb135-61"><a href="#cb135-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-62"><a href="#cb135-62" aria-hidden="true" tabindex="-1"></a>mits_slim <span class="ot">&lt;-</span> <span class="fu">slim</span>(mits_summary)</span>
+<span id="cb135-63"><a href="#cb135-63" aria-hidden="true" tabindex="-1"></a>apps_slim <span class="ot">&lt;-</span> <span class="fu">slim</span>(apps_summary)</span>
+<span id="cb135-64"><a href="#cb135-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb135-65"><a href="#cb135-65" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mits slim: "</span>, <span class="fu">ncol</span>(mits_slim), <span class="st">" cols (down from "</span>, <span class="fu">ncol</span>(mits_with_eif), <span class="st">")</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mits slim: 57 cols (down from 532)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb137"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb137-1"><a href="#cb137-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Apps slim: "</span>, <span class="fu">ncol</span>(apps_slim), <span class="st">" cols (down from "</span>, <span class="fu">ncol</span>(apps_with_eif), <span class="st">")</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Apps slim: 72 cols (down from 550)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb139"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb139-1"><a href="#cb139-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Mits rows: "</span>, <span class="fu">nrow</span>(mits_slim), <span class="st">" | Apps rows: "</span>, <span class="fu">nrow</span>(apps_slim), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Mits rows: 8801 | Apps rows: 23232</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb141"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb141-1"><a href="#cb141-1" aria-hidden="true" tabindex="-1"></a>sf<span class="sc">::</span><span class="fu">st_write</span>(mits_slim, <span class="fu">file.path</span>(out_dir, <span class="st">"mits_with_eif_summary.gpkg"</span>),</span>
+<span id="cb141-2"><a href="#cb141-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb141-3"><a href="#cb141-3" aria-hidden="true" tabindex="-1"></a>sf<span class="sc">::</span><span class="fu">st_write</span>(apps_slim, <span class="fu">file.path</span>(out_dir, <span class="st">"apps_with_eif_summary.gpkg"</span>),</span>
+<span id="cb141-4"><a href="#cb141-4" aria-hidden="true" tabindex="-1"></a>             <span class="at">delete_dsn =</span> <span class="cn">TRUE</span>, <span class="at">quiet =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb141-5"><a href="#cb141-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb141-6"><a href="#cb141-6" aria-hidden="true" tabindex="-1"></a>mits_slim <span class="sc">|&gt;</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb141-7"><a href="#cb141-7" aria-hidden="true" tabindex="-1"></a>  readr<span class="sc">::</span><span class="fu">write_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mits_with_eif_summary.csv"</span>))</span>
+<span id="cb141-8"><a href="#cb141-8" aria-hidden="true" tabindex="-1"></a>apps_slim <span class="sc">|&gt;</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb141-9"><a href="#cb141-9" aria-hidden="true" tabindex="-1"></a>  readr<span class="sc">::</span><span class="fu">write_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"apps_with_eif_summary.csv"</span>))</span>
+<span id="cb141-10"><a href="#cb141-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb141-11"><a href="#cb141-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Written:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Written:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb143"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb143-1"><a href="#cb143-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  mits_with_eif_summary.gpkg / .csv</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  mits_with_eif_summary.gpkg / .csv</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb145"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb145-1"><a href="#cb145-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  apps_with_eif_summary.gpkg / .csv</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  apps_with_eif_summary.gpkg / .csv</code></pre>
+</div>
+</div></div>
+<section id="output-schema-slim-files" class="level3">
+<h3 class="anchored" data-anchor-id="output-schema-slim-files">Output schema — slim files</h3>
+<p><strong><code>mits_with_eif_summary.gpkg</code></strong> / <strong><code>apps_with_eif_summary.gpkg</code></strong> — analysis-ready, one row per mit/app:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Column</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>unique_id</code>, <code>assigned_parcel_index</code>, <code>assignment_method</code></td>
+<td>alt Step 5</td>
+<td>record + parcel identifiers</td>
+</tr>
+<tr class="even">
+<td>(address + disaster fields)</td>
+<td>input data</td>
+<td>cross-reference only</td>
+</tr>
+<tr class="odd">
+<td><code>parno</code>, <code>siteadd</code>, <code>ownname</code>, <code>LAND.USE.CODE</code>, <code>luc_tier</code>, <code>YEAR.BUILT</code>, <code>ASSESSED.TOTAL.VALUE</code>, etc.</td>
+<td>parcels_pri.gpkg</td>
+<td>property context</td>
+</tr>
+<tr class="even">
+<td><code>eif_lat</code>, <code>eif_lon</code>, <code>valid_cell</code></td>
+<td>EIF topology</td>
+<td>base cell + valid-cell flag</td>
+</tr>
+<tr class="odd">
+<td><code>eif_lat_{prefix}</code>, <code>eif_lon_{prefix}</code></td>
+<td>nearest-neighbor fill</td>
+<td>year-specific cell keys (4 pairs)</td>
+</tr>
+<tr class="even">
+<td><code>pop_total_1999</code>, <code>pop_total_2020</code></td>
+<td>derived</td>
+<td>sum of all postprocessed counts per cell per year</td>
+</tr>
+<tr class="odd">
+<td><code>pct_white_{year}</code>, <code>pct_black_{year}</code>, <code>pct_hispanic_{year}</code>, <code>pct_asian_{year}</code>, <code>pct_aian_{year}</code></td>
+<td>derived</td>
+<td>race share of total, per year (5 categories × 2 years = 10 cols)</td>
+</tr>
+<tr class="even">
+<td><code>pct_low_income_{year}</code>, <code>pct_high_income_{year}</code></td>
+<td>derived</td>
+<td>bottom (decile 1) and top (decile 10) income shares, per year (2 × 2 = 4 cols)</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
      </main>
 <!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
