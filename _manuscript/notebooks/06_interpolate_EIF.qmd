@@ -731,7 +731,6 @@ gc()
 
 # Coverage diagnostics
 coverage <- function(df, label) {
-  df_plain <- sf::st_drop_geometry(df)
   cat("\n", label, "EIF coverage:\n")
   cat(sprintf("  %-35s %d\n", "Total records", nrow(df)))
   cat(sprintf("  %-35s %d  (%.1f%%)\n", "Valid topology cell",
@@ -739,31 +738,62 @@ coverage <- function(df, label) {
   cat(sprintf("  %-35s %d  (%.1f%%)\n", "Invalid/water cell",
               sum(!df$valid_cell), 100 * mean(!df$valid_cell)))
   cat("\n  Per-dataset match rates (after nearest-neighbor fill):\n")
+
+  df_plain <- sf::st_drop_geometry(df)
+
   for (nm in names(eif_files)) {
-    yr   <- eif_files[[nm]]$prefix
-    cols <- names(df_plain)[startsWith(names(df_plain), paste0(yr, "_"))]
-    if (length(cols) > 0) {
-      n_matched <- sum(rowSums(!is.na(df_plain[, cols, drop = FALSE])) > 0)
-      cat(sprintf("  %-30s matched: %d (%.1f%%)\n",
-                  nm, n_matched, 100 * n_matched / nrow(df)))
+    pfx       <- eif_files[[nm]]$prefix
+    pfx_cols  <- grep(paste0("^", pfx, "_"), names(df_plain), value = TRUE)
+    # Exclude snap-key columns — always populated after snap, not EIF data
+    data_cols <- setdiff(pfx_cols,
+                         c(paste0("eif_lat_", pfx),
+                           paste0("eif_lon_", pfx)))
+
+    if (length(data_cols) == 0) {
+      cat(sprintf("  %-30s no data columns found\n", nm))
+      next
     }
+
+    has_any_data <- rowSums(!is.na(df_plain[, data_cols, drop = FALSE])) > 0
+    n_matched <- sum(has_any_data)
+    cat(sprintf("  %-30s matched: %d (%.1f%%)\n",
+                nm, n_matched, 100 * n_matched / nrow(df_plain)))
   }
 }
 
 coverage(mits_with_eif, "Mitigations")
 coverage(apps_with_eif, "Applications")
 ```
+
+```{r eif-write}
+st_write(mits_with_eif, file.path(out_dir, "mits_with_eif.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+st_write(apps_with_eif, file.path(out_dir, "apps_with_eif.gpkg"),
+         delete_dsn = TRUE, quiet = TRUE)
+
+mits_with_eif |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "mits_with_eif.csv"))
+apps_with_eif |> st_drop_geometry() |>
+  write_csv(file.path(out_dir, "apps_with_eif.csv"))
+
+cat("Written:\n")
+cat("  mits_with_eif.gpkg / .csv —", nrow(mits_with_eif), "rows,",
+    ncol(sf::st_drop_geometry(mits_with_eif)), "columns\n")
+cat("  apps_with_eif.gpkg / .csv —", nrow(apps_with_eif), "rows,",
+    ncol(sf::st_drop_geometry(apps_with_eif)), "columns\n")
+```
 ## Summary
 
 ```{r summary-table}
 eif_coverage <- sapply(names(eif_files), function(nm) {
-  pfx  <- eif_files[[nm]]$prefix
-  cols <- names(sf::st_drop_geometry(mits_with_eif))[
-    startsWith(names(sf::st_drop_geometry(mits_with_eif)), paste0(pfx, "_"))
-  ]
-  if (length(cols) > 0)
-    sum(rowSums(!is.na(sf::st_drop_geometry(mits_with_eif)[, cols, drop = FALSE])) > 0)
-  else NA_integer_
+  pfx       <- eif_files[[nm]]$prefix
+  df_plain  <- sf::st_drop_geometry(mits_with_eif)
+  pfx_cols  <- grep(paste0("^", pfx, "_"), names(df_plain), value = TRUE)
+  data_cols <- setdiff(pfx_cols,
+                       c(paste0("eif_lat_", pfx),
+                         paste0("eif_lon_", pfx)))
+  if (length(data_cols) == 0) return(NA_integer_)
+  sum(rowSums(!is.na(df_plain[, data_cols, drop = FALSE])) > 0)
 })
 
 summary_tbl <- tibble(
