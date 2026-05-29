@@ -1,0 +1,317 @@
+---
+title: "Step 7: Flood Event & Eligibility Join (from existing Python CSVs)"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+This notebook bridges Helena's pre-existing flood event data 
+onto R's `parcel_index`, producing per-parcel flood and eligibility counts that
+match the Julian's reported 67.5% eligibility ratio.
+
+**Data source decision.** We use the pre-aggregated `parcels_events.csv`
+produced by Julian and then crosswalked to R's `parcel_index`
+via `(cntyfips, parno)`. 
+
+**Inputs:**
+
+- `parcels_pri.gpkg` — R's parcels (from Step 5)
+- `/proj/.../Raw Data Inputs/parcels_study_area.csv` — Python's parcel index
+  registry, used to build the `(cntyfips, parno)` crosswalk
+- `/proj/.../Intermediary Data/parcels_events.csv` — pre-aggregated flood and
+  eligibility columns per Python `parcel_index`, from Julian 
+
+**Outputs (written to `out_dir`):**
+
+- `parcel_crosswalk_R_Py.csv` — Python `parcel_index` ↔ R `parcel_index`
+  crosswalk for future reference
+- `parcels_events_R.csv` — final per-parcel flood and eligibility table,
+  keyed on R's `parcel_index`, ready to join to `parcels_pri.gpkg`
+
+## Methodology
+
+**Why a crosswalk is necessary.** Python's `parcel_index` was created as the
+row position in pandas's read of the source NC1 file, after Python-specific
+filtering and deduplication. R's `parcel_index` was created independently
+during the R Step 1 pipeline. The two sets diverge: R has ~29k
+more parcels and same numeric indices refer to different parcels.
+
+**Crosswalk key choice.** `(cntyfips, parno)` is the most stable real-world
+parcel identifier across both pipelines. This uses a normalized `parno`
+(alphanumeric only, matching Step 3's `strip_alnum`) for the primary
+crosswalk and `altparno` as a fallback for R parcels that didn't match on
+`parno`.
+
+**Flood and eligibility columns.** The Original `parcels_events.csv`
+already contains pre-computed `flooded` and `eligible` counts (and per-event
+`_max` columns) following Python Step 12's logic. This translates these directly
+to R's `parcel_index` space via the crosswalk.
+
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(stringr)
+library(tidyr)
+library(knitr)
+```
+
+```{r setup}
+out_dir            <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+parcels_path       <- file.path(out_dir, "parcels_pri.gpkg")
+
+py_parcels_csv     <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Raw Data Inputs/parcels_study_area.csv"
+aggregated_events_path <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Intermediary Data/parcels_events.csv"
+
+xwalk_out_path  <- file.path(out_dir, "parcel_crosswalk_R_Py.csv")
+events_out_path <- file.path(out_dir, "parcels_events_R.csv")
+
+# Helper: alphanumeric-only normalization, matches Step 3's strip_alnum
+strip_alnum <- function(x) str_replace_all(replace_na(x, ""), "[^a-zA-Z0-9]", "")
+```
+
+## 1  Build the R ↔ Python parcel crosswalk
+
+Python's aggregated event CSV is keyed on Python's `parcel_index`. We need to
+translate to R's `parcel_index` so the flood data can be joined back to
+`parcels_pri.gpkg`. The join key is `(cntyfips, parno)`, normalized
+alphanumerically to handle formatting differences.
+
+```{r build-crosswalk}
+# Load R parcels
+r_parcels <- sf::st_read(parcels_path, quiet = TRUE) |>
+  sf::st_drop_geometry() |>
+  dplyr::select(r_parcel_index = parcel_index, cntyfips, parno, altparno, fr_1_4) |>
+  dplyr::mutate(
+    cntyfips      = as.character(cntyfips),
+    parno_norm    = strip_alnum(parno),
+    altparno_norm = strip_alnum(altparno)
+  )
+
+# Load Python parcels registry
+py_parcels <- read_csv(py_parcels_csv,
+                       col_types = cols(.default = col_character())) |>
+  dplyr::select(py_parcel_index = parcel_index, cntyfips, parno, altparno) |>
+  dplyr::mutate(
+    py_parcel_index = as.integer(py_parcel_index),
+    cntyfips        = as.character(cntyfips),
+    parno_norm      = strip_alnum(parno),
+    altparno_norm   = strip_alnum(altparno)
+  )
+
+# Normalize cntyfips: Python may store "063", R uses "37063". Add prefix if needed.
+if (!any(str_detect(py_parcels$cntyfips, "^37"), na.rm = TRUE)) {
+  py_parcels <- py_parcels |> mutate(cntyfips = paste0("37", cntyfips))
+}
+
+cat("R parcels:    ", nrow(r_parcels),  "rows\n")
+cat("Python parcels:", nrow(py_parcels), "rows\n")
+cat("Sample R cntyfips: ", head(unique(r_parcels$cntyfips), 5),  "\n")
+cat("Sample Py cntyfips:", head(unique(py_parcels$cntyfips), 5), "\n")
+```
+
+```{r crosswalk-primary}
+# Primary crosswalk: (cntyfips, parno_norm)
+xwalk_primary <- r_parcels |>
+  filter(parno_norm != "") |>
+  inner_join(
+    py_parcels |> filter(parno_norm != "") |>
+      select(py_parcel_index, cntyfips, parno_norm),
+    by = c("cntyfips", "parno_norm"),
+    relationship = "many-to-many"
+  ) |>
+  # If multiple Python parcels match one R parcel, take the first
+  group_by(r_parcel_index) |> slice(1) |> ungroup() |>
+  select(r_parcel_index, py_parcel_index, cntyfips) |>
+  mutate(match_method = "parno")
+
+cat("Primary crosswalk (parno):", nrow(xwalk_primary), "matches\n")
+```
+
+```{r crosswalk-secondary}
+# Secondary crosswalk: altparno fallback for R parcels not matched via parno
+r_unmatched <- r_parcels |>
+  anti_join(xwalk_primary |> select(r_parcel_index), by = "r_parcel_index") |>
+  filter(altparno_norm != "")
+
+xwalk_secondary <- r_unmatched |>
+  inner_join(
+    py_parcels |> filter(altparno_norm != "") |>
+      select(py_parcel_index, cntyfips, altparno_norm),
+    by = c("cntyfips", "altparno_norm"),
+    relationship = "many-to-many"
+  ) |>
+  group_by(r_parcel_index) |> slice(1) |> ungroup() |>
+  select(r_parcel_index, py_parcel_index, cntyfips) |>
+  mutate(match_method = "altparno")
+
+cat("Secondary crosswalk (altparno):", nrow(xwalk_secondary), "matches\n")
+```
+
+```{r crosswalk-combine-write}
+xwalk <- bind_rows(xwalk_primary, xwalk_secondary)
+
+cat("\nFinal crosswalk:\n")
+cat("  Total R parcels:                ", nrow(r_parcels), "\n")
+cat("  R parcels with Py counterpart:  ", nrow(xwalk), "\n")
+cat("  Coverage:                       ",
+    sprintf("%.1f%%", 100 * nrow(xwalk) / nrow(r_parcels)), "\n\n")
+xwalk |> count(match_method) |> print()
+
+# Write crosswalk for reference / debugging
+write_csv(xwalk, xwalk_out_path)
+cat("\nCrosswalk saved to:", xwalk_out_path, "\n")
+```
+
+## 2  Crosswalk the Original aggregated event data to R parcel space
+
+Read `parcels_events.csv` and translate its
+Python `parcel_index` keys to R's `parcel_index` via the crosswalk built
+above. The `flooded` and `eligible` columns in this file are pre-computed
+and used as-is.
+
+```{r read-aggregated-events}
+py_events_aggregated <- read_csv(
+  aggregated_events_path,
+  col_types = cols(.default = col_character())
+) |>
+  mutate(parcel_index = as.integer(parcel_index))
+
+post_merge <- xwalk |>
+  select(r_parcel_index, py_parcel_index) |>
+  inner_join(py_events_aggregated, by = c("py_parcel_index" = "parcel_index")) |>
+  select(-py_parcel_index) |>
+  left_join(
+    r_parcels |> select(r_parcel_index, cntyfips, fr_1_4),
+    by = "r_parcel_index"
+  )
+
+cat("py_events_aggregated rows: ", nrow(py_events_aggregated), "\n")
+cat("post_merge rows:           ", nrow(post_merge), "\n")
+cat("post_merge cols:           ", ncol(post_merge), "\n")
+cat("Crosswalk match rate:      ",
+    sprintf("%.1f%%", 100 * nrow(post_merge) / nrow(py_events_aggregated)), "\n")
+```
+
+## 3  Sanity check vs paper
+
+```{r sanity-check}
+# Coerce flooded / eligible to numeric — they were read as character
+post_merge <- post_merge |>
+  mutate(
+    flooded  = as.integer(flooded_any),
+    eligible = as.integer(eligible)
+  )
+
+flooded_n  <- sum(post_merge$flooded  > 0, na.rm = TRUE)
+eligible_n <- sum(post_merge$eligible > 0, na.rm = TRUE)
+
+# Residential-only subset (fr_1_4 == "1" in the Original CSV)
+res_rows   <- post_merge |> filter(as.integer(fr_1_4) == 1)
+res_flooded_n  <- sum(res_rows$flooded_any  > 0, na.rm = TRUE)
+res_eligible_n <- sum(res_rows$eligible > 0, na.rm = TRUE)
+
+sanity_tbl <- tibble(
+  Metric = c(
+    "Total parcels (crosswalked)",
+    "Parcels flooded ≥ 1 time",
+    "Parcels eligible ≥ 1 declared event",
+    "Eligible / Flooded — all parcels",
+    "Eligible / Flooded — residential only (fr_1_4 == 1)",
+    "Paper reports"
+  ),
+  Value = c(
+    scales::comma(nrow(post_merge)),
+    scales::comma(flooded_n),
+    scales::comma(eligible_n),
+    sprintf("%.1f%%", 100 * eligible_n / flooded_n),
+    sprintf("%.1f%%", 100 * res_eligible_n / res_flooded_n),
+    "67.5%"
+  )
+)
+
+knitr::kable(sanity_tbl, caption = "Sanity check: eligibility rate vs paper claim")
+```
+
+Expected: all-parcel ratio ~69.0%, residential ~69.4%. If either ratio is
+far from these values, check that `aggregated_events_path` points to the correct
+parcel_events file.
+
+## 4  Write the final parcel-event table
+
+```{r write-final}
+write_csv(post_merge, events_out_path)
+
+cat("Wrote:", events_out_path, "\n")
+cat("Final dimensions:", nrow(post_merge), "rows ×",
+    ncol(post_merge), "cols\n")
+```
+
+## 5  Join straight into `parcels_pri.gpkg`
+
+This creates a single file with parcels + flood data combined, ready for
+downstream analysis:
+
+```{r join-to-parcels}
+#| eval: false
+
+# Load R parcels, join flood data, write combined output
+parcels_pri <- sf::st_read(parcels_path, quiet = TRUE)
+
+flood_data <- read_csv(events_out_path,
+                       col_types = cols(.default = col_character())) |>
+  mutate(
+    r_parcel_index = as.integer(r_parcel_index),
+    flooded        = as.integer(flooded),
+    eligible       = as.integer(eligible)
+  ) |>
+  rename(parcel_index = r_parcel_index) |>
+  select(-cntyfips)   # already in parcels_pri
+
+parcels_with_floods <- parcels_pri |>
+  left_join(flood_data, by = "parcel_index")
+
+sf::st_write(parcels_with_floods,
+             file.path(out_dir, "parcels_pri_with_floods.gpkg"),
+             delete_dsn = TRUE, quiet = TRUE)
+
+cat("Wrote: parcels_pri_with_floods.gpkg with",
+    sum(!is.na(parcels_with_floods$flooded) & as.integer(parcels_with_floods$flooded) > 0),
+    "parcels flagged as flooded\n")
+```
+
+## Output schema
+
+**`parcel_crosswalk_R_Py.csv`** — Python ↔ R parcel_index lookup, for
+reference / debugging:
+
+| Column | Notes |
+|---|---|
+| `r_parcel_index` | R's parcel index (from `parcels_pri.gpkg`) |
+| `py_parcel_index` | Python's parcel index (from Helena's CSVs) |
+| `cntyfips` | County FIPS, used as join key |
+| `match_method` | `parno` (primary) or `altparno` (secondary fallback) |
+
+**`parcels_events_R.csv`** — per-parcel flood and eligibility data, keyed
+on R's `parcel_index`:
+
+| Column | Source | Notes |
+|---|---|---|
+| `r_parcel_index` | crosswalk | R's parcel_index, joinable to parcels_pri |
+| `cntyfips` | R parcels | County FIPS for the parcel |
+| `flooded` | `parcels_events.csv` | Count of events the parcel was flooded by |
+| `eligible` | `parcels_events.csv` | Count of declared events for which parcel was eligible |
+| `fr_1_4` | `parcels_events.csv` | Residential flag (1 = single-family residential) |
+| *(other columns)* | `parcels_events.csv` | All columns from the Original Aug 2024 file are passed through |
+
