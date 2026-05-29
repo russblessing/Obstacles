@@ -76,8 +76,7 @@ A value is treated as unreliable if the parcel is:
 
 **Donors (parcels providing value estimates)**: 1–4 family residential,
 NOT government-owned, with non-missing recorded total value above
-$25,000. Strict NA exclusion ensures every neighbor mean is computed
-over exactly k actual values.
+$25,000. 
 
 **Mit/app per-parcel counts** are computed from `assigned_parcel_index`
 in the alt resolved outputs — each unique mit/app contributes to
@@ -97,24 +96,6 @@ via `floor(coord * 100) / 100 + 0.005` (cell centers are at `.005` offsets
 per the EIF grid topology), then joined to EIF data by the snapped
 coordinates as a character key. Equivalent result, much faster than `st_join`.
 
-**Stage 2 nearest-neighbor search** uses parcel centroid distance rather
-than point-to-polygon-edge distance for computational reliability. For NC
-residential parcels (~30–80m typical diameter), centroid distance overstates
-edge distance by a similar amount; the 200m distance cap still correctly
-identifies geocoding-artifact rescues. Earlier polygon-distance implementation
-via `nngeo::st_nn` produced misaligned neighbor results and was replaced.
-
-**Caveats** worth noting in the manuscript:
-
-- The $25,000 thresholds are heuristic; sensitivity analysis at $10k
-  and $50k recommended.
-- Three K values (5/10/50) are produced in parallel; downstream
-  analysis picks the granularity.
-- EIF counts are differentially-private — approximate per cell.
-- Adjacent buildings within ~1.2 km² of each other share the same EIF cell.
-  For dense urban geometry this means per-cell attributes can't distinguish
-  neighboring properties.
-- Donor pool is statewide; border parcels may reach across counties.
 
 
 ```{r libraries}
@@ -725,10 +706,6 @@ gc()
 apps_with_eif <- join_eif_all(apps_resolved)
 gc()
 
-# Free the NC tables now that joins are done
-rm(eif_nc_tables, eif_cells_sf)
-gc()
-
 # Coverage diagnostics
 coverage <- function(df, label) {
   cat("\n", label, "EIF coverage:\n")
@@ -1059,235 +1036,126 @@ cat("  mits_with_eif_summary.gpkg / .csv\n")
 cat("  apps_with_eif_summary.gpkg / .csv\n")
 ```
 
-### Output schema — slim files
+```{r eif-cells-full}
+# Full NC cell summary for Step 7 parcel-centroid join.
+# Re-reads parquets directly — eif_nc_tables is filtered to needed_cells
+# (mit/app cells only) and cannot serve as the full-NC spine.
+# Spine = topo_nc (all valid NC land cells).
 
-**`mits_with_eif_summary.gpkg`** / **`apps_with_eif_summary.gpkg`** — analysis-ready,
-one row per mit/app:
+build_full_nc_cell_summary <- function() {
 
-| Column | Source | Notes |
-|---|---|---|
-| `unique_id`, `assigned_parcel_index`, `assignment_method` | alt Step 5 | record + parcel identifiers |
-| (address + disaster fields) | input data | cross-reference only |
-| `parno`, `siteadd`, `ownname`, `LAND.USE.CODE`, `luc_tier`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`, etc. | parcels_pri.gpkg | property context |
-| `eif_lat`, `eif_lon`, `valid_cell` | EIF topology | base cell + valid-cell flag |
-| `eif_lat_{prefix}`, `eif_lon_{prefix}` | nearest-neighbor fill | year-specific cell keys (4 pairs) |
-| `pop_total_1999`, `pop_total_2020` | derived | sum of all postprocessed counts per cell per year |
-| `pct_white_{year}`, `pct_black_{year}`, `pct_hispanic_{year}`, `pct_asian_{year}`, `pct_aian_{year}` | derived | race share of total, per year (5 categories × 2 years = 10 cols) |
-| `pct_low_income_{year}`, `pct_high_income_{year}` | derived | bottom (decile 1) and top (decile 10) income shares, per year (2 × 2 = 4 cols) |
+  years <- c(1999, 2020)
+  cell_summary <- topo_nc |> select(eif_lat, eif_lon)
 
-## Section 11: Descriptive comparisons — EIF vs paper draft
+  for (yr in years) {
 
-The paper draft (Plough et al., Fig. 4) reports racial composition at the
-block-group level using 2010 ACS data, while this notebook produces EIF
-cell-level estimates time-matched to 1999 and 2020. The comparisons below
-are necessarily methodologically different (block-group vs cell;
-"at-least-one-record" presence vs record-level demographics), but useful
-as a sanity check that the EIF data is producing reasonable summaries.
+    # --- ageracesex ---
+    ars_raw <- arrow::open_dataset(
+      file.path(out_dir, sprintf("gridded_eif_pop_ageracesex_%d.parquet", yr))
+    ) |>
+      dplyr::filter(
+        as.numeric(grid_lat) >= NC_BBOX$lat_min,
+        as.numeric(grid_lat) <= NC_BBOX$lat_max,
+        as.numeric(grid_lon) >= NC_BBOX$lon_min,
+        as.numeric(grid_lon) <= NC_BBOX$lon_max
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        eif_lat = round(as.numeric(grid_lat), 3),
+        eif_lon = round(as.numeric(grid_lon), 3)
+      ) |>
+      dplyr::select(-grid_lat, -grid_lon)
 
-### 11.1  Paper vs EIF comparison table
+    ars_wide <- aggregate_eif_wide(ars_raw, paste0("ars_", yr))
+    rm(ars_raw); gc()
 
-```{r descriptive-comparison-table}
-library(knitr)
-library(dplyr)
-library(tidyr)
+    ars_pp_cols <- grep(paste0("^ars_", yr, "_n_noise_postprocessed_"),
+                        names(ars_wide), value = TRUE)
+    pop_total <- rowSums(ars_wide[, ars_pp_cols, drop = FALSE], na.rm = TRUE)
 
-# Helper: median percentage (×100) for a column, handling NA
-median_pct <- function(x) median(x, na.rm = TRUE) * 100
+    race_pats <- c(
+      white    = "_White(?:_[MF])?$",
+      black    = "_Black(?:_[MF])?$",
+      hispanic = "_Hispanic(?:_[MF])?$",
+      asian    = "_Asian(?:_[MF])?$",
+      aian     = "_AIAN(?:_[MF])?$"
+    )
 
-build_eif_row <- function(df, label) {
-  df_plain <- sf::st_drop_geometry(df)
-  tibble(
-    Side                    = label,
-    `Median % Black 1999`   = median_pct(df_plain$pct_black_1999),
-    `Median % Black 2020`   = median_pct(df_plain$pct_black_2020),
-    `Median % Low Inc 1999` = median_pct(df_plain$pct_low_income_1999),
-    `Median % Low Inc 2020` = median_pct(df_plain$pct_low_income_2020)
-  )
+    ars_summary <- ars_wide |>
+      select(eif_lat, eif_lon) |>
+      mutate(!!paste0("pop_total_", yr) := pop_total)
+
+    for (race in names(race_pats)) {
+      cols     <- ars_pp_cols[grepl(race_pats[[race]], ars_pp_cols, perl = TRUE)]
+      race_pop <- if (length(cols) > 0)
+        rowSums(ars_wide[, cols, drop = FALSE], na.rm = TRUE)
+      else
+        rep(NA_real_, nrow(ars_wide))
+      ars_summary[[paste0("pct_", race, "_", yr)]] <-
+        ifelse(pop_total > 0, race_pop / pop_total, NA_real_)
+    }
+
+    rm(ars_wide); gc()
+
+    # --- raceincome ---
+    ri_raw <- arrow::open_dataset(
+      file.path(out_dir, sprintf("gridded_eif_pop_raceincome_%d.parquet", yr))
+    ) |>
+      dplyr::filter(
+        as.numeric(grid_lat) >= NC_BBOX$lat_min,
+        as.numeric(grid_lat) <= NC_BBOX$lat_max,
+        as.numeric(grid_lon) >= NC_BBOX$lon_min,
+        as.numeric(grid_lon) <= NC_BBOX$lon_max
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        eif_lat = round(as.numeric(grid_lat), 3),
+        eif_lon = round(as.numeric(grid_lon), 3)
+      ) |>
+      dplyr::select(-grid_lat, -grid_lon)
+
+    ri_wide <- aggregate_eif_wide(ri_raw, paste0("ri_", yr))
+    rm(ri_raw); gc()
+
+    ri_pp_cols <- grep(paste0("^ri_", yr, "_n_noise_postprocessed_"),
+                       names(ri_wide), value = TRUE)
+    ri_total  <- rowSums(ri_wide[, ri_pp_cols, drop = FALSE], na.rm = TRUE)
+    low_cols  <- ri_pp_cols[grepl("_postprocessed_1_",  ri_pp_cols, fixed = TRUE)]
+    high_cols <- ri_pp_cols[grepl("_postprocessed_10_", ri_pp_cols, fixed = TRUE)]
+
+    ri_summary <- ri_wide |>
+      select(eif_lat, eif_lon) |>
+      mutate(
+        !!paste0("pct_low_income_",  yr) :=
+          ifelse(ri_total > 0,
+                 rowSums(ri_wide[, low_cols,  drop = FALSE], na.rm = TRUE) / ri_total,
+                 NA_real_),
+        !!paste0("pct_high_income_", yr) :=
+          ifelse(ri_total > 0,
+                 rowSums(ri_wide[, high_cols, drop = FALSE], na.rm = TRUE) / ri_total,
+                 NA_real_)
+      )
+
+    rm(ri_wide); gc()
+
+    cell_summary <- cell_summary |>
+      left_join(ars_summary, by = c("eif_lat", "eif_lon")) |>
+      left_join(ri_summary,  by = c("eif_lat", "eif_lon"))
+  }
+
+  cell_summary
 }
 
-eif_summary_tbl <- bind_rows(
-  build_eif_row(mits_slim, "Mitigations (record-level)"),
-  build_eif_row(apps_slim, "Applications (record-level)")
-)
+eif_cells_summary <- build_full_nc_cell_summary()
 
-# Paper reference numbers (from manuscript Fig. 4 discussion).
-# % Black inferred as 100 − reported % white; paper has no direct income
-# equivalent (uses property value percentiles instead).
-paper_ref <- tibble(
-  Side                    = c("Paper — applying-stage block groups",
-                              "Paper — funded-stage block groups"),
-  `Median % Black 1999`   = c(NA_real_, NA_real_),
-  `Median % Black 2020`   = c(100 - 64.1, 100 - 59.3),
-  `Median % Low Inc 1999` = c(NA_real_, NA_real_),
-  `Median % Low Inc 2020` = c(NA_real_, NA_real_)
-)
+write_csv(eif_cells_summary, file.path(out_dir, "eif_cells_summary.csv"))
 
-comparison_tbl <- bind_rows(eif_summary_tbl, paper_ref) |>
-  mutate(across(where(is.numeric),
-                ~ if_else(is.na(.), "—", sprintf("%.1f%%", .))))
-
-knitr::kable(
-  comparison_tbl,
-  align   = c("l", "r", "r", "r", "r"),
-  caption = paste(
-    "EIF cell-level summary statistics vs paper draft's 2010 ACS block-group",
-    "statistics. Paper rows include only the % Black column (inferred from",
-    "reported % white as 100 − white share); paper does not report an income",
-    "equivalent, using property value percentiles instead."
-  )
-)
-```
-
-**Reading the table.** The paper's 64.1% white (applying block groups) and
-59.3% white (funded block groups) imply ~36% and ~41% Black respectively —
-slightly lower than the cell-level EIF medians, which makes sense because
-EIF cells are smaller than block groups and more directly localized to
-each mit/app point. Both methods produce the same qualitative story
-(applying/funded properties are in more-Black neighborhoods than the
-state average); the EIF data shows the pattern at finer spatial resolution.
-
-### 11.2  Boxplots — 1999 vs 2020
-
-
-
-
-```{r descriptive-boxplots-all}
-#| fig-width: 12
-#| fig-height: 7
-library(ggplot2)
-library(scales)
-
-# Combine mits + apps with side label
-slim_combined <- bind_rows(
-  mits_slim |> sf::st_drop_geometry() |> mutate(side = "Mitigations"),
-  apps_slim |> sf::st_drop_geometry() |> mutate(side = "Applications")
-) |>
-  select(side, starts_with("pct_"))
-
-# Pivot to long: (record, side, variable, year, value)
-long_df <- slim_combined |>
-  pivot_longer(
-    cols          = -side,
-    names_to      = c("variable", "year"),
-    names_pattern = "^(.*)_(1999|2020)$",
-    values_to     = "value"
-  ) |>
-  mutate(
-    variable_label = dplyr::recode(variable,
-      "pct_white"       = "% White",
-      "pct_black"       = "% Black",
-      "pct_hispanic"    = "% Hispanic",
-      "pct_asian"       = "% Asian",
-      "pct_aian"        = "% AIAN",
-      "pct_low_income"  = "% Low income\n(decile 1)",
-      "pct_high_income" = "% High income\n(decile 10)"
-    )
-  )
-
-pct_vars_ordered <- c(
-  "pct_aian", "pct_asian", "pct_hispanic", "pct_black", "pct_white",
-  "pct_high_income", "pct_low_income"
-)
-pct_labels_ordered <- c(
-  "% AIAN", "% Asian", "% Hispanic", "% Black", "% White",
-  "% High income\n(decile 10)", "% Low income\n(decile 1)"
-)
-
-pct_plot <- long_df |>
-  filter(variable %in% pct_vars_ordered) |>
-  mutate(variable_label = factor(variable_label, levels = pct_labels_ordered)) |>
-  ggplot(aes(x = year, y = value, fill = year)) +
-  geom_boxplot(outlier.alpha = 0.15, outlier.size = 0.6) +
-  facet_grid(side ~ variable_label, scales = "free_y") +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  scale_fill_manual(values = c("1999" = "#7E94B8", "2020" = "#C46A4E")) +
-  labs(
-    title    = "EIF demographic shares — 1999 vs 2020",
-    subtitle = "By mit/app side",
-    x        = NULL,
-    y        = "Share of cell population",
-    caption  = "Each box = distribution across records. Whiskers = 1.5×IQR; points beyond are outliers."
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(
-    legend.position = "none",
-    strip.text.x    = element_text(size = 9),
-    panel.spacing.x = unit(0.4, "lines")
-  )
-
-print(pct_plot)
-```
-
-
-```{r ttest-eif-vars}
-eif_vars <- c(
-  "pct_white", "pct_black", "pct_hispanic",
-  "pct_asian", "pct_aian",
-  "pct_low_income", "pct_high_income",
-  "pop_total"
-)
-
-var_labels <- c(
-  pct_white        = "% White",
-  pct_black        = "% Black",
-  pct_hispanic     = "% Hispanic",
-  pct_asian        = "% Asian",
-  pct_aian         = "% AIAN",
-  pct_low_income   = "% Low income (decile 1)",
-  pct_high_income  = "% High income (decile 10)",
-  pop_total        = "Total population"
-)
-
-run_ttests <- function(df, side_label) {
-  purrr::map_dfr(eif_vars, function(v) {
-    x99  <- df[[paste0(v, "_1999")]]
-    x20  <- df[[paste0(v, "_2020")]]
-    keep <- complete.cases(x99, x20)
-    tt   <- t.test(x20[keep], x99[keep], paired = TRUE)
-    tibble::tibble(
-      Side      = side_label,
-      Variable  = var_labels[v],
-      is_pct    = v != "pop_total",
-      n         = sum(keep),
-      Mean_1999 = mean(x99[keep]),
-      Mean_2020 = mean(x20[keep]),
-      Mean_diff = tt$estimate,
-      t_stat    = tt$statistic,
-      df_t      = tt$parameter,
-      p_value   = tt$p.value
-    )
-  })
-}
-
-ttest_tbl <- bind_rows(
-  run_ttests(sf::st_drop_geometry(mits_slim), "Mitigations"),
-  run_ttests(sf::st_drop_geometry(apps_slim), "Applications")
-) |>
-  mutate(
-    sig = dplyr::case_when(
-      p_value < 0.001 ~ "***",
-      p_value < 0.01  ~ "**",
-      p_value < 0.05  ~ "*",
-      p_value < 0.1   ~ ".",
-      TRUE            ~ ""
-    )
-  )
-
-ttest_tbl |>
-  mutate(
-    across(
-      c(Mean_1999, Mean_2020, Mean_diff),
-      \(x) dplyr::if_else(is_pct, scales::percent(x, accuracy = 0.01),
-                          scales::comma(x, accuracy = 1))
-    ),
-    t_stat  = round(t_stat, 2),
-    p_value = scales::pvalue(p_value)
-  ) |>
-  select(Side, Variable, n, Mean_1999, Mean_2020, `Δ Mean` = Mean_diff,
-         `t` = t_stat, `p` = p_value, ` ` = sig) |>
-  knitr::kable(
-    caption = "Paired t-tests: EIF demographic shares and total population 1999 vs 2020 (paired by record). Signif. codes: *** p<0.001, ** p<0.01, * p<0.05, . p<0.1",
-    align   = c("l", "l", "r", "r", "r", "r", "r", "r", "l")
-  )
+cat("eif_cells_summary.csv written:\n")
+cat("  Total NC cells:        ", nrow(eif_cells_summary), "\n")
+cat("  Columns:               ", ncol(eif_cells_summary), "\n")
+cat("  Non-NA pop_total_2020: ",
+    sum(!is.na(eif_cells_summary$pop_total_2020)), "\n")
+cat("  Non-NA pct_black_2020: ",
+    sum(!is.na(eif_cells_summary$pct_black_2020)), "\n")
 ```
 
