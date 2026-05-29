@@ -76,8 +76,7 @@ A value is treated as unreliable if the parcel is:
 
 **Donors (parcels providing value estimates)**: 1–4 family residential,
 NOT government-owned, with non-missing recorded total value above
-$25,000. Strict NA exclusion ensures every neighbor mean is computed
-over exactly k actual values.
+$25,000. 
 
 **Mit/app per-parcel counts** are computed from `assigned_parcel_index`
 in the alt resolved outputs — each unique mit/app contributes to
@@ -97,24 +96,6 @@ via `floor(coord * 100) / 100 + 0.005` (cell centers are at `.005` offsets
 per the EIF grid topology), then joined to EIF data by the snapped
 coordinates as a character key. Equivalent result, much faster than `st_join`.
 
-**Stage 2 nearest-neighbor search** uses parcel centroid distance rather
-than point-to-polygon-edge distance for computational reliability. For NC
-residential parcels (~30–80m typical diameter), centroid distance overstates
-edge distance by a similar amount; the 200m distance cap still correctly
-identifies geocoding-artifact rescues. Earlier polygon-distance implementation
-via `nngeo::st_nn` produced misaligned neighbor results and was replaced.
-
-**Caveats** worth noting in the manuscript:
-
-- The $25,000 thresholds are heuristic; sensitivity analysis at $10k
-  and $50k recommended.
-- Three K values (5/10/50) are produced in parallel; downstream
-  analysis picks the granularity.
-- EIF counts are differentially-private — approximate per cell.
-- Adjacent buildings within ~1.2 km² of each other share the same EIF cell.
-  For dense urban geometry this means per-cell attributes can't distinguish
-  neighboring properties.
-- Donor pool is statewide; border parcels may reach across counties.
 
 
 ```{r libraries}
@@ -725,10 +706,6 @@ gc()
 apps_with_eif <- join_eif_all(apps_resolved)
 gc()
 
-# Free the NC tables now that joins are done
-rm(eif_nc_tables, eif_cells_sf)
-gc()
-
 # Coverage diagnostics
 coverage <- function(df, label) {
   cat("\n", label, "EIF coverage:\n")
@@ -869,40 +846,8 @@ to_interpolate |>
 | `ars_1999_*`, `ars_2020_*` columns | EIF pop_ageracesex (1999 + 2020) | population × age × race × sex |
 | `ri_1999_*`, `ri_2020_*` columns | EIF pop_raceincome (1999 + 2020) | population × race × income decile |
 
-## Unresolved — confirm before using outputs
-
-- **`LOW_VALUE_THRESHOLD = 25000`** and **`MIN_DONOR_VALUE = 25000`** are
-  heuristic. Sensitivity analysis at $10k and $50k recommended.
-- **`K_VALUES = c(5, 10, 50)`** — three parallel estimates. Drop unused
-  K values once a preferred granularity is selected.
-- **No within-county constraint** on donor matching. Border parcels may
-  pull donors across county lines.
-- **Government-ownership regex** is empirically derived. Spot-check
-  `gov_owned == 1` against `parusedesc` to confirm coverage.
-- **EIF `LAT_COL` / `LON_COL`** are set to `"grid_lat"` / `"grid_lon"` per the
-  Gridded EIF topology file (CES-WP-24-74). Verified via the
-  `eif-inspect-schemas` chunk at runtime.
-- **EIF differential privacy** — per-cell counts are noise-protected.
-  Negligible for averages across many cells, important for per-cell
-  point estimates.
-- **`unassigned` mits/apps** are excluded from per-parcel counts but
-  still appear in the EIF-enriched outputs (with NA `assigned_parcel_index`).
-  Downstream analysis should decide whether to include or exclude these
-  records depending on whether the analytic unit is the mit/app record
-  or the matched parcel.
 
 ## Section 10: Analysis-ready summary outputs
-
-The full wide outputs (`mits_with_eif.gpkg`, `apps_with_eif.gpkg`) carry 531 and
-549 columns respectively — one column per EIF demographic combination. This section
-derives per-cell racial composition percentages and income shares from the postprocessed
-counts, then writes slim analysis-ready files (~30–60 cols) alongside the full-fidelity
-intermediates.
-
-Race tokens in the EIF data are bare labels (`White`, `Black`, `Hispanic`, `Asian`,
-`AIAN`), not Census "Non-Hispanic" prefixed strings. Income deciles are encoded as
-integers 1–10 in the column name (`ri_{year}_n_noise_postprocessed_{decile}_{Race}`);
-decile 0 is a suppressed/unclassifiable bucket and is excluded from income aggregates.
 
 ```{r eif-inspect-suffix-tokens}
 library(stringr)
@@ -1091,18 +1036,126 @@ cat("  mits_with_eif_summary.gpkg / .csv\n")
 cat("  apps_with_eif_summary.gpkg / .csv\n")
 ```
 
-### Output schema — slim files
+```{r eif-cells-full}
+# Full NC cell summary for Step 7 parcel-centroid join.
+# Re-reads parquets directly — eif_nc_tables is filtered to needed_cells
+# (mit/app cells only) and cannot serve as the full-NC spine.
+# Spine = topo_nc (all valid NC land cells).
 
-**`mits_with_eif_summary.gpkg`** / **`apps_with_eif_summary.gpkg`** — analysis-ready,
-one row per mit/app:
+build_full_nc_cell_summary <- function() {
 
-| Column | Source | Notes |
-|---|---|---|
-| `unique_id`, `assigned_parcel_index`, `assignment_method` | alt Step 5 | record + parcel identifiers |
-| (address + disaster fields) | input data | cross-reference only |
-| `parno`, `siteadd`, `ownname`, `LAND.USE.CODE`, `luc_tier`, `YEAR.BUILT`, `ASSESSED.TOTAL.VALUE`, etc. | parcels_pri.gpkg | property context |
-| `eif_lat`, `eif_lon`, `valid_cell` | EIF topology | base cell + valid-cell flag |
-| `eif_lat_{prefix}`, `eif_lon_{prefix}` | nearest-neighbor fill | year-specific cell keys (4 pairs) |
-| `pop_total_1999`, `pop_total_2020` | derived | sum of all postprocessed counts per cell per year |
-| `pct_white_{year}`, `pct_black_{year}`, `pct_hispanic_{year}`, `pct_asian_{year}`, `pct_aian_{year}` | derived | race share of total, per year (5 categories × 2 years = 10 cols) |
-| `pct_low_income_{year}`, `pct_high_income_{year}` | derived | bottom (decile 1) and top (decile 10) income shares, per year (2 × 2 = 4 cols) |
+  years <- c(1999, 2020)
+  cell_summary <- topo_nc |> select(eif_lat, eif_lon)
+
+  for (yr in years) {
+
+    # --- ageracesex ---
+    ars_raw <- arrow::open_dataset(
+      file.path(out_dir, sprintf("gridded_eif_pop_ageracesex_%d.parquet", yr))
+    ) |>
+      dplyr::filter(
+        as.numeric(grid_lat) >= NC_BBOX$lat_min,
+        as.numeric(grid_lat) <= NC_BBOX$lat_max,
+        as.numeric(grid_lon) >= NC_BBOX$lon_min,
+        as.numeric(grid_lon) <= NC_BBOX$lon_max
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        eif_lat = round(as.numeric(grid_lat), 3),
+        eif_lon = round(as.numeric(grid_lon), 3)
+      ) |>
+      dplyr::select(-grid_lat, -grid_lon)
+
+    ars_wide <- aggregate_eif_wide(ars_raw, paste0("ars_", yr))
+    rm(ars_raw); gc()
+
+    ars_pp_cols <- grep(paste0("^ars_", yr, "_n_noise_postprocessed_"),
+                        names(ars_wide), value = TRUE)
+    pop_total <- rowSums(ars_wide[, ars_pp_cols, drop = FALSE], na.rm = TRUE)
+
+    race_pats <- c(
+      white    = "_White(?:_[MF])?$",
+      black    = "_Black(?:_[MF])?$",
+      hispanic = "_Hispanic(?:_[MF])?$",
+      asian    = "_Asian(?:_[MF])?$",
+      aian     = "_AIAN(?:_[MF])?$"
+    )
+
+    ars_summary <- ars_wide |>
+      select(eif_lat, eif_lon) |>
+      mutate(!!paste0("pop_total_", yr) := pop_total)
+
+    for (race in names(race_pats)) {
+      cols     <- ars_pp_cols[grepl(race_pats[[race]], ars_pp_cols, perl = TRUE)]
+      race_pop <- if (length(cols) > 0)
+        rowSums(ars_wide[, cols, drop = FALSE], na.rm = TRUE)
+      else
+        rep(NA_real_, nrow(ars_wide))
+      ars_summary[[paste0("pct_", race, "_", yr)]] <-
+        ifelse(pop_total > 0, race_pop / pop_total, NA_real_)
+    }
+
+    rm(ars_wide); gc()
+
+    # --- raceincome ---
+    ri_raw <- arrow::open_dataset(
+      file.path(out_dir, sprintf("gridded_eif_pop_raceincome_%d.parquet", yr))
+    ) |>
+      dplyr::filter(
+        as.numeric(grid_lat) >= NC_BBOX$lat_min,
+        as.numeric(grid_lat) <= NC_BBOX$lat_max,
+        as.numeric(grid_lon) >= NC_BBOX$lon_min,
+        as.numeric(grid_lon) <= NC_BBOX$lon_max
+      ) |>
+      dplyr::collect() |>
+      dplyr::mutate(
+        eif_lat = round(as.numeric(grid_lat), 3),
+        eif_lon = round(as.numeric(grid_lon), 3)
+      ) |>
+      dplyr::select(-grid_lat, -grid_lon)
+
+    ri_wide <- aggregate_eif_wide(ri_raw, paste0("ri_", yr))
+    rm(ri_raw); gc()
+
+    ri_pp_cols <- grep(paste0("^ri_", yr, "_n_noise_postprocessed_"),
+                       names(ri_wide), value = TRUE)
+    ri_total  <- rowSums(ri_wide[, ri_pp_cols, drop = FALSE], na.rm = TRUE)
+    low_cols  <- ri_pp_cols[grepl("_postprocessed_1_",  ri_pp_cols, fixed = TRUE)]
+    high_cols <- ri_pp_cols[grepl("_postprocessed_10_", ri_pp_cols, fixed = TRUE)]
+
+    ri_summary <- ri_wide |>
+      select(eif_lat, eif_lon) |>
+      mutate(
+        !!paste0("pct_low_income_",  yr) :=
+          ifelse(ri_total > 0,
+                 rowSums(ri_wide[, low_cols,  drop = FALSE], na.rm = TRUE) / ri_total,
+                 NA_real_),
+        !!paste0("pct_high_income_", yr) :=
+          ifelse(ri_total > 0,
+                 rowSums(ri_wide[, high_cols, drop = FALSE], na.rm = TRUE) / ri_total,
+                 NA_real_)
+      )
+
+    rm(ri_wide); gc()
+
+    cell_summary <- cell_summary |>
+      left_join(ars_summary, by = c("eif_lat", "eif_lon")) |>
+      left_join(ri_summary,  by = c("eif_lat", "eif_lon"))
+  }
+
+  cell_summary
+}
+
+eif_cells_summary <- build_full_nc_cell_summary()
+
+write_csv(eif_cells_summary, file.path(out_dir, "eif_cells_summary.csv"))
+
+cat("eif_cells_summary.csv written:\n")
+cat("  Total NC cells:        ", nrow(eif_cells_summary), "\n")
+cat("  Columns:               ", ncol(eif_cells_summary), "\n")
+cat("  Non-NA pop_total_2020: ",
+    sum(!is.na(eif_cells_summary$pop_total_2020)), "\n")
+cat("  Non-NA pct_black_2020: ",
+    sum(!is.na(eif_cells_summary$pct_black_2020)), "\n")
+```
+

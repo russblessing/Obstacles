@@ -28,6 +28,7 @@ library(purrr)
 library(gt)
 ```
 
+
 ```{r setup}
 # Read data
 nc1 <- st_read("/proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_study_area.gpkg", quiet = TRUE) |>
