@@ -54,26 +54,7 @@ library(ggridges)
 out_dir <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
 
 cfg <- list(
-  # --- input files -----------------------------------------------------------
-  parcels_path  = file.path(out_dir, "parcels_pri_with_floods.gpkg"),
-  apps_path     = file.path(out_dir, "apps_pcls.gpkg"),
-  mits_path     = file.path(out_dir, "mits_pcls.gpkg"),
-  interp_path   = file.path(out_dir, "interpolated_parcels_final.csv"),
-
-  # --- column names on the Step 7 parcel table -------------------------------
-  col_parcel_id = "parcel_index",
-  col_county    = "cntyfips",
-  col_city      = "SITUS.CITY",
-  col_flood_ct  = "flooded_any",
-  col_elig_ct   = "eligible",
-  col_value     = "TOTAL.VALUE.CALCULATED",
-  col_lat       = "PARCEL.LEVEL.LATITUDE",
-  col_lng       = "PARCEL.LEVEL.LONGITUDE",
-  col_interp_flag = "interpolate",
-  col_interp_val  = "prop_value_5",
-  col_res_flag  = "fr_1_4.x",
-
-  # --- behaviour -------------------------------------------------------------
+  master_path      = file.path(out_dir, "parcels_master.gpkg"),
   repeat_threshold = 2L
 )
 ```
@@ -83,36 +64,17 @@ cfg <- list(
 ## 2  Diagnostic — what is actually in the files
 
 ```{r diagnostic}
-report_cols <- function(path, want) {
-  if (!file.exists(path)) { cat("  MISSING FILE:", path, "\n"); return(invisible()) }
-  nm <- if (grepl("\\.gpkg$", path, ignore.case = TRUE)) {
-    names(st_read(path, quiet = TRUE, query = paste0(
-      "SELECT * FROM \"", tools::file_path_sans_ext(basename(path)), "\" LIMIT 0")))
-  } else {
-    names(read_csv(path, n_max = 0, show_col_types = FALSE))
-  }
-  cat("  file:", basename(path), "(", length(nm), "cols )\n")
-  for (w in want) {
-    hit <- w %in% nm
-    cat("   ", if (hit) "[ok]  " else "[MISS]", w, "\n")
-    if (!hit) {
-      near <- nm[str_detect(tolower(nm), substr(tolower(w), 1, 3))]
-      if (length(near)) cat("           candidates:", paste(head(near, 8), collapse = ", "), "\n")
-    }
-  }
-}
+needed <- c("parcel_index", "cntyfips", "SITUS.CITY",
+            "flooded_any", "eligible", "fr_1_4", "interpolate",
+            "value", "cent_lat", "cent_lng", "eif_lat", "eif_lon",
+            "applied", "funded", "pct_white_2020", "pct_black_2020")
 
-cat("PARCELS (Step 7)\n")
-report_cols(cfg$parcels_path,
-            c(cfg$col_parcel_id, cfg$col_county, cfg$col_city,
-              cfg$col_flood_ct, cfg$col_elig_ct, cfg$col_res_flag))
-cat("\nAPPLICATIONS (Step 5)\n")
-report_cols(cfg$apps_path, c(cfg$col_parcel_id, cfg$col_city, cfg$col_county))
-cat("\nMITIGATIONS (Step 5)\n")
-report_cols(cfg$mits_path, c(cfg$col_parcel_id, cfg$col_city, cfg$col_county))
-cat("\nINTERPOLATION (Step 9)\n")
-report_cols(cfg$interp_path,
-            c(cfg$col_parcel_id, cfg$col_interp_flag, cfg$col_interp_val))
+master_cols <- names(st_read(cfg$master_path, quiet = TRUE,
+  query = "SELECT * FROM \"parcels_master\" LIMIT 0"))
+
+for (w in needed) {
+  cat(if (w %in% master_cols) "[ok]  " else "[MISS] ", w, "\n", sep = "")
+}
 ```
 
 ---
@@ -120,48 +82,26 @@ report_cols(cfg$interp_path,
 ## 3  Load finalized datasets
 
 ```{r load-parcels}
-read_any <- function(path) {
-  if (grepl("\\.gpkg$", path, ignore.case = TRUE)) {
-    st_read(path, quiet = TRUE) |> st_drop_geometry()
-  } else {
-    read_csv(path, col_types = cols(.default = col_character()))
-  }
-}
-
-# Step 9 interpolation table — only the three columns we need
-interp <- read_csv(
-  cfg$interp_path,
-  col_select = all_of(c(cfg$col_parcel_id,
-                        cfg$col_interp_flag,
-                        cfg$col_interp_val)),
-  col_types  = cols(.default = col_character()),
-  show_col_types = FALSE
-) |>
+parcels <- st_read(cfg$master_path, quiet = TRUE) |>
+  st_drop_geometry() |>
   transmute(
-    parcel_index = as.integer(.data[[cfg$col_parcel_id]]),
-    interpolate  = suppressWarnings(as.integer(.data[[cfg$col_interp_flag]])),
-    value_interp = suppressWarnings(as.numeric(.data[[cfg$col_interp_val]]))
-  )
-
-parcels <- read_any(cfg$parcels_path) |>
-  transmute(
-    parcel_index = as.integer(.data[[cfg$col_parcel_id]]),
-    county       = as.character(.data[[cfg$col_county]]),
-    city         = as.character(.data[[cfg$col_city]]),
-    flood_ct     = suppressWarnings(as.numeric(.data[[cfg$col_flood_ct]])),
-    elig_ct      = suppressWarnings(as.numeric(.data[[cfg$col_elig_ct]])),
-    res_flag     = suppressWarnings(as.integer(.data[[cfg$col_res_flag]])),
-    value_tvc    = suppressWarnings(as.numeric(.data[[cfg$col_value]])),
-    lat          = suppressWarnings(as.numeric(.data[[cfg$col_lat]])),
-    lng          = suppressWarnings(as.numeric(.data[[cfg$col_lng]]))
+    parcel_index   = as.integer(parcel_index),
+    county         = as.character(cntyfips),
+    city           = as.character(SITUS.CITY),
+    flood_ct       = suppressWarnings(as.numeric(flooded_any)),
+    elig_ct        = suppressWarnings(as.numeric(eligible)),
+    res_flag       = suppressWarnings(as.integer(fr_1_4)),
+    interpolate    = suppressWarnings(as.integer(interpolate)),
+    value          = suppressWarnings(as.numeric(value)),
+    lat            = suppressWarnings(as.numeric(cent_lat)),
+    lng            = suppressWarnings(as.numeric(cent_lng)),
+    eif_lat        = suppressWarnings(as.numeric(eif_lat)),
+    eif_lon        = suppressWarnings(as.numeric(eif_lon)),
+    applied        = as.logical(applied),
+    funded         = as.logical(funded),
+    pct_white_2020 = suppressWarnings(as.numeric(pct_white_2020)),
+    pct_black_2020 = suppressWarnings(as.numeric(pct_black_2020))
   ) |>
-  left_join(interp, by = "parcel_index") |>
-  mutate(
-    interpolate = coalesce(interpolate, 0L),
-    # prop_value_5 where this is a buyout-candidate, else CoreLogic TVC
-    value       = if_else(interpolate == 1L, value_interp, value_tvc)
-  ) |>
-  select(-value_tvc, -value_interp) |>
   mutate(
     community = if_else(is.na(city) | str_trim(city) == "",
                         paste0("COUNTY_", county),
@@ -169,28 +109,6 @@ parcels <- read_any(cfg$parcels_path) |>
   )
 
 cat("parcels loaded:", format(nrow(parcels), big.mark = ","), "\n")
-cat("  of which fr_1_4 == 1:    ",
-    format(sum(parcels$res_flag == 1L,    na.rm = TRUE), big.mark = ","), "\n")
-cat("  of which interpolate==1: ",
-    format(sum(parcels$interpolate == 1L, na.rm = TRUE), big.mark = ","), "\n")
-cat("  sample (fr_1_4 OR interp):",
-    format(sum(parcels$res_flag == 1L | parcels$interpolate == 1L,
-               na.rm = TRUE), big.mark = ","), "\n")
-```
-
-```{r load-app-mit}
-apps <- read_any(cfg$apps_path) |>
-  transmute(parcel_index = as.integer(.data[[cfg$col_parcel_id]])) |>
-  filter(!is.na(parcel_index)) |>
-  distinct()
-
-mits <- read_any(cfg$mits_path) |>
-  transmute(parcel_index = as.integer(.data[[cfg$col_parcel_id]])) |>
-  filter(!is.na(parcel_index)) |>
-  distinct()
-
-cat("parcels with an application:", format(nrow(apps), big.mark = ","), "\n")
-cat("parcels with a mitigation: ", format(nrow(mits), big.mark = ","), "\n")
 ```
 
 ---
@@ -201,7 +119,7 @@ cat("parcels with a mitigation: ", format(nrow(mits), big.mark = ","), "\n")
 # Set of communities where the local government assisted with >=1 HMA
 # application (draft Fig. 2 stage-3 definition).
 app_communities <- parcels |>
-  semi_join(apps, by = "parcel_index") |>
+  filter(applied) |>
   distinct(community) |>
   pull(community)
 
@@ -214,8 +132,8 @@ pipeline <- parcels |>
     s1_flooded   = !is.na(flood_ct) & flood_ct >= 1,
     s2_eligible  = !is.na(elig_ct)  & elig_ct  >= 1,
     s3_community = community %in% app_communities,
-    s4_applied   = parcel_index %in% apps$parcel_index,
-    s5_funded    = parcel_index %in% mits$parcel_index,
+    s4_applied   = applied,
+    s5_funded    = funded,
     repeat_exp   = !is.na(flood_ct) & flood_ct >= cfg$repeat_threshold
   ) |>
   # cumulative "reached stage k" — enforces nesting
@@ -270,12 +188,9 @@ funnel |>
 
 ## 7  Fig. 3 — property value distribution by pipeline stage
  
-Each property's value is converted to a **percentile** — two ways. Panel A
-ranks each property against the entire `fr_1_4` study-area sample (one big
-pool). Panel B ranks each property only against the other `fr_1_4` properties
-that fall in the same 0.01° EIF grid cell. Both panels show the density of
-those percentiles at each pipeline stage, with a vertical line at the stage
-median.
+Each property's value is converted to a **percentile** against the entire
+`fr_1_4` study-area sample. Histograms use 5% bins; the red vertical line
+marks the stage median. Four stages shown (Eligible dropped).
  
 ### 7.1  Build the percentile sample
  
@@ -285,7 +200,7 @@ median.
 value_df <- pipeline |>
   filter(!is.na(value), value > 0, !is.na(lat), !is.na(lng)) |>
   mutate(
-    eif_cell = paste0(floor(lat * 100), "_", floor(lng * 100)),
+    eif_cell = paste0(eif_lat, "_", eif_lon),
     pct_A = dplyr::percent_rank(value) * 100
   ) |>
   group_by(eif_cell) |>
@@ -303,168 +218,44 @@ cat("parcels with valid Panel B percentile:",
     format(sum(!is.na(value_df$pct_B)), big.mark = ","), "\n")
 ```
  
-### 7.2  Long-format stage data
- 
-```{r fig3-stage-long}
-stage_order <- c("Flooded", "Eligible", "In a community",
-                 "Applied", "Funded")
- 
-# Cumulative reach: each stage is a (nested) subset of the previous.
-fig3_long <- bind_rows(
-  value_df |> filter(reach1) |> mutate(stage = "Flooded"),
-  value_df |> filter(reach2) |> mutate(stage = "Eligible"),
-  value_df |> filter(reach3) |> mutate(stage = "In a community"),
-  value_df |> filter(reach4) |> mutate(stage = "Applied"),
-  value_df |> filter(reach5) |> mutate(stage = "Funded")
+### 7.2  Plot
+
+```{r fig3-hist, fig.width=6, fig.height=7}
+stage_levels_4 <- c("Flooded", "In a community", "Applied", "Funded")
+
+fig3_hist_data <- bind_rows(
+  value_df |> filter(reach1) |> transmute(stage = "Flooded",        pct = pct_A),
+  value_df |> filter(reach3) |> transmute(stage = "In a community", pct = pct_A),
+  value_df |> filter(reach4) |> transmute(stage = "Applied",        pct = pct_A),
+  value_df |> filter(reach5) |> transmute(stage = "Funded",         pct = pct_A)
 ) |>
-  # Reverse factor levels so Flooded sits at the top of the ridgeline.
-  mutate(stage = factor(stage, levels = rev(stage_order)))
-```
- 
-### 7.4  Plot
- 
-```{r fig3-setup}
-panel_labels <- c(
-  pct_A = "Property Value Percentile",
-  pct_B = "Property Value Percentile within EIF Grid Cell (n > 5)"
-)
+  mutate(stage = factor(stage, levels = stage_levels_4))
 
-fig3_panel <- fig3_long |>
-  select(stage, pct_A, pct_B) |>
-  tidyr::pivot_longer(c(pct_A, pct_B),
-                      names_to = "panel", values_to = "pct") |>
-  filter(!is.na(pct)) |>
-  mutate(
-    stage = factor(as.character(stage), levels = stage_order),
-    panel = factor(recode(panel, !!!panel_labels),
-                   levels = unname(panel_labels))
-  )
+fig3_medians <- fig3_hist_data |>
+  group_by(stage) |>
+  summarise(median_pct = median(pct, na.rm = TRUE), .groups = "drop")
 
-stage_colors <- c(
-  "Flooded"        = "#0072B2",
-  "Eligible"       = "#009E73",
-  "In a community" = "#E69F00",
-  "Applied"        = "#D55E00",
-  "Funded"         = "#CC79A7"
-)
-stage_linetypes <- c(
-  "Flooded"        = "solid",
-  "Eligible"       = "dashed",
-  "In a community" = "dotted",
-  "Applied"        = "dotdash",
-  "Funded"         = "longdash"
-)
-```
-
-```{r fig3-option-a, eval=FALSE, fig.width=8.5, fig.height=5}
-# Option A: Density curves
-fig3_median_lines <- fig3_panel |>
-  group_by(panel, stage) |>
-  summarise(median_pct = median(pct), .groups = "drop")
-
-y_ceil   <- 0.035
-y_breaks <- seq(0, y_ceil, by = 0.005)
-
-fig3 <- ggplot(fig3_panel, aes(x = pct, colour = stage, linetype = stage)) +
-  stat_density(
-    geom = "line", position = "identity",
-    adjust = 1.5, linewidth = 0.85, trim = TRUE
-  ) +
-  geom_vline(
-    data = fig3_median_lines,
-    aes(xintercept = median_pct, colour = stage, linetype = stage),
-    linewidth = 0.55, alpha = 0.9, show.legend = FALSE
-  ) +
-  facet_wrap(~ panel, ncol = 2, axes = "all") +
-  coord_cartesian(xlim = c(0, 100), ylim = c(0, y_ceil), expand = FALSE) +
-  scale_x_continuous(
-    breaks = seq(0, 100, 20),
-    labels = function(x) paste0(x, "%"),
-    expand = expansion(add = 3)
-  ) +
-  scale_y_continuous(
-    breaks = y_breaks,
-    labels = scales::label_number(accuracy = 0.001)
-  ) +
-  scale_colour_manual(values = stage_colors, name = NULL) +
-  scale_linetype_manual(values = stage_linetypes, name = NULL) +
-  guides(
-    colour   = guide_legend(
-      nrow = 1,
-      override.aes = list(linewidth = 1, linetype = unname(stage_linetypes))
-    ),
-    linetype = "none"
-  ) +
+fig3 <- ggplot(fig3_hist_data, aes(x = pct)) +
+  geom_histogram(binwidth = 5, boundary = 0,
+                 fill = "grey60", colour = "grey30", linewidth = 0.2) +
+  geom_vline(data = fig3_medians,
+             aes(xintercept = median_pct),
+             colour = "firebrick", linewidth = 0.6) +
+  facet_wrap(~ stage, ncol = 1, scales = "free_y", strip.position = "right") +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 20),
+                     labels = function(x) paste0(x, "%"),
+                     expand = c(0.005, 0)) +
   labs(
-    title = "Fig. 3  Property value distribution by pipeline stage",
-    x = "Percentile", y = "Density"
+    title = "Fig. 3  Property value percentile distribution by HMA stage",
+    x = "Property value percentile (study-area sample)",
+    y = "Number of parcels"
   ) +
   theme_minimal(base_size = 11) +
   theme(
-    axis.line         = element_line(colour = "grey30", linewidth = 0.5),
-    axis.ticks        = element_line(colour = "grey30", linewidth = 0.4),
-    axis.ticks.length = unit(3, "pt"),
-    axis.text         = element_text(colour = "grey20"),
-    axis.title        = element_text(colour = "grey20"),
-    axis.text.y       = element_text(colour = "grey20"),
-    axis.title.y      = element_text(colour = "grey20"),
-    strip.text        = element_text(face = "bold", hjust = 0, colour = "grey10"),
-    strip.background  = element_blank(),
-    legend.position   = "bottom",
-    legend.key        = element_blank(),
-    legend.key.width  = unit(2, "cm"),
-    legend.key.height = unit(0.4, "lines"),
-    panel.grid.major  = element_blank(),
-    panel.grid.minor  = element_blank(),
-    panel.spacing.x   = unit(1.5, "cm"),
-    plot.margin       = margin(10, 14, 10, 10)
-  )
-
-fig3
-```
-
-```{r fig3-option-b, fig.width=6.5, fig.height=2.8}
-# Option B: Median + IQR dot-segment — grayscale, publication dimensions
-fig3_ci <- fig3_panel |>
-  group_by(panel, stage) |>
-  summarise(
-    median = median(pct),
-    lo     = quantile(pct, 0.25),
-    hi     = quantile(pct, 0.75),
-    .groups = "drop"
-  ) |>
-  mutate(stage = factor(stage, levels = rev(stage_order)))
-
-fig3 <- ggplot(fig3_ci, aes(x = median, y = stage)) +
-  geom_segment(
-    aes(x = lo, xend = hi, yend = stage),
-    colour = "grey40", linewidth = 3, alpha = 0.4
-  ) +
-  geom_point(colour = "grey15", size = 2.5) +
-  facet_wrap(~ panel, ncol = 2, axes = "all") +
-  scale_x_continuous(
-    limits = c(0, 100),
-    breaks = seq(0, 100, 20),
-    labels = function(x) paste0(x, "%"),
-    expand = expansion(add = 3)
-  ) +
-  labs(
-    title = "Fig. 3  Property value distribution by pipeline stage",
-    x = "Percentile (median + IQR)", y = NULL
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    axis.line          = element_line(colour = "grey30", linewidth = 0.4),
-    axis.ticks         = element_line(colour = "grey30", linewidth = 0.3),
-    axis.ticks.length  = unit(2.5, "pt"),
-    axis.text          = element_text(colour = "grey20"),
-    axis.title         = element_text(colour = "grey20"),
-    strip.text         = element_text(face = "bold", hjust = 0, colour = "grey10", size = 10),
-    strip.background   = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor   = element_blank(),
-    panel.spacing.x    = unit(1.2, "cm"),
-    plot.margin        = margin(6, 10, 6, 6)
+    strip.text.y     = element_text(face = "bold"),
+    panel.grid.minor = element_blank(),
+    panel.spacing.y  = unit(0.5, "lines"),
+    plot.title       = element_text(face = "bold")
   )
 
 fig3
@@ -472,14 +263,104 @@ fig3
 
 ```{r fig3-save}
 dir.create(file.path(getwd(), "figures"), showWarnings = FALSE)
-ggsave(
-  filename = file.path(getwd(), "figures", "fig3.png"),
-  plot     = fig3,
-  width    = 6.5,
-  height   = 2.8,
-  units    = "in",
-  dpi      = 300
-)
-write_csv(fig3_median_lines, file.path(getwd(), "figures", "fig3_medians.csv"))
-write_csv(fig3_ci,           file.path(getwd(), "figures", "fig3_ci.csv"))
+ggsave(file.path(getwd(), "figures", "fig3.png"),
+       fig3, width = 6, height = 7, dpi = 300)
+write_csv(fig3_medians, file.path(getwd(), "figures", "fig3_medians.csv"))
+```
+---
+
+## 8  Fig. 4 — neighborhood racial composition by HMA stage
+
+Two-panel figure following the draft's Fig. 4 caption.
+**Panel A** is % Non-Hispanic White residents in the EIF 0.01° grid cell
+containing each property. **Panel B** is % Black residents in the same cell.
+A cell is at stage *k* if it contains ≥ 1 residential parcel that reached *k*.
+Cell-level. Four stages shown (Eligible dropped); 5% bins; red line = median.
+
+### 8.1  Build per-panel data
+
+```{r fig4-hist, fig.width=8, fig.height=9}
+# Per-cell race shares — one row per EIF cell, with stage flags.
+# Multiply by 100 if `pct_white_2020` / `pct_black_2020` on master are 0-1
+# fractions; remove the *100 if they are already 0-100 percentages.
+cells_at_stage <- value_df |>
+  group_by(eif_cell) |>
+  summarise(
+    pct_white = dplyr::first(pct_white_2020) * 100,
+    pct_black = dplyr::first(pct_black_2020) * 100,
+    s1 = any(reach1, na.rm = TRUE),
+    s3 = any(reach3, na.rm = TRUE),
+    s4 = any(reach4, na.rm = TRUE),
+    s5 = any(reach5, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+fig4_hist_data <- cells_at_stage |>
+  tidyr::pivot_longer(c(s1, s3, s4, s5),
+                      names_to = "stage_key", values_to = "in_stage") |>
+  filter(in_stage) |>
+  mutate(stage = recode(stage_key,
+    s1 = "Flooded", s3 = "In a community",
+    s4 = "Applied", s5 = "Funded"
+  )) |>
+  select(stage, pct_white, pct_black) |>
+  tidyr::pivot_longer(c(pct_white, pct_black),
+                      names_to = "race", values_to = "pct") |>
+  mutate(
+    stage = factor(stage, levels = stage_levels_4),
+    race  = factor(recode(race,
+      pct_white = "A. % Non-Hispanic White",
+      pct_black = "B. % Black"
+    ), levels = c("A. % Non-Hispanic White", "B. % Black"))
+  )
+
+fig4_medians <- fig4_hist_data |>
+  group_by(stage, race) |>
+  summarise(median_pct = median(pct, na.rm = TRUE), .groups = "drop")
+
+fig4 <- ggplot(fig4_hist_data, aes(x = pct)) +
+  geom_histogram(binwidth = 5, boundary = 0,
+                 fill = "grey60", colour = "grey30", linewidth = 0.2) +
+  geom_vline(data = fig4_medians,
+             aes(xintercept = median_pct),
+             colour = "firebrick", linewidth = 0.6) +
+  facet_grid(stage ~ race, scales = "free_y", switch = "y") +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 20),
+                     labels = function(x) paste0(x, "%"),
+                     expand = c(0.005, 0)) +
+  labs(
+    title = "Fig. 4  Neighborhood racial composition by HMA stage",
+    x = "Percent of residents (EIF cell)",
+    y = "Number of cells"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    strip.text       = element_text(face = "bold"),
+    strip.placement  = "outside",
+    panel.grid.minor = element_blank(),
+    panel.spacing    = unit(0.5, "lines"),
+    plot.title       = element_text(face = "bold")
+  )
+
+fig4
+```
+
+### 8.2  Medians table
+
+```{r fig4-medians}
+fig4_medians |>
+  mutate(
+    n          = NA_integer_,   # counts live in fig4_hist_data if needed
+    median_pct = round(median_pct, 1)
+  ) |>
+  select(race, stage, median_pct) |>
+  arrange(race, stage) |>
+  knitr::kable(col.names = c("Panel", "Stage", "Median pct"))
+```
+
+```{r fig4-save}
+dir.create(file.path(getwd(), "figures"), showWarnings = FALSE)
+ggsave(file.path(getwd(), "figures", "fig4.png"),
+       fig4, width = 8, height = 9, dpi = 300)
+write_csv(fig4_medians, file.path(getwd(), "figures", "fig4_medians.csv"))
 ```

@@ -480,5 +480,5 @@ ggsave(
   units    = "in",
   dpi      = 300
 )
-write_csv(fig3_medians, file.path(getwd(), "figures", "fig3_medians.csv"))
+write_csv(fig3_ci, file.path(getwd(), "figures", "fig3_ci.csv"))
 ```

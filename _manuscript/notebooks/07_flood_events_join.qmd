@@ -291,27 +291,190 @@ cat("Wrote: parcels_pri_with_floods.gpkg with",
     "parcels flagged as flooded\n")
 ```
 
-## Output schema
+## 6  Build the master parcel dataset
 
-**`parcel_crosswalk_R_Py.csv`** — Python ↔ R parcel_index lookup, for
-reference / debugging:
+Single per-parcel table consolidating everything Step 8 needs:
+flood + eligibility (Section 5 above), interpolation + value (Step 6),
+applied/funded flags (Step 5 priority outputs), centroid coords + EIF
+cell key, and per-cell EIF demographics (Step 6's `eif_cells_summary.csv`).
 
-| Column | Notes |
-|---|---|
-| `r_parcel_index` | R's parcel index (from `parcels_pri.gpkg`) |
-| `py_parcel_index` | Python's parcel index (from Helena's CSVs) |
-| `cntyfips` | County FIPS, used as join key |
-| `match_method` | `parno` (primary) or `altparno` (secondary fallback) |
+**Prerequisite.** Run the Step 6 per-cell summary chunk first so
+`eif_cells_summary.csv` exists in `out_dir`. Without it, the cell
+demographics join silently produces NAs.
 
-**`parcels_events_R.csv`** — per-parcel flood and eligibility data, keyed
-on R's `parcel_index`:
+**Inputs:**
 
-| Column | Source | Notes |
+- `parcels_pri_with_floods.gpkg` — Section 5 above
+- `interpolated_parcels_final.csv` — Step 6
+- `apps_pcls.gpkg`, `mits_pcls.gpkg` — Step 5 priority outputs
+- `eif_cells_summary.csv` — Step 6 per-cell summary
+
+**Output (written to `out_dir`):**
+
+- `parcels_master.gpkg` — one row per parcel, all downstream analytical
+  fields joined and resolved
+
+### 6.1  Setup
+
+```{r master-setup}
+interp_path    <- file.path(out_dir, "interpolated_parcels_final.csv")
+apps_path      <- file.path(out_dir, "apps_pcls.gpkg")
+mits_path      <- file.path(out_dir, "mits_pcls.gpkg")
+floods_path    <- file.path(out_dir, "parcels_pri_with_floods.gpkg")
+eif_cells_path <- file.path(out_dir, "eif_cells_summary.csv")
+master_path    <- file.path(out_dir, "parcels_master.gpkg")
+```
+
+### 6.2  Parcel centroids + EIF cell key
+
+Centroids in WGS84 are the canonical parcel location. CoreLogic's
+`PARCEL.LEVEL.LATITUDE` / `LONGITUDE` are not used — they have ~34%
+missingness for late-pipeline parcels (completed buyouts, voided
+addresses) and known precision issues. The EIF cell key uses Step 6's
+convention (cell-center, 3-decimal rounded) so the join to
+`eif_cells_summary.csv` works directly.
+
+```{r master-centroids}
+parcels_sf <- st_read(floods_path, quiet = TRUE)
+
+centroids <- suppressWarnings(
+  parcels_sf |>
+    st_transform(4326) |>
+    st_centroid() |>
+    st_coordinates() |>
+    as_tibble() |>
+    rename(cent_lng = X, cent_lat = Y)
+) |>
+  mutate(
+    eif_lon = round(floor(cent_lng * 100) / 100 + 0.005, 3),
+    eif_lat = round(floor(cent_lat * 100) / 100 + 0.005, 3)
+  )
+
+cat("Centroids computed:", nrow(centroids), "\n")
+```
+
+### 6.3  Resolve duplicate residential flag
+
+Section 5's join leaves `fr_1_4.x` (from parcels_pri) and `fr_1_4.y`
+(from parcels_events.csv). Collapse to one `fr_1_4` column.
+
+```{r master-dedup-fr14}
+parcels_attr <- parcels_sf |>
+  st_drop_geometry() |>
+  bind_cols(centroids) |>
+  mutate(fr_1_4 = coalesce(
+    suppressWarnings(as.integer(fr_1_4.x)),
+    suppressWarnings(as.integer(fr_1_4.y))
+  )) |>
+  select(-any_of(c("fr_1_4.x", "fr_1_4.y")))
+```
+
+### 6.4  Load Step 6 interpolation + Step 5 applied/funded flags
+
+```{r master-load-interp-flags}
+# Interpolation flag, prop_value_5, mit/app counts, gov_owned (Step 6)
+interp <- read_csv(
+  interp_path,
+  col_select = c("parcel_index", "interpolate", "prop_value_5",
+                 "mit_count", "app_count", "gov_owned"),
+  col_types  = cols(.default = col_character()),
+  show_col_types = FALSE
+) |>
+  transmute(
+    parcel_index = as.integer(parcel_index),
+    interpolate  = suppressWarnings(as.integer(interpolate)),
+    prop_value_5 = suppressWarnings(as.numeric(prop_value_5)),
+    mit_count    = suppressWarnings(as.integer(mit_count)),
+    app_count    = suppressWarnings(as.integer(app_count)),
+    gov_owned    = suppressWarnings(as.integer(gov_owned))
+  )
+
+# Applied / funded flags from Step 5 priority outputs
+applied_set <- st_read(apps_path, quiet = TRUE) |>
+  st_drop_geometry() |>
+  distinct(parcel_index) |>
+  mutate(parcel_index = as.integer(parcel_index), applied = TRUE)
+
+funded_set <- st_read(mits_path, quiet = TRUE) |>
+  st_drop_geometry() |>
+  distinct(parcel_index) |>
+  mutate(parcel_index = as.integer(parcel_index), funded = TRUE)
+
+# EIF cell demographics (Step 6 per-cell summary)
+eif_cells <- read_csv(eif_cells_path, show_col_types = FALSE)
+```
+
+### 6.5  Assemble the master file
+
+```{r master-assemble}
+master <- parcels_attr |>
+  mutate(parcel_index = as.integer(parcel_index)) |>
+  left_join(interp,      by = "parcel_index") |>
+  left_join(applied_set, by = "parcel_index") |>
+  left_join(funded_set,  by = "parcel_index") |>
+  left_join(eif_cells,   by = c("eif_lat", "eif_lon")) |>
+  mutate(
+    interpolate = coalesce(interpolate, 0L),
+    mit_count   = coalesce(mit_count,   0L),
+    app_count   = coalesce(app_count,   0L),
+    gov_owned   = coalesce(gov_owned,   0L),
+    applied     = coalesce(applied,     FALSE),
+    funded      = coalesce(funded,      FALSE),
+    # Final value: prop_value_5 for buyout candidates, TVC otherwise.
+    # prop_value_5 already falls back to TVC for non-recipients, so this
+    # collapses to just `value = prop_value_5` — kept conditional for clarity.
+    value = if_else(
+      interpolate == 1L,
+      prop_value_5,
+      suppressWarnings(as.numeric(TOTAL.VALUE.CALCULATED))
+    )
+  ) |>
+  # Re-attach geometry from parcels_sf (same row order)
+  bind_cols(geometry = st_geometry(parcels_sf)) |>
+  st_as_sf(crs = st_crs(parcels_sf))
+```
+
+### 6.6  Sanity check
+
+```{r master-sanity}
+cat("master parcels:", format(nrow(master), big.mark = ","), "\n")
+cat("  fr_1_4 == 1:     ",
+    format(sum(master$fr_1_4 == 1L,  na.rm = TRUE), big.mark = ","), "\n")
+cat("  interpolate==1:  ",
+    format(sum(master$interpolate == 1L, na.rm = TRUE), big.mark = ","), "\n")
+cat("  applied:         ",
+    format(sum(master$applied,  na.rm = TRUE), big.mark = ","), "\n")
+cat("  funded:          ",
+    format(sum(master$funded,   na.rm = TRUE), big.mark = ","), "\n")
+cat("  centroid coords valid: ",
+    format(sum(!is.na(master$cent_lat) & !is.na(master$cent_lng)), big.mark = ","), "\n")
+cat("  matched to EIF demographics: ",
+    format(sum(!is.na(master$pct_white_2020)), big.mark = ","), "of",
+    format(nrow(master), big.mark = ","), "\n")
+```
+
+### 6.7  Write
+
+```{r master-write}
+st_write(master, master_path, delete_dsn = TRUE, quiet = TRUE)
+cat("Wrote:", master_path, "—", ncol(master), "cols\n")
+```
+
+## Output schema — `parcels_master.gpkg`
+
+One row per parcel; downstream consumers (Step 8 figures) read only this file.
+
+| Column group | Columns | Source |
 |---|---|---|
-| `r_parcel_index` | crosswalk | R's parcel_index, joinable to parcels_pri |
-| `cntyfips` | R parcels | County FIPS for the parcel |
-| `flooded` | `parcels_events.csv` | Count of events the parcel was flooded by |
-| `eligible` | `parcels_events.csv` | Count of declared events for which parcel was eligible |
-| `fr_1_4` | `parcels_events.csv` | Residential flag (1 = single-family residential) |
-| *(other columns)* | `parcels_events.csv` | All columns from the Original Aug 2024 file are passed through |
+| Identifier | `parcel_index`, `cntyfips`, `parno`, `altparno`, `siteadd`, `SITUS.CITY` | parcels_pri (Step 5) |
+| Geometry | parcel polygon + `cent_lat`, `cent_lng` | computed centroid (this step) |
+| EIF cell key | `eif_lat`, `eif_lon` | derived from centroid, Step 6 convention |
+| LUC | `LAND.USE.CODE`, `vacant`, `gov_lu`, `res_lu`, `fr_1_4` (deduped) | parcels_pri |
+| Priority | `luc_tier`, `qual_sum`, `match_priority` | parcels_pri |
+| Flood | `flooded_any`, `eligible` | Section 5 above |
+| Interpolation | `interpolate`, `prop_value_5`, `mit_count`, `app_count`, `gov_owned` | Step 6 |
+| Final value | `value` (resolved: prop_value_5 if interpolate else TVC) | derived (this step) |
+| Pipeline flags | `applied`, `funded` (logicals) | Step 5 priority outputs |
+| EIF demographics | `pop_total_{1999,2020}`, `pct_white_{1999,2020}`, `pct_black_{1999,2020}`, `pct_hispanic_{1999,2020}`, `pct_asian_{1999,2020}`, `pct_aian_{1999,2020}` | Step 6 per-cell summary |
+
 
