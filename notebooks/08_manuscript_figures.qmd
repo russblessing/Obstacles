@@ -443,7 +443,7 @@ fig4 <- ggplot(fig4_hist_data, aes(x = pct)) +
                      labels = function(x) paste0(x, "%"),
                      expand = c(0.005, 0)) +
   labs(
-    title    = "Fig. 4  Neighborhood racial composition by HMA stage",
+    #title    = "Fig. 4  Neighborhood racial composition by HMA stage",
     subtitle = "Census block groups, 2013 ACS",
     x        = "Percent of residents (block group)",
     y        = "Number of block groups"
@@ -558,7 +558,7 @@ fig5a <- ggplot(fig5_income, aes(x = val)) +
     expand = c(0.005, 0)
   ) +
   labs(
-    title    = "Fig. 5a  Block-group median household income by HMA stage",
+    #title    = "Fig. 5a  Block-group median household income by HMA stage",
     subtitle = "2013 ACS 5-year estimates",
     x        = "Median household income ($)",
     y        = "Number of block groups"
@@ -593,7 +593,7 @@ fig5b <- ggplot(fig5_hvalue, aes(x = val)) +
     expand = c(0.005, 0)
   ) +
   labs(
-    title    = "Fig. 5b  Block-group median home value by HMA stage",
+    #title    = "Fig. 5b  Block-group median home value by HMA stage",
     subtitle = "2013 ACS 5-year estimates (owner-occupied housing units)",
     x        = "Median home value ($)",
     y        = "Number of block groups"
