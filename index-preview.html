@@ -1,55 +1,179 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="generator" content="quarto-1.8.27">
 
-<meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.27">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="author" content="Julian Plough">
+    <meta name="author" content="Miyuki Hino">
+    <meta name="author" content="Antonia Sebastian">
+    <meta name="author" content="Helena Garcia">
+    <meta name="author" content="Russell Blessing">
+    <meta name="dcterms.date" content="2026-06-02">
+    <meta name="keywords" content="Flood mitigation, Climate resilience">
 
-<meta name="author" content="Julian Plough">
-<meta name="author" content="Miyuki Hino">
-<meta name="author" content="Antonia Sebastian">
-<meta name="author" content="Helena Garcia">
-<meta name="author" content="Russell Blessing">
-<meta name="dcterms.date" content="2026-06-02">
-<meta name="keywords" content="Flood mitigation, Climate resilience">
+    <title>Identifying Obstacles to Equitable Flood Mitigation Funding</title>
+    <style>
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      div.columns{display: flex; gap: min(4vw, 1.5em);}
+      div.column{flex: auto; overflow-x: auto;}
+      div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+      ul.task-list{list-style: none;}
+      ul.task-list li input[type="checkbox"] {
+        width: 0.8em;
+        margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+        vertical-align: middle;
+      }
+      /* CSS for syntax highlighting */
+      html { -webkit-text-size-adjust: 100%; }
+      pre > code.sourceCode { white-space: pre; position: relative; }
+      pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+      pre > code.sourceCode > span:empty { height: 1.2em; }
+      .sourceCode { overflow: visible; }
+      code.sourceCode > span { color: inherit; text-decoration: inherit; }
+      div.sourceCode { margin: 1em 0; }
+      pre.sourceCode { margin: 0; }
+      @media screen {
+      div.sourceCode { overflow: auto; }
+      }
+      @media print {
+      pre > code.sourceCode { white-space: pre-wrap; }
+      pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+      }
+      pre.numberSource code
+        { counter-reset: source-line 0; }
+      pre.numberSource code > span
+        { position: relative; left: -4em; counter-increment: source-line; }
+      pre.numberSource code > span > a:first-child::before
+        { content: counter(source-line);
+          position: relative; left: -1em; text-align: right; vertical-align: baseline;
+          border: none; display: inline-block;
+          -webkit-touch-callout: none; -webkit-user-select: none;
+          -khtml-user-select: none; -moz-user-select: none;
+          -ms-user-select: none; user-select: none;
+          padding: 0 4px; width: 4em;
+        }
+      pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+      div.sourceCode
+        {   }
+      @media screen {
+      pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+      }
+      /* CSS for citations */
+      div.csl-bib-body { }
+      div.csl-entry {
+        clear: both;
+        margin-bottom: 0em;
+      }
+      .hanging-indent div.csl-entry {
+        margin-left:2em;
+        text-indent:-2em;
+      }
+      div.csl-left-margin {
+        min-width:2em;
+        float:left;
+      }
+      div.csl-right-inline {
+        margin-left:2em;
+        padding-left:1em;
+      }
+      div.csl-indent {
+        margin-left: 2em;
+      }    </style>
 
-<title>Identifying Obstacles to Equitable Flood Mitigation Funding</title>
-<style>
-code{white-space: pre-wrap;}
-span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
-div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-ul.task-list{list-style: none;}
-ul.task-list li input[type="checkbox"] {
-  width: 0.8em;
-  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
-  vertical-align: middle;
-}
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-  margin-bottom: 0em;
-}
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
-}
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
-}
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+    <style>
+      body.hypothesis-enabled #quarto-embed-header {
+        padding-right: 36px;
+      }
 
+      #quarto-embed-header {
+        height: 3em;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: solid 1px;
+      }
 
+      #quarto-embed-header h6 {
+        font-size: 1.1em;
+        padding-top: 0.6em;
+        margin-left: 1em;
+        margin-right: 1em;
+        font-weight: 400;
+      }
+
+      #quarto-embed-header a.quarto-back-link,
+      #quarto-embed-header a.quarto-download-embed {
+        font-size: 0.8em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        margin-left: 1em;
+        margin-right: 1em;
+      }
+
+      .quarto-back-container {
+        padding-left: 0.5em;
+        display: flex;
+      }
+
+      .headroom {
+          will-change: transform;
+          transition: transform 200ms linear;
+      }
+
+      .headroom--pinned {
+          transform: translateY(0%);
+      }
+
+      .headroom--unpinned {
+          transform: translateY(-100%);
+      }      
+    </style>
+
+    <script>
+    window.document.addEventListener("DOMContentLoaded", function () {
+
+      var header = window.document.querySelector("#quarto-embed-header");
+      const titleBannerEl = window.document.querySelector("body > #title-block-header");
+      if (titleBannerEl) {
+        titleBannerEl.style.paddingTop = header.clientHeight + "px";
+      }
+      const contentEl = window.document.getElementById('quarto-content');
+      for (const child of contentEl.children) {
+        child.style.paddingTop = header.clientHeight + "px";
+        child.style.marginTop = "1em";
+      }
+
+      // Use the article root if the `back` call doesn't work. This isn't perfect
+      // but should typically work
+      window.quartoBackToArticle = () => {
+        var currentUrl = window.location.href;
+        window.history.back();
+        setTimeout(() => {
+            // if location was not changed in 100 ms, then there is no history back
+            if(currentUrl === window.location.href){              
+                // redirect to site root
+                window.location.href = "index.html";
+            }
+        }, 100);
+      }
+
+      const headroom = new window.Headroom(header, {
+        tolerance: 5,
+        onPin: function () {
+        },
+        onUnpin: function () {
+        },
+      });
+      headroom.init();
+    });
+    </script>
+
+    
+<script src="site_libs/manuscript-notebook/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -65,15 +189,13 @@ div.csl-indent {
 <script src="site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
-<script async="" src="https://hypothes.is/embed.js"></script>
+     <script async="" src="https://hypothes.is/embed.js"></script>
 <script>
   window.document.addEventListener("DOMContentLoaded", function (_event) {
     document.body.classList.add('hypothesis-enabled');
   });
-</script>
-
-
-<meta name="citation_title" content="Identifying Obstacles to Equitable Flood Mitigation Funding">
+</script>  
+      <meta name="citation_title" content="Identifying Obstacles to Equitable Flood Mitigation Funding">
 <meta name="citation_abstract" content="As damages from floods, fires, and other climate extremes mount, public investments in risk reduction have also grown. In the US, FEMA made over $1.6 billion available through its two main competitive pre-disaster mitigation programs — Building Resilient Infrastructure and Communities (BRIC) and Flood Mitigation Assistance (FMA) — for FY2024, and demand for such funds regularly exceeds available funding. Evidence suggests that in this competitive landscape for funding, urban and whiter communities have fared better at obtaining funding but are often spending it on more disadvantaged neighborhoods within them. However, the reasons for this trend are unclear: complexities in the application process, cost-benefit analysis requirements, and flood damage may all play a role in driving the uneven funding patterns. Here, using a novel dataset tracking properties from flood exposure to application to funding receipt, we identify how each hurdle in the mitigation process shapes the properties that ultimately benefit. Our results demonstrate that the application stage is the critical pinch point in the mitigation funding pipeline: of all flooded properties, 67.5% are eligible for public assistance and 61% are located in communities where local governments have submitted applications, yet only 2.3% apply and approximately 1% are ultimately funded. Homeowners in less-white neighborhoods and more affordable homes relative to their neighbors are more likely to apply, and this trend deepens for those who ultimately receive funding, while higher flood exposure has minimal correlation — implying that funding may not reach all who need it or may be interested.
 ">
 <meta name="citation_keywords" content="Flood mitigation,Climate resilience">
@@ -133,9 +255,16 @@ div.csl-indent {
 <meta name="citation_reference" content="citation_title=Procedural Vulnerability and Its Effects on Equitable Post-Disaster Recovery in Low-Income Communities;,citation_abstract=Equity is a major goal in post-disaster recovery and reconstruction. However, although extensive research demonstrates the connections between race/class and heightened vulnerability to disasters, few examine or name the mechanisms responsible for this correlation. Such mechanisms are referred to as procedural vulnerabilities or historical and ongoing power relations that lead to inequitable outcomes. We interrogate the role of procedural vulnerabilities in generating inequitable recovery by analyzing LUPE et&nbsp;al. v. FEMA (B:08-cv-487 [2008]). This legal case emerged from the experiences of colonia residents in the Río Grande Valley of South Texas following Hurricane Dolly in 2008. From this case, we found that, first, the Federal Emergency Management Agency’s (FEMA’s) unclear definitions of deferred maintenance and insufficient damages negatively affected low-income households. Second, even with clear definitions, post-disaster recovery and reconstruction outcomes would remain inequitable due to historic patterns of disinvestment in the colonias. From this case, two key implications for planners emerge. First, planners must acknowledge the historic concerns facing low-income communities of color that lead to inequitable outcomes in FEMA funding. Unincorporated communities of color are less likely to be able to access strong environmental planning, placing them at higher risk of disaster. Second, local stigma surrounding communities can greatly influence the efficacy of post-disaster reconstruction and recovery by predetermining who is or is not “deserving” of assistance. Engaging local histories of racism and prejudice is key to addressing and redressing these inequities.;,citation_author=Danielle Zoe Rivera;,citation_author=Bradleigh Jenkins;,citation_author=Rebecca Randolph;,citation_publication_date=2022-04;,citation_cover_date=2022-04;,citation_year=2022;,citation_fulltext_html_url=https://doi.org/10.1080/01944363.2021.1929417;,citation_issue=2;,citation_doi=10.1080/01944363.2021.1929417;,citation_issn=0194-4363;,citation_volume=88;,citation_journal_title=Journal of the American Planning Association;,citation_publisher=Routledge;">
 </head>
 
-<body class="quarto-light">
+  <body class="quarto-notebook quarto-light">
+    <div id="quarto-embed-header" class="headroom fixed-top bg-primary">
+      
+      <a onclick="window.quartoBackToArticle(); return false;" class="btn btn-primary quarto-back-link" href=""><i class="bi bi-caret-left"></i> Back to Article</a>
+      <h6><i class="bi bi-journal-code"></i> Article Notebook</h6>
 
-<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
+            <a href="./index.qmd" class="btn btn-primary quarto-download-embed" download="index.qmd">Download Source</a>
+          </div>
+
+     <header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
       <h1 class="title">Identifying Obstacles to Equitable Flood Mitigation Funding</h1>
@@ -210,7 +339,7 @@ div.csl-indent {
               </div>
       </div>
       <div class="quarto-title-meta-column-end quarto-other-formats-target">
-      <div class="quarto-alternate-formats"><div class="quarto-title-meta-heading">Other Formats</div><div class="quarto-title-meta-contents"><p><a href="index.pdf"><i class="bi bi-file-pdf"></i>PDF (elsevier)</a></p></div><div class="quarto-title-meta-contents"><p><a href="index-meca.zip" data-meca-link="true"><i class="bi bi-archive"></i>MECA Bundle</a></p></div></div></div>
+      </div>
     </div>
 
     <div>
@@ -252,17 +381,91 @@ div.csl-indent {
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
-<div class="quarto-alternate-notebooks"><h2>Notebooks</h2><ul><li><a href="notebooks/01_parcel_ETL-preview.html"><i class="bi bi-journal-code"></i>Step 1: NC Parcel Data Sanity Checks</a></li><li><a href="notebooks/02_corelogic-preview.html"><i class="bi bi-journal-code"></i>Step 2: CoreLogic Trim + QA/QC</a></li><li><a href="notebooks/03_cl_nc1map_id_match-preview.html"><i class="bi bi-journal-code"></i>Step 3: NC CoreLogic and Parcel Matching</a></li><li><a href="notebooks/04_spatial_join-preview.html"><i class="bi bi-journal-code"></i>Step 4: Nearest-Neighbor Spatial Join for Unmatched Parcels</a></li><li><a href="notebooks/05_spatial_match_app_mit-preview.html"><i class="bi bi-journal-code"></i>Step 5: Mitigations to Parcels</a></li><li><a href="notebooks/05_alt_direct_match-preview.html"><i class="bi bi-journal-code"></i>Step 5.1 (Alt): Direct Intersection — Mits &amp; Apps to Parcels</a></li><li><a href="notebooks/06_interpolate_EIF-preview.html"><i class="bi bi-journal-code"></i>Step 6: Property Value Interpolation &amp; EIF Census Enrichment</a></li><li><a href="notebooks/07_flood_events_join-preview.html"><i class="bi bi-journal-code"></i>Step 7: Flood Event &amp; Eligibility Join (from existing Python CSVs)</a></li><li><a href="notebooks/07b_acs_blockgroup_join-preview.html"><i class="bi bi-journal-code"></i>Step 7b: Join 2013 ACS Block-Group Demographics into Master</a></li><li><a href="notebooks/08_manuscript_figures-preview.html"><i class="bi bi-journal-code"></i>Step 8: Manuscript Figures</a></li></ul></div></nav>
+</nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
-<main class="content quarto-banner-title-block" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">      
 
+       <div class="cell-container"><div class="cell-decorator"><pre>In [1]:</pre></div><div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
 
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
 
-  
-
-
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"figures"</span>, <span class="st">"index_inputs.rds"</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Sample sizes</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>n_sample         <span class="ot">&lt;-</span> inputs<span class="sc">$</span>n_sample</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>n_counties       <span class="ot">&lt;-</span> inputs<span class="sc">$</span>n_counties</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>n_bg             <span class="ot">&lt;-</span> inputs<span class="sc">$</span>n_bg</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Funnel — flooded counts and percentages</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>funnel_data      <span class="ot">&lt;-</span> inputs<span class="sc">$</span>funnel</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>n_flooded_all    <span class="ot">&lt;-</span> funnel_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"All flood-exposed"</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                                          stage <span class="sc">==</span> <span class="st">"Flooded"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(n)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>n_flooded_repeat <span class="ot">&lt;-</span> funnel_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"Repeat flood-exposed"</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                                          stage <span class="sc">==</span> <span class="st">"Flooded"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(n)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>funnel_all <span class="ot">&lt;-</span> funnel_data <span class="sc">|&gt;</span> <span class="fu">filter</span>(group <span class="sc">==</span> <span class="st">"All flood-exposed"</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>get_pct <span class="ot">&lt;-</span> <span class="cf">function</span>(stage_name, col) {</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(funnel_all[funnel_all<span class="sc">$</span>stage <span class="sc">==</span> stage_name, col, <span class="at">drop =</span> <span class="cn">TRUE</span>] <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>pct_eligible_of_flood <span class="ot">&lt;-</span> <span class="fu">get_pct</span>(<span class="st">"Eligible"</span>,          <span class="st">"pct_of_prev"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>pct_comm_of_eligible  <span class="ot">&lt;-</span> <span class="fu">get_pct</span>(<span class="st">"Community Applied"</span>, <span class="st">"pct_of_prev"</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>pct_applied_of_comm   <span class="ot">&lt;-</span> <span class="fu">get_pct</span>(<span class="st">"Applied"</span>,           <span class="st">"pct_of_prev"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>pct_applied_of_flood  <span class="ot">&lt;-</span> <span class="fu">get_pct</span>(<span class="st">"Applied"</span>,           <span class="st">"pct_of_flood"</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>pct_funded_of_applied <span class="ot">&lt;-</span> <span class="fu">get_pct</span>(<span class="st">"Funded"</span>,            <span class="st">"pct_of_prev"</span>)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Fig 3 medians — function first, THEN the variable assignments</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>get_med <span class="ot">&lt;-</span> <span class="cf">function</span>(panel_label, stage_name) {</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> inputs<span class="sc">$</span>fig3_medians <span class="sc">|&gt;</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(panel <span class="sc">==</span> panel_label, stage <span class="sc">==</span> stage_name) <span class="sc">|&gt;</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(median_pct)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(v, <span class="dv">0</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>med_A_flood   <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"A. vs study-area sample"</span>, <span class="st">"Flooded"</span>)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>med_A_comm    <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"A. vs study-area sample"</span>, <span class="st">"Community Applied"</span>)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>med_A_applied <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"A. vs study-area sample"</span>, <span class="st">"Applied"</span>)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>med_A_funded  <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"A. vs study-area sample"</span>, <span class="st">"Funded"</span>)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>med_B_flood   <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"B. within block group"</span>,  <span class="st">"Flooded"</span>)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>med_B_comm    <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"B. within block group"</span>,  <span class="st">"Community Applied"</span>)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>med_B_applied <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"B. within block group"</span>,  <span class="st">"Applied"</span>)</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>med_B_funded  <span class="ot">&lt;-</span> <span class="fu">get_med</span>(<span class="st">"B. within block group"</span>,  <span class="st">"Funded"</span>)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Fig 4 medians (race)</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>get_race_med <span class="ot">&lt;-</span> <span class="cf">function</span>(panel_label, stage_name) {</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> inputs<span class="sc">$</span>fig4_medians <span class="sc">|&gt;</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(race <span class="sc">==</span> panel_label, stage <span class="sc">==</span> stage_name) <span class="sc">|&gt;</span>   <span class="co"># `race`, not `panel`</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pull</span>(median_pct)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">round</span>(v, <span class="dv">1</span>)</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>med_white_flood    <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"A. % Non-Hispanic White"</span>, <span class="st">"Flooded"</span>)</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>med_white_comm     <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"A. % Non-Hispanic White"</span>, <span class="st">"Community Applied"</span>)</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>med_white_applied  <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"A. % Non-Hispanic White"</span>, <span class="st">"Applied"</span>)</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>med_white_funded   <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"A. % Non-Hispanic White"</span>, <span class="st">"Funded"</span>)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>med_black_flood    <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"B. % Black"</span>,              <span class="st">"Flooded"</span>)</span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>med_black_comm     <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"B. % Black"</span>,              <span class="st">"Community Applied"</span>)</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>med_black_applied  <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"B. % Black"</span>,              <span class="st">"Applied"</span>)</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>med_black_funded   <span class="ot">&lt;-</span> <span class="fu">get_race_med</span>(<span class="st">"B. % Black"</span>,              <span class="st">"Funded"</span>)</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co"># ACS-CL comparison (from 07b)</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>acs_cl <span class="ot">&lt;-</span> inputs<span class="sc">$</span>acs_cl_summary  <span class="co"># may be NULL if 07b hasn't run</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div></div>
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
 <p>Flooding is the most costly natural hazard in the United States, and projected climate changes will intensify both its frequency and its financial burden <span class="citation" data-cites="noaanationalcentersforenvironmentalinformationUSBillionDollarWeather2024">(<a href="#ref-noaanationalcentersforenvironmentalinformationUSBillionDollarWeather2024" role="doc-biblioref">Environmental Information 2024</a>)</span>. An estimated 41 million people live within the 100-year floodplain, more than twice the figure suggested by FEMA’s official flood maps, and the populations most exposed are disproportionately low-income, Black, and Native American <span class="citation" data-cites="tateFloodExposureSocial2021">(<a href="#ref-tateFloodExposureSocial2021" role="doc-biblioref">Tate, Rahman, and Emrich 2021</a>)</span>. In response to mounting losses, federal investment in flood risk reduction has grown substantially, averaging over $1.2 billion per year in FEMA hazard mitigation grants alone over the last decade. Yet growing evidence suggests this investment is not reaching those who need it most. Nationwide analyses find that wealthier and whiter counties have secured more federal mitigation funding, while racially and economically marginalized communities, which bear a disproportionate flood burden, have received comparatively less <span class="citation" data-cites="machManagedRetreatVoluntary2019 elliottRacialInequitiesFederal2020a loughranUnequalRetreatsHow2022">(<a href="#ref-machManagedRetreatVoluntary2019" role="doc-biblioref">Mach et al. 2019</a>; <a href="#ref-elliottRacialInequitiesFederal2020a" role="doc-biblioref">Elliott, Brown, and Loughran 2020</a>; <a href="#ref-loughranUnequalRetreatsHow2022" role="doc-biblioref">Loughran and Elliott 2022</a>)</span>. Several mechanisms have been proposed to explain this pattern: federal cost-benefit analysis requirements that systematically favor high-value properties, limited local government capacity to administer grants, and lack of household awareness about available funding. Prior research, however, has been constrained by a fundamental data limitation: we can observe only who <em>receives</em> funding, not who is eligible or who applies. As a result, it remains unclear where in the process inequities first emerge and which interventions would most effectively improve access.</p>
@@ -294,7 +497,7 @@ Figure&nbsp;1: <strong>Fig. 1.</strong> Inequitable outcomes across the FEMA Haz
 <section id="results" class="level1">
 <h1>Results</h1>
 <p>While most flooded properties are eligible and in communities that have applied for funding, very few properties submit applications (<a href="#fig-funnel" class="quarto-xref">Figure&nbsp;2</a>). Among all flooded properties (<a href="#fig-funnel" class="quarto-xref">Figure&nbsp;2</a>, left panel), we find that around 2/3 are eligible for federal funding (69.7%). Of these eligible properties, 94% are in communities where local government assisted with the submission of at least one application. Only a small fraction (4.3%) of eligible properties in applying communities apply themselves, equal to 2.8% of all flooded properties. Of those that apply, around half are funded (59.7%).</p>
-<div id="fig-funnel" class="quarto-float quarto-figure quarto-figure-center anchored" width="100%" alt="Diagram showing parcel counts by the five pipeline stages — flooded, eligible, in an applying community, applied, funded">
+<div id="fig-funnel" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Diagram showing parcel counts by the five pipeline stages — flooded, eligible, in an applying community, applied, funded" width="100%">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-funnel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/fig2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: "><img src="figures/fig2.png" id="fig-funnel" class="img-fluid figure-img" style="width:100.0%" alt="Diagram showing parcel counts by the five pipeline stages — flooded, eligible, in an applying community, applied, funded"></a>
@@ -305,7 +508,7 @@ Figure&nbsp;2
 </figure>
 </div>
 <p><strong>Fig. 2. Flooded-to-funded pipeline for residential properties in eastern North Carolina, 1996–2020.</strong> Bars show the number of 1–4 family residential parcels at each of five sequential pipeline stages: flooded in any of the 78 modeled events; eligible (flooded during a presidentially-declared event covering the parcel’s county); in an applying community (jurisdiction with at least one HMA application during the study period); itself named on an HMA application; and ultimately funded. Panel A: all flood-exposed parcels (n = 202,623). Panel B: parcels exposed to flooding in more than one event (n = 66,443).</p>
-<div id="fig-value" class="quarto-float quarto-figure quarto-figure-center anchored" width="100%" alt="Faceted histogram with two columns and four rows. Columns compare property value percentile rankings against the full study-area sample (left) versus within each parcel's own census block group (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded, top to bottom. Red vertical lines mark stage medians. Funded properties cluster at lower percentiles in the study-area panel but remain near the median in the block-group panel.">
+<div id="fig-value" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Faceted histogram with two columns and four rows. Columns compare property value percentile rankings against the full study-area sample (left) versus within each parcel's own census block group (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded, top to bottom. Red vertical lines mark stage medians. Funded properties cluster at lower percentiles in the study-area panel but remain near the median in the block-group panel." width="100%">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-value-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/fig3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: "><img src="figures/fig3.png" id="fig-value" class="img-fluid figure-img" style="width:100.0%" alt="Faceted histogram with two columns and four rows. Columns compare property value percentile rankings against the full study-area sample (left) versus within each parcel's own census block group (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded, top to bottom. Red vertical lines mark stage medians. Funded properties cluster at lower percentiles in the study-area panel but remain near the median in the block-group panel."></a>
@@ -317,7 +520,7 @@ Figure&nbsp;3
 </div>
 <p><strong>Fig. 3. Changes in distribution of property value by HMA stage.</strong> (A) Distribution expressed as percentile ranks relative to the entire study-area sample. (B) Distribution expressed as percentiles within each property’s block group. Property values are from CoreLogic (2022 dollars); red vertical lines mark stage medians.</p>
 <p>The number of properties surviving each pipeline stage drops substantially, and the property-value composition shifts as well (<a href="#fig-value" class="quarto-xref">Figure&nbsp;3</a>). Properties that flooded or that sit in communities with at least one HMA application have median values near the th–th percentile of the study-area sample (Panel A). Properties that apply for funding themselves drop to the th percentile, and those that are funded are even more affordable at the th percentile. Panel B re-ranks each property against the other parcels in its own block group: early-stage properties sit near the th–th percentile of their immediate neighborhood, while applying and funded properties land at the th and th percentiles respectively. Whether compared to the broader study area or within their own block groups, applying and funded properties are more affordable than flooded properties — but Panel B indicates they are relatively typical for their own neighborhoods rather than the cheapest houses on the block. Mitigation funding flows toward lower-value neighborhoods rather than toward the lowest-value homes within them.</p>
-<div id="fig-race" class="quarto-float quarto-figure quarto-figure-center anchored" width="100%" alt="Faceted histogram with two columns and four rows. Columns show the distribution of block-group percentages of non-Hispanic White residents (left) and Black residents (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded. Red vertical lines mark stage medians. The white-resident median shifts downward across stages while the Black-resident median shifts upward.">
+<div id="fig-race" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Faceted histogram with two columns and four rows. Columns show the distribution of block-group percentages of non-Hispanic White residents (left) and Black residents (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded. Red vertical lines mark stage medians. The white-resident median shifts downward across stages while the Black-resident median shifts upward." width="100%">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-race-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/fig4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: "><img src="figures/fig4.png" id="fig-race" class="img-fluid figure-img" style="width:100.0%" alt="Faceted histogram with two columns and four rows. Columns show the distribution of block-group percentages of non-Hispanic White residents (left) and Black residents (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded. Red vertical lines mark stage medians. The white-resident median shifts downward across stages while the Black-resident median shifts upward."></a>
@@ -374,11 +577,8 @@ Figure&nbsp;5: Overview of the flooded-to-funded mitigation pipeline and the key
 </section>
 </section>
 <section id="references" class="level1 unnumbered">
-
-
-</section>
-
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-bentoRaciallyUnequalImpacts2022" class="csl-entry" role="listitem">
 Bento, Asia, and James R. Elliott. 2022. <span>“The <span>Racially</span> <span>Unequal</span> <span>Impacts</span> of <span>Disasters</span> and <span>Federal</span> <span>Recovery</span> <span>Assistance</span> on <span>Local</span> <span>Self</span>-<span>Employment</span> <span>Rates</span>.”</span> <em>Social Currents</em> 9 (5): 424–44. <a href="https://doi.org/10.1177/23294965211028841">https://doi.org/10.1177/23294965211028841</a>.
 </div>
@@ -433,9 +633,10 @@ Tate, Eric, M. A. Rahman, and Christopher T. Emrich. 2021. <span>“Flood <span>
 <div id="ref-wilsonFloodRecoveryOutcomes2021" class="csl-entry" role="listitem">
 Wilson, Brenda, Eric Tate, and Christopher T. Emrich. 2021. <span>“Flood <span>Recovery</span> <span>Outcomes</span> and <span>Disaster</span> <span>Assistance</span> <span>Barriers</span> for <span>Vulnerable</span> <span>Populations</span>.”</span> <em>Frontiers in Water</em> 3: 752307. <a href="https://doi.org/10.3389/frwa.2021.752307">https://doi.org/10.3389/frwa.2021.752307</a>.
 </div>
-</div></section></div></main>
-<!-- /main column -->
-<script id="quarto-html-after-body" type="application/javascript">
+</div>
+</section>
+     </main>
+<!-- /main column -->  <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
     const anchorJS = new window.AnchorJS();
@@ -834,9 +1035,7 @@ Wilson, Brenda, Eric Tate, and Christopher T. Emrich. 2021. <span>“Flood <span
       }
     }
   });
-  </script>
-</div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+  </script>  </div> <!-- /content -->  <script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {
@@ -867,9 +1066,6 @@ Wilson, Brenda, Eric Tate, and Christopher T. Emrich. 2021. <span>“Flood <span
   };
   
 })();
-          </script>
-
-
-
-
+          </script> 
+  
 </body></html>

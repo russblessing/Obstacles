@@ -1,0 +1,388 @@
+---
+title: "Step 7b: Join 2013 ACS Block-Group Demographics into Master"
+author: "Russell Blessing"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show / hide code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Overview
+
+Pulls 2013 American Community Survey (5-year) demographic data at the census
+block-group level for the eastern NC study area, spatial-joins each parcel
+to its containing block group via centroid, and appends the demographic
+columns to `parcels_master.gpkg`. 
+
+**Inputs:**
+
+- `parcels_master.gpkg` (Step 7 output)
+- 2013 ACS 5-year estimates via `tidycensus`
+- 2010 block-group TIGER polygons via `tigris` (2013 ACS uses 2010 census
+  geography)
+
+**Outputs:**
+
+- `parcels_master.gpkg` updated in-place with new `bg_*` columns
+- `acs_bg_2013_nc.gpkg` — standalone block-group layer with demographics for
+  future use
+- `acs_corelogic_value_comparison.csv` — diagnostic comparing CoreLogic
+  median TVC to ACS median home value per block group
+
+```{r libraries}
+library(sf)
+library(dplyr)
+library(readr)
+library(tigris)
+library(tidycensus)
+library(stringr)
+library(tidyr)
+options(tigris_use_cache = TRUE)
+```
+
+```{r setup}
+out_dir     <- "/proj/mhinolab/users/rbless/data/Obstacles_Output"
+master_path <- file.path(out_dir, "parcels_master.gpkg")
+bg_out_path <- file.path(out_dir, "acs_bg_2013_nc.gpkg")
+cmp_out_path <- file.path(out_dir, "acs_corelogic_value_comparison.csv")
+```
+
+---
+
+## 1  Identify study-area counties
+
+Pull the unique county FIPS codes from `parcels_master.gpkg` so we only
+download block groups for counties that contain analysis-sample parcels.
+
+```{r identify-counties}
+master_attrs <- st_read(master_path, quiet = TRUE) |>
+  st_drop_geometry() |>
+  select(parcel_index, cntyfips, cent_lat, cent_lng, fr_1_4, interpolate,
+         TOTAL.VALUE.CALCULATED) |>
+  mutate(cntyfips = as.character(cntyfips))
+
+study_county_fips <- master_attrs |>
+  distinct(cntyfips) |>
+  filter(!is.na(cntyfips)) |>
+  pull(cntyfips)
+
+# tigris/tidycensus expect 3-digit county codes within a state.
+# cntyfips is stored as "37063" (state + county); strip the leading state.
+study_counties_3digit <- str_sub(study_county_fips, 3, 5)
+
+cat("Study area counties: ", length(study_counties_3digit), "\n")
+cat(head(study_counties_3digit, 10), "...\n")
+```
+
+---
+
+## 2  Pull 2013 ACS demographics + block-group geometries
+
+```{r acs-variables}
+# B03002 — Hispanic or Latino origin by race (race-ethnicity cross-tab)
+# B19013 — Median household income (last 12 months, 2013 inflation-adjusted)
+# B25077 — Median value of owner-occupied housing units
+
+acs_vars <- c(
+  pop_total          = "B03002_001",
+  pop_nh_white       = "B03002_003",
+  pop_nh_black       = "B03002_004",
+  pop_nh_aian        = "B03002_005",
+  pop_nh_asian       = "B03002_006",
+  pop_hispanic       = "B03002_012",
+  median_income      = "B19013_001",
+  median_home_value  = "B25077_001"
+)
+```
+
+```{r pull-acs-data}
+# Pull all block groups for the study area's counties. tidycensus returns
+# a long-format tibble; pivot_wider gives one row per block group.
+acs_raw <- get_acs(
+  geography = "block group",
+  variables = acs_vars,
+  state     = "NC",
+  county    = study_counties_3digit,
+  year      = 2013,
+  survey    = "acs5",
+  geometry  = TRUE,
+  output    = "wide",
+  cache_table = TRUE
+)
+
+cat("Block groups pulled:", nrow(acs_raw), "\n")
+```
+
+```{r prep-bg-table}
+bg_2013 <- acs_raw |>
+  st_transform(4326) |>                    # WGS84 to match parcel centroids
+  rename_with(\(x) str_remove(x, "E$"),    # drop the "E" suffix on estimates
+              ends_with("E")) |>
+  mutate(
+    bg_geoid             = GEOID,
+    bg_pop_total_2013    = pop_total,
+    bg_pct_white_2013    = ifelse(pop_total > 0,
+                                  pop_nh_white / pop_total * 100, NA_real_),
+    bg_pct_black_2013    = ifelse(pop_total > 0,
+                                  pop_nh_black / pop_total * 100, NA_real_),
+    bg_pct_hispanic_2013 = ifelse(pop_total > 0,
+                                  pop_hispanic / pop_total * 100, NA_real_),
+    bg_pct_asian_2013    = ifelse(pop_total > 0,
+                                  pop_nh_asian / pop_total * 100, NA_real_),
+    bg_pct_aian_2013     = ifelse(pop_total > 0,
+                                  pop_nh_aian / pop_total * 100, NA_real_),
+    bg_median_income_2013 = median_income,
+    bg_median_home_value_2013 = median_home_value
+  ) |>
+  select(bg_geoid,
+         starts_with("bg_pop_"),
+         starts_with("bg_pct_"),
+         starts_with("bg_median_"))
+
+cat("BG demographic summary (NC study area, 2013):\n")
+bg_2013 |>
+  st_drop_geometry() |>
+  summarise(
+    n_bgs                = dplyr::n(),
+    median_pop           = median(bg_pop_total_2013,    na.rm = TRUE),
+    median_pct_white     = median(bg_pct_white_2013,    na.rm = TRUE),
+    median_pct_black     = median(bg_pct_black_2013,    na.rm = TRUE),
+    median_pct_hispanic  = median(bg_pct_hispanic_2013, na.rm = TRUE),
+    median_inc           = median(bg_median_income_2013,  na.rm = TRUE),
+    median_hv            = median(bg_median_home_value_2013, na.rm = TRUE)
+  ) |>
+  print()
+
+# Save the BG layer for future use
+st_write(bg_2013, bg_out_path, delete_dsn = TRUE, quiet = TRUE)
+```
+
+---
+
+## 3  Spatial join parcels to block groups
+
+```{r build-parcel-points}
+# Build sf points from parcel centroids
+parcel_pts <- master_attrs |>
+  filter(!is.na(cent_lat), !is.na(cent_lng)) |>
+  st_as_sf(coords = c("cent_lng", "cent_lat"), crs = 4326, remove = FALSE)
+
+cat("Parcels with valid centroids:",
+    format(nrow(parcel_pts), big.mark = ","), "\n")
+```
+
+```{r spatial-join}
+# Point-in-polygon — assigns each parcel its containing block-group GEOID.
+parcel_bg <- st_join(
+  parcel_pts |> select(parcel_index),
+  bg_2013 |> select(bg_geoid),
+  join = st_intersects,
+  left = TRUE
+) |>
+  st_drop_geometry() |>
+  distinct(parcel_index, .keep_all = TRUE)   # in case any point lands on a BG edge
+
+cat("Parcels with assigned BG GEOID: ",
+    format(sum(!is.na(parcel_bg$bg_geoid)), big.mark = ","), "\n")
+cat("Parcels missing BG GEOID (off-NC or out-of-BG): ",
+    format(sum(is.na(parcel_bg$bg_geoid)),  big.mark = ","), "\n")
+```
+
+```{r attach-demographics}
+# Join BG demographics onto each parcel via GEOID
+parcel_bg_demo <- parcel_bg |>
+  left_join(st_drop_geometry(bg_2013), by = "bg_geoid")
+
+cat("Coverage by demographic column:\n")
+parcel_bg_demo |>
+  summarise(across(starts_with("bg_"),
+                   \(x) sum(!is.na(x)),
+                   .names = "{.col}")) |>
+  pivot_longer(everything(), names_to = "column", values_to = "n_non_na") |>
+  mutate(pct = sprintf("%.1f%%", 100 * n_non_na / nrow(parcel_bg_demo))) |>
+  print(n = Inf)
+```
+
+---
+
+## 4  Update parcels_master.gpkg in place
+
+```{r update-master}
+# Reload the full master (with geometry), join in the BG columns, save back.
+master_full <- st_read(master_path, quiet = TRUE)
+
+# Drop any prior bg_* columns so we don't end up with bg_*.x / bg_*.y duplicates
+master_full <- master_full |>
+  select(-any_of(grep("^bg_", names(master_full), value = TRUE)))
+
+# Join — bg columns are attribute-only, so st_drop_geometry on parcel_bg_demo
+master_with_bg <- master_full |>
+  left_join(parcel_bg_demo, by = "parcel_index")
+
+cat("master_with_bg dimensions:",
+    format(nrow(master_with_bg), big.mark = ","), "rows ×",
+    ncol(master_with_bg), "cols\n")
+
+cat("New columns:\n")
+new_cols <- setdiff(names(master_with_bg), names(master_full))
+print(new_cols)
+
+# Overwrite the master file
+st_write(master_with_bg, master_path,
+         delete_dsn = TRUE, quiet = TRUE)
+cat("Wrote (overwrote):", master_path, "\n")
+```
+
+---
+
+## 5  Sanity checks
+
+```{r sanity-check}
+# Quick verification: stages-level race medians, like Step 8 will compute
+master_sanity <- master_with_bg |>
+  st_drop_geometry() |>
+  filter(fr_1_4 == 1L | interpolate == 1L,
+         !is.na(flooded_any), as.numeric(flooded_any) >= 1)
+
+stage_check <- bind_rows(
+  master_sanity |>
+    mutate(stage = "Flooded"),
+  master_sanity |>
+    filter(!is.na(eligible), as.numeric(eligible) >= 1) |>
+    mutate(stage = "Eligible"),
+  master_sanity |>
+    filter(as.logical(applied)) |>
+    mutate(stage = "Applied"),
+  master_sanity |>
+    filter(as.logical(funded)) |>
+    mutate(stage = "Funded")
+) |>
+  group_by(stage) |>
+  summarise(
+    n_parcels         = dplyr::n(),
+    n_with_bg         = sum(!is.na(bg_pct_white_2013)),
+    median_pct_white  = round(median(bg_pct_white_2013,
+                                     na.rm = TRUE), 1),
+    median_pct_black  = round(median(bg_pct_black_2013,
+                                     na.rm = TRUE), 1),
+    median_income     = round(median(bg_median_income_2013,
+                                     na.rm = TRUE), 0),
+    median_hv         = round(median(bg_median_home_value_2013,
+                                     na.rm = TRUE), 0),
+    .groups = "drop"
+  ) |>
+  mutate(stage = factor(stage,
+                        levels = c("Flooded", "Eligible",
+                                   "Applied", "Funded")))
+
+knitr::kable(stage_check |> arrange(stage),
+             caption = "BG demographic medians by pipeline stage (parcel-weighted)")
+```
+
+**Reproduction targets (from Julian's draft):**
+
+- Panel A (% NH White): Flooded ~74.9, Eligible ~74.1, In-a-community ~75.2,
+  Applied ~64.1, Funded ~59.3
+- Funded median below Flooded by ~15pp → cleaner shift than the EIF version
+
+If `median_pct_white` for Applied lands near 64 and for Funded near 59, the
+block-group switch reproduces Julian's qualitative story. The above table
+is *parcel-weighted* (each parcel contributes its BG's race share);
+Step 8's Fig. 4 will compute the cell-vs-unique-block-group version, which
+will be slightly different.
+
+---
+
+## 6  CoreLogic-vs-ACS dollar-level value diagnostic
+
+The ACS B25077 median home value is in dollars (unlike the EIF vigintiles),
+so we can do the cell-vs-cell dollar comparison Miyuki originally
+expected. Per block group:
+
+- ACS median home value (2013 dollars, owner-occupied units)
+- Median CoreLogic `TOTAL.VALUE.CALCULATED` across our 1–4 family residential
+  parcels (2022 dollars)
+
+The vintage mismatch (ACS 2013 vs CL 2022) will bias the ratio upward — NC
+home values appreciated ~30–40% over that decade. We document the agreement
+in *ratio* and *correlation* terms.
+
+```{r corelogic-acs-comparison}
+cl_per_bg <- master_with_bg |>
+  st_drop_geometry() |>
+  filter(fr_1_4 == 1L,
+         interpolate == 0L,                         # raw CoreLogic, no interpolation
+         !is.na(TOTAL.VALUE.CALCULATED),
+         as.numeric(TOTAL.VALUE.CALCULATED) > 0,
+         !is.na(bg_geoid)) |>
+  group_by(bg_geoid) |>
+  summarise(
+    cl_n_parcels  = dplyr::n(),
+    cl_median_tvc = median(as.numeric(TOTAL.VALUE.CALCULATED), na.rm = TRUE),
+    .groups       = "drop"
+  )
+
+cmp <- inner_join(
+  cl_per_bg |> filter(cl_n_parcels >= 5),
+  bg_2013   |> st_drop_geometry() |>
+    select(bg_geoid, bg_median_home_value_2013) |>
+    filter(!is.na(bg_median_home_value_2013)),
+  by = "bg_geoid"
+)
+
+cat("BGs with both CL and ACS medians:",
+    format(nrow(cmp), big.mark = ","), "\n")
+
+cmp_summary <- cmp |>
+  summarise(
+    spearman_rho     = cor(cl_median_tvc, bg_median_home_value_2013,
+                            method = "spearman"),
+    pearson_log      = cor(log(cl_median_tvc), log(bg_median_home_value_2013)),
+    median_cl        = median(cl_median_tvc),
+    median_acs       = median(bg_median_home_value_2013),
+    median_ratio_cl_acs = median(cl_median_tvc / bg_median_home_value_2013)
+  )
+print(cmp_summary)
+
+write_csv(cmp, cmp_out_path)
+cat("Wrote:", cmp_out_path, "\n")
+```
+
+---
+
+## Output schema additions to `parcels_master.gpkg`
+
+| Column | Type | Source |
+|---|---|---|
+| `bg_geoid` | char (12-digit GEOID) | spatial join (Section 3) |
+| `bg_pop_total_2013` | int | ACS B03002_001 |
+| `bg_pct_white_2013` | dbl, 0–100 | derived: B03002_003 / B03002_001 × 100 |
+| `bg_pct_black_2013` | dbl, 0–100 | derived: B03002_004 / B03002_001 × 100 |
+| `bg_pct_hispanic_2013` | dbl, 0–100 | derived: B03002_012 / B03002_001 × 100 |
+| `bg_pct_asian_2013` | dbl, 0–100 | derived: B03002_006 / B03002_001 × 100 |
+| `bg_pct_aian_2013` | dbl, 0–100 | derived: B03002_005 / B03002_001 × 100 |
+| `bg_median_income_2013` | int (dollars) | ACS B19013_001 |
+| `bg_median_home_value_2013` | int (dollars) | ACS B25077_001 |
+
+## Notes
+
+- Block groups follow **2010 Census geography** because the 2013 ACS 5-year
+  is published against that geography. If you later want to use 2020-vintage
+  ACS, you'll need 2020 BG boundaries and a crosswalk if comparing both
+  vintages.
+- **ACS median home value (B25077) is owner-occupied housing units only.**
+  Renter-occupied units don't contribute. This matches the conceptual scope
+  of CoreLogic parcel values (assessor-recorded ownership) reasonably well.
+- Some block groups have **suppressed** values for median income or home
+  value when the underlying counts are too small. These appear as `NA` in
+  the demographic columns — propagating to any parcel in those BGs.
+- **NA `bg_geoid`** parcels are likely off-coast (over water) or in BG-edge
+  positions that the spatial join missed. Investigate the count printed in
+  Section 3 before publishing; if it's >1% of parcels, may need a fallback
+  rule (nearest-BG via `st_nearest_feature`).

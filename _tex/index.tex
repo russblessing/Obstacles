@@ -300,8 +300,9 @@ that never enter the applicant pool at all.
 
 }
 
-\caption{\label{fig-funding-pipeline}Inequitable outcomes across the
-FEMA Hazard Mitigation Assistance (HMA) application pipeline.}
+\caption{\label{fig-funding-pipeline}\textbf{Fig. 1.} Inequitable
+outcomes across the FEMA Hazard Mitigation Assistance (HMA) application
+pipeline.}
 
 \end{figure}%
 
@@ -418,6 +419,104 @@ flood event to funding outcome, we can assess not just who receives
 mitigation assistance, but where along the pipeline the losses occur,
 and for whom.
 
+\section{Results}\label{results}
+
+While most flooded properties are eligible and in communities that have
+applied for funding, very few properties submit applications
+(Figure~\ref{fig-funnel}). Among all flooded properties
+(Figure~\ref{fig-funnel}, left panel), we find that around 2/3 are
+eligible for federal funding (69.7\%). Of these eligible properties,
+94\% are in communities where local government assisted with the
+submission of at least one application. Only a small fraction (4.3\%) of
+eligible properties in applying communities apply themselves, equal to
+2.8\% of all flooded properties. Of those that apply, around half are
+funded (59.7\%).
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/fig2.png}
+
+}
+
+\caption{\label{fig-funnel}}
+
+\end{figure}%
+
+\textbf{Fig. 2. Flooded-to-funded pipeline for residential properties in
+eastern North Carolina, 1996--2020.} Bars show the number of 1--4 family
+residential parcels at each of five sequential pipeline stages: flooded
+in any of the 78 modeled events; eligible (flooded during a
+presidentially-declared event covering the parcel's county); in an
+applying community (jurisdiction with at least one HMA application
+during the study period); itself named on an HMA application; and
+ultimately funded. Panel A: all flood-exposed parcels (n = 202,623).
+Panel B: parcels exposed to flooding in more than one event (n =
+66,443).
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/fig3.png}
+
+}
+
+\caption{\label{fig-value}}
+
+\end{figure}%
+
+\textbf{Fig. 3. Changes in distribution of property value by HMA stage.}
+(A) Distribution expressed as percentile ranks relative to the entire
+study-area sample. (B) Distribution expressed as percentiles within each
+property's block group. Property values are from CoreLogic (2022
+dollars); red vertical lines mark stage medians.
+
+The number of properties surviving each pipeline stage drops
+substantially, and the property-value composition shifts as well
+(Figure~\ref{fig-value}). Properties that flooded or that sit in
+communities with at least one HMA application have median values near
+the th--th percentile of the study-area sample (Panel A). Properties
+that apply for funding themselves drop to the th percentile, and those
+that are funded are even more affordable at the th percentile. Panel B
+re-ranks each property against the other parcels in its own block group:
+early-stage properties sit near the th--th percentile of their immediate
+neighborhood, while applying and funded properties land at the th and th
+percentiles respectively. Whether compared to the broader study area or
+within their own block groups, applying and funded properties are more
+affordable than flooded properties --- but Panel B indicates they are
+relatively typical for their own neighborhoods rather than the cheapest
+houses on the block. Mitigation funding flows toward lower-value
+neighborhoods rather than toward the lowest-value homes within them.
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/fig4.png}
+
+}
+
+\caption{\label{fig-race}}
+
+\end{figure}%
+
+\textbf{Fig. 4. Block-group racial composition by HMA stage.} (A)
+Percentage of non-Hispanic White residents. (B) Percentage of Black
+residents. One observation per block group containing ≥ 1 residential
+parcel reaching the stage; demographic data from the 2013 ACS 5-year
+estimates. Red vertical lines mark stage medians.
+
+Properties applying for and receiving mitigation funding are located in
+block groups with lower shares of non-Hispanic White residents and
+correspondingly higher shares of Black residents than block groups at
+preceding pipeline stages (Figure~\ref{fig-race}). Median NH White share
+declines from 69.3\% at the flooded stage to 66.6\% at applying
+communities, 65.7\% at applied properties, and 60\% at funded
+properties. Median Black share rises by a nearly equal magnitude ---
+from 16.4\% to 26.1\% across the same trajectory.
+
 \section{Materials and Methods}\label{materials-and-methods}
 
 We construct a novel, multi-layered property-level dataset that links
@@ -431,14 +530,28 @@ flood inundation footprints
 records from the North Carolina Department of Public Safety (NCDPS), and
 block-group demographic data from the American Community Survey (ACS).
 We use this dataset to track residential properties through five
-sequential stages of the flood mitigation funding pipeline (Fig. 5):
-whether a property has flooded, whether it is eligible for federal
-mitigation funding, whether its local government has applied for
-funding, whether the property itself is named on an application, and
-whether that application was funded. The framework allows us to
-identify, at each transition, which properties drop out and how the
-composition of the remaining pool shifts in terms of flood-exposure
-history, property value, and neighborhood racial composition.
+sequential stages of the flood mitigation funding pipeline
+(Figure~\ref{fig-overview}): whether a property has flooded, whether it
+is eligible for federal mitigation funding, whether its local government
+has applied for funding, whether the property itself is named on an
+application, and whether that application was funded. The framework
+allows us to identify, at each transition, which properties drop out and
+how the composition of the remaining pool shifts in terms of
+flood-exposure history, property value, and neighborhood racial
+composition.
+
+\begin{figure}
+
+\centering{
+
+\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/Fig5_overview.png}
+
+}
+
+\caption{\label{fig-overview}Overview of the flooded-to-funded
+mitigation pipeline and the key datasets contributing to each stage.}
+
+\end{figure}%
 
 \subsection{Study area and unit of
 analysis}\label{study-area-and-unit-of-analysis}
@@ -461,7 +574,7 @@ spatially, with address-string similarity used to break ties when more
 than one CoreLogic record is closest. We retain 1--4 family residential
 parcels and exclude commercial, industrial, agricultural, and most
 government-owned land uses. The final analytic sample comprises
-\textbf{3,575,337 unique 1--4 family residential properties} across the
+\textbf{3,137,520 unique 1--4 family residential properties} across the
 78-county study area.
 
 A small number of residential parcels are recorded in CoreLogic as
@@ -574,24 +687,10 @@ emerge.
 
 This cross-sectional design intentionally treats the pipeline as a
 series of selection filters rather than estimating causal effects of any
-single program rule. Our claim is descriptive: by tracking who is
-present at each stage, we can pinpoint the transitions at which
-inequities in mitigation outcomes are produced, rather than inferring
-them from funded properties alone --- a contribution made possible only
-because address-level applications and funding records are observed
-alongside flood exposure and the full property universe.
-
-\section{Results}\label{results}
-
-While most flooded properties are eligible and in communities that have
-applied for funding, very few properties submit applications (Fig. 2).
-Among all flooded properties (Fig. 2, left panel), we find that around
-2/3 are eligible for federal funding (67.5\%). Of these eligible
-properties, 89.9\% are in communities where local government assisted
-with the submission of at least one application. Only a small fraction
-(3.8\%) of eligible properties in applying communities apply themselves,
-equal to 2.3\% of all flooded properties. Of those that apply, around
-half are funded (49.4\%).
+single program rule. By observing applications, funding, and flood
+exposure at the parcel level for every residential property in the study
+area, we identify the transitions at which inequities emerge, rather
+than inferring them from funded properties alone.
 
 
 \renewcommand\refname{References}
