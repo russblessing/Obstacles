@@ -1,0 +1,11 @@
+group,stage_num,stage,n,pct_of_prev,pct_of_flood
+All flood-exposed,1,Flooded,202623,NA,1
+All flood-exposed,2,Eligible,141253,0.6971222417988087,0.6971222417988087
+All flood-exposed,3,Community Applied,132828,0.9403552490920547,0.6555425593343303
+All flood-exposed,4,Applied,5746,0.04325895142590418,0.0283580837318567
+All flood-exposed,5,Funded,3432,0.5972850678733032,0.01693785996653884
+Repeat flood-exposed,1,Flooded,66443,NA,1
+Repeat flood-exposed,2,Eligible,57671,0.8679770630465211,0.8679770630465211
+Repeat flood-exposed,3,Community Applied,53912,0.9348199268263079,0.8114022545640625
+Repeat flood-exposed,4,Applied,3705,0.0687231043181481,0.055762081784386616
+Repeat flood-exposed,5,Funded,2166,0.5846153846153846,0.03259937088933371

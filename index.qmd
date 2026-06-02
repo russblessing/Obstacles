@@ -51,6 +51,72 @@ format:
       formatting: preprint
       cite-style: authoryear
 ---
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+
+inputs <- readRDS(here::here("figures", "index_inputs.rds"))
+
+# Sample sizes
+n_sample         <- inputs$n_sample
+n_counties       <- inputs$n_counties
+n_bg             <- inputs$n_bg
+
+# Funnel — flooded counts and percentages
+funnel_data      <- inputs$funnel
+n_flooded_all    <- funnel_data |> filter(group == "All flood-exposed",
+                                          stage == "Flooded") |> pull(n)
+n_flooded_repeat <- funnel_data |> filter(group == "Repeat flood-exposed",
+                                          stage == "Flooded") |> pull(n)
+
+funnel_all <- funnel_data |> filter(group == "All flood-exposed")
+get_pct <- function(stage_name, col) {
+  round(funnel_all[funnel_all$stage == stage_name, col, drop = TRUE] * 100, 1)
+}
+
+pct_eligible_of_flood <- get_pct("Eligible",          "pct_of_prev")
+pct_comm_of_eligible  <- get_pct("Community Applied", "pct_of_prev")
+pct_applied_of_comm   <- get_pct("Applied",           "pct_of_prev")
+pct_applied_of_flood  <- get_pct("Applied",           "pct_of_flood")
+pct_funded_of_applied <- get_pct("Funded",            "pct_of_prev")
+
+# Fig 3 medians
+get_med <- function(panel_label, stage_name) {
+  v <- inputs$fig3_medians |>
+    filter(panel == panel_label, stage == stage_name) |>
+    pull(median_pct)
+  round(v, 0)
+}
+
+med_A_flood   <- get_med("A. vs study-area sample", "Flooded")
+med_A_comm    <- get_med("A. vs study-area sample", "Community Applied")
+med_A_applied <- get_med("A. vs study-area sample", "Applied")
+med_A_funded  <- get_med("A. vs study-area sample", "Funded")
+med_B_flood   <- get_med("B. within block group",  "Flooded")
+med_B_comm    <- get_med("B. within block group",  "Community Applied")
+med_B_applied <- get_med("B. within block group",  "Applied")
+med_B_funded  <- get_med("B. within block group",  "Funded")
+
+# Fig 4 medians (race)
+get_race_med <- function(panel_label, stage_name) {
+  v <- inputs$fig4_medians |>
+    filter(panel == panel_label, stage == stage_name) |>
+    pull(median_pct)
+  round(v, 1)
+}
+
+med_white_comm     <- get_race_med("A. % Non-Hispanic White", "Community Applied")
+med_white_applied  <- get_race_med("A. % Non-Hispanic White", "Applied")
+med_black_comm     <- get_race_med("B. % Black", "Community Applied")
+med_black_applied  <- get_race_med("B. % Black", "Applied")
+med_white_flood  <- get_race_med("A. % Non-Hispanic White", "Flooded")
+med_white_funded <- get_race_med("A. % Non-Hispanic White", "Funded")
+med_black_flood  <- get_race_med("B. % Black", "Flooded")
+med_black_funded <- get_race_med("B. % Black", "Funded")
+
+# ACS-CL comparison (from 07b)
+acs_cl <- inputs$acs_cl_summary  # may be NULL if 07b hasn't run
+```
 
 # Introduction 
 Flooding is the most costly natural hazard in the United States, and projected climate changes will intensify both its frequency and its financial burden [@noaanationalcentersforenvironmentalinformationUSBillionDollarWeather2024]. An estimated 41 million people live within the 100-year floodplain, more than twice the figure suggested by FEMA's official flood maps, and the populations most exposed are disproportionately low-income, Black, and Native American [@tateFloodExposureSocial2021]. In response to mounting losses, federal investment in flood risk reduction has grown substantially, averaging over $1.2 billion per year in FEMA hazard mitigation grants alone over the last decade. Yet growing evidence suggests this investment is not reaching those who need it most. Nationwide analyses find that wealthier and whiter counties have secured more federal mitigation funding, while racially and economically marginalized communities, which bear a disproportionate flood burden, have received comparatively less [@machManagedRetreatVoluntary2019; @elliottRacialInequitiesFederal2020a; @loughranUnequalRetreatsHow2022]. Several mechanisms have been proposed to explain this pattern: federal cost-benefit analysis requirements that systematically favor high-value properties, limited local government capacity to administer grants, and lack of household awareness about available funding. Prior research, however, has been constrained by a fundamental data limitation: we can observe only who *receives* funding, not who is eligible or who applies. As a result, it remains unclear where in the process inequities first emerge and which interventions would most effectively improve access.
@@ -58,7 +124,7 @@ Flooding is the most costly natural hazard in the United States, and projected c
 Here, we combine novel datasets spanning over two decades of flood exposure, grant applications, and funding allocations in North Carolina to examine the full flooded-to-funded pipeline (Fig. 1). Flood exposure is derived from a random forest model trained on address-level National Flood Insurance Program (NFIP) records, producing inundation footprints for 78 damaging events between 1996 and 2020 [@garciaReconstructingRepetitiveFlood2025]. We link these exposure records to property-level application and funding data for FEMA Hazard Mitigation Assistance (HMA), provided by the North Carolina Department of Public Safety. Together, these datasets allow us to track individual properties across five stages (flooded, eligible, in an applying community, applied, and funded) and to examine how the composition of properties shifts in terms of flood exposure history, property value, and neighborhood racial demographics at each transition. This is the first analysis to follow properties from flood exposure through to mitigation funding outcome at the property level, making it possible to distinguish between households that are not being selected and those that never enter the applicant pool at all.
 
 
-![Inequitable outcomes across the FEMA Hazard Mitigation Assistance (HMA) application pipeline.](figures/Fig1_Funding_Pipeline.png){#fig-funding-pipeline}
+![**Fig. 1.** Inequitable outcomes across the FEMA Hazard Mitigation Assistance (HMA) application pipeline.](figures/Fig1_Funding_Pipeline.png){#fig-funding-pipeline}
 
 
 ## Access to federal funding for climate resilience
@@ -77,15 +143,37 @@ Inequities can arise at every stage. At the county level, administrative capacit
 
 Our analysis uses novel address-level data on the application and funding process to examine how each of these stages shapes the distribution of who ultimately benefits. By tracking properties from flood event to funding outcome, we can assess not just who receives mitigation assistance, but where along the pipeline the losses occur, and for whom.
 
+# Results
+While most flooded properties are eligible and in communities that have applied for funding, very few properties submit applications (@fig-funnel). Among all flooded properties (@fig-funnel, left panel), we find that around 2/3 are eligible for federal funding (`r pct_eligible_of_flood`%). Of these eligible properties, `r pct_comm_of_eligible`% are in communities where local government assisted with the submission of at least one application. Only a small fraction (`r pct_applied_of_comm`%) of eligible properties in applying communities apply themselves, equal to `r pct_applied_of_flood`% of all flooded properties. Of those that apply, around half are funded (`r pct_funded_of_applied`%).
+
+![](figures/fig2.png){#fig-funnel fig-alt="Diagram showing parcel counts by the five pipeline stages — flooded, eligible, in an applying community, applied, funded" width=100%}
+
+**Fig. 2. Flooded-to-funded pipeline for residential properties in eastern North Carolina, 1996–2020.** Bars show the number of 1–4 family residential parcels at each of five sequential pipeline stages: flooded in any of the 78 modeled events; eligible (flooded during a presidentially-declared event covering the parcel's county); in an applying community (jurisdiction
+with at least one HMA application during the study period); itself named on an HMA application; and ultimately funded. Panel A: all flood-exposed parcels (n = `r format(n_flooded_all, big.mark = ",")`). Panel B: parcels exposed to flooding in more than one event (n = `r format(n_flooded_repeat, big.mark = ",")`).
+
+![](figures/fig3.png){#fig-value fig-alt="Faceted histogram with two columns and four rows. Columns compare property value percentile rankings against the full study-area sample (left) versus within each parcel's own census block group (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded, top to bottom. Red vertical lines mark stage medians. Funded properties cluster at lower percentiles in the study-area panel but remain near the median in the block-group panel." width=100%}
+
+**Fig. 3. Changes in distribution of property value by HMA stage.** (A) Distribution expressed as percentile ranks relative to the entire study-area sample. (B) Distribution expressed as percentiles within each property's block group. Property values are from CoreLogic (2022 dollars); red vertical lines mark stage medians.
+
+The number of properties surviving each pipeline stage drops substantially, and the property-value composition shifts as well (@fig-value). Properties that flooded or that sit in communities with at least one HMA application have median values near the `r med_A_flood`th–`r med_A_comm`th percentile of the study-area sample (Panel A). Properties that apply for funding themselves drop to the `r med_A_applied`th percentile, and those that are funded are even more affordable at the `r med_A_funded`th percentile. Panel B re-ranks each property against the other parcels in its own block group: early-stage properties sit near the `r med_B_flood`th–`r med_B_comm`th percentile of their immediate neighborhood, while applying and funded properties land at the `r med_B_applied`th and `r med_B_funded`th percentiles respectively. Whether compared to the broader study area or within their own block groups, applying and funded properties are more affordable than flooded properties — but Panel B indicates they are relatively typical for their own neighborhoods rather than the cheapest houses on the block. Mitigation funding flows toward lower-value neighborhoods rather than toward the lowest-value homes within them.
+
+![](figures/fig4.png){#fig-race fig-alt="Faceted histogram with two columns and four rows. Columns show the distribution of block-group percentages of non-Hispanic White residents (left) and Black residents (right). Rows correspond to four pipeline stages: Flooded, Community Applied, Applied, and Funded. Red vertical lines mark stage medians. The white-resident median shifts downward across stages while the Black-resident median shifts upward." width=100%}
+
+**Fig. 4. Block-group racial composition by HMA stage.** (A) Percentage of non-Hispanic White residents. (B) Percentage of Black residents. One observation per block group containing ≥ 1 residential parcel reaching the stage; demographic data from the 2013 ACS 5-year estimates. Red vertical lines mark stage medians.
+
+Properties applying for and receiving mitigation funding are located in block groups with lower shares of non-Hispanic White residents and correspondingly higher shares of Black residents than block groups at preceding pipeline stages (@fig-race). Median NH White share declines from `r med_white_flood`% at the flooded stage to `r med_white_comm`% at applying communities, `r med_white_applied`% at applied properties, and `r med_white_funded`% at funded properties. Median Black share rises by a nearly equal magnitude — from `r med_black_flood`% to `r med_black_funded`% across the same trajectory.
+
 # Materials and Methods
 
-We construct a novel, multi-layered property-level dataset that links flood exposure, federal flood mitigation applications, and funding outcomes for eastern North Carolina between 1996 and 2020. The dataset combines parcel geometries from the North Carolina OneMap database, attribute records from the CoreLogic property database, address-level National Flood Insurance Program (NFIP) records used to reconstruct flood inundation footprints [@garciaReconstructingRepetitiveFlood2025], application and funding records from the North Carolina Department of Public Safety (NCDPS), and block-group demographic data from the American Community Survey (ACS). We use this dataset to track residential properties through five sequential stages of the flood mitigation funding pipeline (Fig. 5): whether a property has flooded, whether it is eligible for federal mitigation funding, whether its local government has applied for funding, whether the property itself is named on an application, and whether that application was funded. The framework allows us to identify, at each transition, which properties drop out and how the composition of the remaining pool shifts in terms of flood-exposure history, property value, and neighborhood racial composition.
+We construct a novel, multi-layered property-level dataset that links flood exposure, federal flood mitigation applications, and funding outcomes for eastern North Carolina between 1996 and 2020. The dataset combines parcel geometries from the North Carolina OneMap database, attribute records from the CoreLogic property database, address-level National Flood Insurance Program (NFIP) records used to reconstruct flood inundation footprints [@garciaReconstructingRepetitiveFlood2025], application and funding records from the North Carolina Department of Public Safety (NCDPS), and block-group demographic data from the American Community Survey (ACS). We use this dataset to track residential properties through five sequential stages of the flood mitigation funding pipeline (@fig-overview): whether a property has flooded, whether it is eligible for federal mitigation funding, whether its local government has applied for funding, whether the property itself is named on an application, and whether that application was funded. The framework allows us to identify, at each transition, which properties drop out and how the composition of the remaining pool shifts in terms of flood-exposure history, property value, and neighborhood racial composition.
+
+![Overview of the flooded-to-funded mitigation pipeline and the key datasets contributing to each stage.](figures/Fig5_overview.png.png){#fig-overview fig-alt="Diagram showing five pipeline stages — flooded, eligible, in an applying community, applied, funded — with the data source linked to each stage" width=100%}
 
 ## Study area and unit of analysis
 
 Our analysis covers the eastern portion of North Carolina, defined hydrologically as the entirety of the Neuse–Pamlico and Cape Fear watersheds together with the portions of the Pee Dee and Chowan–Roanoke watersheds that drain through the state. This domain spans 78 of North Carolina's 100 counties and contains the bulk of the state's repetitive flood activity over the study period.
 
-The base unit of analysis is the residential parcel. Parcel geometries are sourced from the North Carolina OneMap database, which aggregates county tax assessor records into a statewide spatial layer. Each parcel is linked to property-level attributes (land use code, structure characteristics, assessor value) drawn from the CoreLogic property database. Where parcel records and CoreLogic records share a common identifier we match directly; the remaining parcels are matched spatially, with address-string similarity used to break ties when more than one CoreLogic record is closest. We retain 1–4 family residential parcels and exclude commercial, industrial, agricultural, and most government-owned land uses. The final analytic sample comprises **3,575,337 unique 1–4 family residential properties** across the 78-county study area.
+The base unit of analysis is the residential parcel. Parcel geometries are sourced from the North Carolina OneMap database, which aggregates county tax assessor records into a statewide spatial layer. Each parcel is linked to property-level attributes (land use code, structure characteristics, assessor value) drawn from the CoreLogic property database. Where parcel records and CoreLogic records share a common identifier we match directly; the remaining parcels are matched spatially, with address-string similarity used to break ties when more than one CoreLogic record is closest. We retain 1–4 family residential parcels and exclude commercial, industrial, agricultural, and most government-owned land uses. The final analytic sample comprises **`r format(n_sample, big.mark = ",")` unique 1–4 family residential properties** across the 78-county study area.
 
 A small number of residential parcels are recorded in CoreLogic as currently vacant or government-owned. Because completed buyouts demolish the structure and transfer the parcel to public ownership, these post-buyout parcels appear in the present-day data with property values that reflect their post-mitigation rather than pre-mitigation state. To recover a pre-mitigation value for parcels that we have reason to believe were previously residential, we impute the property value as the mean assessor value of the five nearest non-vacant residential parcels. Parcels that are vacant for reasons unrelated to mitigation are excluded from the property-value analysis.
 
@@ -113,10 +201,9 @@ Neighborhood-level race and income are joined at the census block-group scale. W
 
 The five-stage pipeline (flooded → eligible → in an applying community → applied → funded) is a sequence of nested subsets: each stage is, by construction, a subset of the previous one. We characterize each stage in three ways. First, we count the number of parcels that survive into the stage and report stage-to-stage attrition rates, separately for once-flooded and repeatedly flooded parcels. Second, we describe the distribution of flood-exposure intensity (count of intersecting events) at each stage, to test whether the parcels surviving deeper into the pipeline are systematically those with more severe flood histories. Third, we describe the distribution of property values (county-percentile rank) and block-group demographics at each stage, to identify where in the pipeline shifts in wealth and racial composition emerge.
 
-This cross-sectional design intentionally treats the pipeline as a series of selection filters rather than estimating causal effects of any single program rule. Our claim is descriptive: by tracking who is present at each stage, we can pinpoint the transitions at which inequities in mitigation outcomes are produced, rather than inferring them from funded properties alone — a contribution made possible only because address-level applications and funding records are observed alongside flood exposure and the full property universe.
+This cross-sectional design intentionally treats the pipeline as a series of selection filters rather than estimating causal effects of any single program rule. By observing applications, funding, and flood exposure at the parcel level for every residential property in the study area, we identify the transitions at which inequities emerge, rather than inferring them from funded properties alone.
 
-# Results
-While most flooded properties are eligible and in communities that have applied for funding, very few properties submit applications (Fig. 2). Among all flooded properties (Fig. 2, left panel), we find that around 2/3 are eligible for federal funding (67.5%). Of these eligible properties, 89.9% are in communities where local government assisted with the submission of at least one application. Only a small fraction (3.8%) of eligible properties in applying communities apply themselves, equal to 2.3% of all flooded properties. Of those that apply, around half are funded (49.4%). 
+
 
 
 # References {-}
