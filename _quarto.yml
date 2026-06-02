@@ -16,6 +16,9 @@ format:
 
 execute:
   freeze: auto
+website:
+  repo-url: ""        # clear if set
+  repo-actions: []    # disable edit/issue/source buttons
 
 bibliography: bibliography.bib
 

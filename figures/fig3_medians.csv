@@ -1,5 +1,9 @@
-stage,median_pct
-Flooded,50.70959156489305
-Community Applied,53.08456512759177
-Applied,29.10571688842003
-Funded,22.871393288173145
+panel,stage,median_pct
+A. Within Study Area,Flooded,50.55457468097392
+A. Within Study Area,Community Applied,52.814164028121155
+A. Within Study Area,Applied,29.101407210047004
+A. Within Study Area,Funded,22.83614728397322
+B. Within Block Group,Flooded,61.29032258064516
+B. Within Block Group,Community Applied,60.20689901187886
+B. Within Block Group,Applied,58.139534883720934
+B. Within Block Group,Funded,56.59332688588008

@@ -81,11 +81,11 @@ pct_applied_of_flood  <- get_pct("Applied",           "pct_of_flood")
 pct_funded_of_applied <- get_pct("Funded",            "pct_of_prev")
 
 # Fig 3 medians
-get_med <- function(panel_label, stage_name) {
-  v <- inputs$fig3_medians |>
-    filter(panel == panel_label, stage == stage_name) |>
+get_race_med <- function(panel_label, stage_name) {
+  v <- inputs$fig4_medians |>
+    filter(race == panel_label, stage == stage_name) |>   # was `panel ==`
     pull(median_pct)
-  round(v, 0)
+  round(v, 1)
 }
 
 med_A_flood   <- get_med("A. vs study-area sample", "Flooded")
