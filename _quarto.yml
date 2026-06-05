@@ -17,8 +17,8 @@ format:
 execute:
   freeze: auto
 website:
-  repo-url: ""        # clear if set
-  repo-actions: []    # disable edit/issue/source buttons
+  repo-url: https://github.com/russblessing/Obstacles
+  repo-actions: []
 
 bibliography: bibliography.bib
 
