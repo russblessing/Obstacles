@@ -225,6 +225,10 @@
   <li><a href="#save-per-tier-csvs" id="toc-save-per-tier-csvs" class="nav-link" data-scroll-target="#save-per-tier-csvs">8 Save per-tier CSVs</a></li>
   <li><a href="#merge-geometry-tags-back-to-full-mit-app-datasets" id="toc-merge-geometry-tags-back-to-full-mit-app-datasets" class="nav-link" data-scroll-target="#merge-geometry-tags-back-to-full-mit-app-datasets">9 Merge geometry tags back to full mit / app datasets</a></li>
   <li><a href="#join-back-to-parcels" id="toc-join-back-to-parcels" class="nav-link" data-scroll-target="#join-back-to-parcels">10 Join back to parcels</a></li>
+  <li><a href="#mitigation-type-classification" id="toc-mitigation-type-classification" class="nav-link" data-scroll-target="#mitigation-type-classification">11 Mitigation type classification</a>
+  <ul class="collapse">
+  <li><a href="#summary-tables" id="toc-summary-tables" class="nav-link" data-scroll-target="#summary-tables">Summary tables</a></li>
+  </ul></li>
   <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   <li><a href="#comparison-with-previous-analysis" id="toc-comparison-with-previous-analysis" class="nav-link" data-scroll-target="#comparison-with-previous-analysis">Comparison with previous analysis</a></li>
   </ul>
@@ -635,8 +639,8 @@ Attaching package: 'tidyr'</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>             used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells  100260937 5354.6  177477272  9478.4  177477272  9478.4
-Vcells 1184124831 9034.2 2216893715 16913.6 2023658956 15439.3</code></pre>
+Ncells  100263769 5354.7  160195590  8555.4  160195590  8555.4
+Vcells 1184131295 9034.3 2217125098 16915.4 1887801063 14402.8</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [13]:</pre></div><div class="cell">
@@ -848,9 +852,9 @@ Vcells 1184124831 9034.2 2216893715 16913.6 2023658956 15439.3</code></pre>
 <span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>            used   (Mb) gc trigger    (Mb)   max used    (Mb)
-Ncells  70250857 3751.9  189280591 10108.7  236600738 12635.9
-Vcells 936630850 7146.0 2216893715 16913.6 2023658956 15439.3</code></pre>
+<pre><code>            used (Mb) gc trigger    (Mb)   max used    (Mb)
+Ncells  70253599 3752  233422561 12466.2  233422561 12466.2
+Vcells 936637164 7146 2217125098 16915.4 2063951787 15746.8</code></pre>
 </div>
 </div></div>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [22]:</pre></div><div class="cell">
@@ -980,44 +984,200 @@ Vcells 936630850 7146.0 2216893715 16913.6 2023658956 15439.3</code></pre>
 </div></div>
 <hr>
 </section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<section id="mitigation-type-classification" class="level2">
+<h2 class="anchored" data-anchor-id="mitigation-type-classification">11 Mitigation type classification</h2>
+<p>Classify each parcel-linked mitigation record by <code>project_type</code> for downstream analysis. This lookup is used by the manuscript-figures notebook (08) for the buyout-versus-elevation decomposition of funded properties.</p>
+<ul>
+<li><strong>Buyout</strong> — <code>project_type == "Acquisition"</code>. Property acquisition and structure demolition; household relocation required.</li>
+<li><strong>Elevation</strong> — <code>project_type == "Elevation"</code>. Structural elevation; preserves in-place residence.</li>
+<li><strong>Other / Unknown</strong> — everything else, including Utility Infrastructure, Quick Connect, Other, and records with no project type recorded.</li>
+</ul>
+<p>The classification is rolled up to the parcel level (one row per <code>parcel_index</code>). Parcels with multiple mit records of mixed type are classified as <strong>Buyout</strong> if any record is a buyout, then <strong>Elevation</strong> if any record is an elevation, falling through to <strong>Other / Unknown</strong> otherwise.</p>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [25]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>pri_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>())</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>mit_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>app_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>mit_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>app_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>mit_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>app_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Classify each mit record by project type -----------------------------</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>mits_typed <span class="ot">&lt;-</span> mits_pcls <span class="sc">|&gt;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">mit_type =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>      project_type <span class="sc">==</span> <span class="st">"Acquisition"</span> <span class="sc">~</span> <span class="st">"Buyout"</span>,</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>      project_type <span class="sc">==</span> <span class="st">"Elevation"</span>   <span class="sc">~</span> <span class="st">"Elevation"</span>,</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                          <span class="sc">~</span> <span class="st">"Other/Unknown"</span></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Roll up to parcel level (one mit_type per parcel) --------------------</span></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>parcel_mit_type <span class="ot">&lt;-</span> mits_typed <span class="sc">|&gt;</span></span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(parcel_index)) <span class="sc">|&gt;</span></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">group_by</span>(parcel_index) <span class="sc">|&gt;</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">summarise</span>(</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mit_type =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">any</span>(mit_type <span class="sc">==</span> <span class="st">"Buyout"</span>)    <span class="sc">~</span> <span class="st">"Buyout"</span>,</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">any</span>(mit_type <span class="sc">==</span> <span class="st">"Elevation"</span>) <span class="sc">~</span> <span class="st">"Elevation"</span>,</span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                         <span class="sc">~</span> <span class="st">"Other/Unknown"</span></span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_mit_records =</span> dplyr<span class="sc">::</span><span class="fu">n</span>(),</span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Save lookup table for use in step 08 ---------------------------------</span></span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(parcel_mit_type,</span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">file.path</span>(out_dir, <span class="st">"parcel_mit_type.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div></div>
+<section id="summary-tables" class="level3">
+<h3 class="anchored" data-anchor-id="summary-tables">Summary tables</h3>
 <div class="cell-container code-fold"><div class="cell-decorator"><pre>In [26]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Type        =</span> <span class="fu">c</span>(<span class="st">"Mitigations"</span>, <span class="st">"Applications"</span>),</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Total       =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_sa),      <span class="fu">nrow</span>(app_sa)),</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">High        =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_highpri), <span class="fu">nrow</span>(app_highpri)),</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Med         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_medpri),  <span class="fu">nrow</span>(app_medpri)),</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Low         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_lowpri),  <span class="fu">nrow</span>(app_lowpri)),</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fallback_NN =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_dist),    <span class="fu">nrow</span>(app_dist)),</span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unmatched   =</span> <span class="fu">c</span>(n_mits_rem,    n_apps_rem)</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Matched =</span> High <span class="sc">+</span> Med <span class="sc">+</span> Low <span class="sc">+</span> Fallback_NN</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Mit records by classified type</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>record_tally <span class="ot">&lt;-</span> mits_typed <span class="sc">|&gt;</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">count</span>(mit_type, <span class="at">name =</span> <span class="st">"n"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">pct =</span> <span class="fu">round</span>(n <span class="sc">/</span> <span class="fu">sum</span>(n) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(dplyr<span class="sc">::</span><span class="fu">desc</span>(n))</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>record_tally <span class="sc">|&gt;</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n   =</span> <span class="fu">format</span>(n, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct =</span> <span class="fu">paste0</span>(pct, <span class="st">"%"</span>)</span>
 <span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) <span class="sc">|&gt;</span></span>
-<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
-<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names   =</span> <span class="fu">c</span>(<span class="st">"Type"</span>, <span class="st">"Total"</span>, <span class="st">"High"</span>, <span class="st">"Med"</span>, <span class="st">"Low"</span>, <span class="st">"Fallback NN"</span>,</span>
-<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Total Matched"</span>, <span class="st">"Unmatched"</span>)</span>
-<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Mitigation type"</span>, <span class="st">"Records"</span>, <span class="st">"% of records"</span>),</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption   =</span> <span class="st">"Study-area mit records by classified type"</span></span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Study-area mit records by classified type</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mitigation type</th>
+<th style="text-align: left;">Records</th>
+<th style="text-align: left;">% of records</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Other/Unknown</td>
+<td style="text-align: left;">4,330</td>
+<td style="text-align: left;">49.2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Buyout</td>
+<td style="text-align: left;">3,814</td>
+<td style="text-align: left;">43.3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Elevation</td>
+<td style="text-align: left;">657</td>
+<td style="text-align: left;">7.5%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Parcels by classified type</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>parcel_tally <span class="ot">&lt;-</span> parcel_mit_type <span class="sc">|&gt;</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">count</span>(mit_type, <span class="at">name =</span> <span class="st">"n_parcels"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">pct =</span> <span class="fu">round</span>(n_parcels <span class="sc">/</span> <span class="fu">sum</span>(n_parcels) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(dplyr<span class="sc">::</span><span class="fu">desc</span>(n_parcels))</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>parcel_tally <span class="sc">|&gt;</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_parcels =</span> <span class="fu">format</span>(n_parcels, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct       =</span> <span class="fu">paste0</span>(pct, <span class="st">"%"</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"Mitigation type"</span>, <span class="st">"Parcels"</span>, <span class="st">"% of parcels"</span>),</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption   =</span> <span class="st">"Study-area parcels with at least one mit record, by classified type"</span></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Study-area parcels with at least one mit record, by classified type</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Mitigation type</th>
+<th style="text-align: left;">Parcels</th>
+<th style="text-align: left;">% of parcels</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Buyout</td>
+<td style="text-align: left;">2,698</td>
+<td style="text-align: left;">46.2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Other/Unknown</td>
+<td style="text-align: left;">2,538</td>
+<td style="text-align: left;">43.5%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Elevation</td>
+<td style="text-align: left;">600</td>
+<td style="text-align: left;">10.3%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Wrote parcel_mit_type.csv with"</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(<span class="fu">nrow</span>(parcel_mit_type), <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"classified parcels</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Wrote parcel_mit_type.csv with 5,836 classified parcels</code></pre>
+</div>
+</div></div>
+<hr>
+</section>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [27]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>pri_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(<span class="at">g_indicator =</span> <span class="fu">col_integer</span>(), <span class="at">geometry_id =</span> <span class="fu">col_integer</span>(), <span class="at">distance =</span> <span class="fu">col_double</span>())</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>mit_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>app_highpri <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_highpri.csv"</span>), <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>mit_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>app_medpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_medpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>mit_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>app_lowpri  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_lowpri.csv"</span>),  <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>mit_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"mit_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>app_dist    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"app_dist.csv"</span>),    <span class="at">col_types =</span> pri_cols)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [28]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Type        =</span> <span class="fu">c</span>(<span class="st">"Mitigations"</span>, <span class="st">"Applications"</span>),</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Total       =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_sa),      <span class="fu">nrow</span>(app_sa)),</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">High        =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_highpri), <span class="fu">nrow</span>(app_highpri)),</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Med         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_medpri),  <span class="fu">nrow</span>(app_medpri)),</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Low         =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_lowpri),  <span class="fu">nrow</span>(app_lowpri)),</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fallback_NN =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(mit_dist),    <span class="fu">nrow</span>(app_dist)),</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Unmatched   =</span> <span class="fu">c</span>(n_mits_rem,    n_apps_rem)</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Matched =</span> High <span class="sc">+</span> Med <span class="sc">+</span> Low <span class="sc">+</span> Fallback_NN</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Type, Total, High, Med, Low, Fallback_NN, Matched, Unmatched) <span class="sc">|&gt;</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">format.args =</span> <span class="fu">list</span>(<span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">col.names   =</span> <span class="fu">c</span>(<span class="st">"Type"</span>, <span class="st">"Total"</span>, <span class="st">"High"</span>, <span class="st">"Med"</span>, <span class="st">"Low"</span>, <span class="st">"Fallback NN"</span>,</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Total Matched"</span>, <span class="st">"Unmatched"</span>)</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1081,28 +1241,28 @@ Vcells 936630850 7146.0 2216893715 16913.6 2023658956 15439.3</code></pre>
 <li><p><strong>Parcel duplicate preservation</strong> — the Python pipeline’s final <code>merge(apps, parcels, on='geometry_id')</code> naturally re-inflates matched records across all parcel rows that share a <code>geometry_id</code> (i.e.&nbsp;a common physical footprint).</p></li>
 <li><p><strong>Duplicate-geometry deduplication</strong> — this pipeline resolves the 39 <code>geometry_id</code>s with multiple candidate parcel rows by selecting a single winner per record using address similarity (Jaro-Winkler on <code>siteadd</code>) with <code>APN.SEQUENCE.NUMBER</code>, <code>luc_tier</code>, and <code>improvval</code> as tiebreakers. The prior pipeline retained all matching rows, inflating parcel counts.</p></li>
 </ol>
-<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [27]:</pre></div><div class="cell">
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [29]:</pre></div><div class="cell">
 <details class="code-fold">
 <summary>Show / hide code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>n_mit_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(mits_pcls<span class="sc">$</span>parcel_index)</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>n_app_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(apps_pcls<span class="sc">$</span>parcel_index)</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>n_both     <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">intersect</span>(mits_pcls<span class="sc">$</span>parcel_index, apps_pcls<span class="sc">$</span>parcel_index))</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>pct_both   <span class="ot">&lt;-</span> <span class="fu">round</span>(n_both <span class="sc">/</span> n_app_pcls <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric      =</span> <span class="fu">c</span>(<span class="st">"Parcels with a mitigation"</span>,</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with an application"</span>,</span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with both (mit \u2229 app)"</span>,</span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Share of app parcels with a mit"</span>),</span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Prior run</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"6,087"</span>, <span class="st">"8,782"</span>, <span class="st">"4,292"</span>, <span class="st">"48.9%"</span>),</span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">This run</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">c</span>(</span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_mit_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_app_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_both,     <span class="at">big.mark =</span> <span class="st">","</span>),</span>
-<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(pct_both, <span class="st">"%"</span>)</span>
-<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="fu">c</span>(<span class="st">"l"</span>, <span class="st">"r"</span>, <span class="st">"r"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>n_mit_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(mits_pcls<span class="sc">$</span>parcel_index)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>n_app_pcls <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(apps_pcls<span class="sc">$</span>parcel_index)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>n_both     <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">intersect</span>(mits_pcls<span class="sc">$</span>parcel_index, apps_pcls<span class="sc">$</span>parcel_index))</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>pct_both   <span class="ot">&lt;-</span> <span class="fu">round</span>(n_both <span class="sc">/</span> n_app_pcls <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">1</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric      =</span> <span class="fu">c</span>(<span class="st">"Parcels with a mitigation"</span>,</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with an application"</span>,</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Parcels with both (mit \u2229 app)"</span>,</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Share of app parcels with a mit"</span>),</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Prior run</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">"6,087"</span>, <span class="st">"8,782"</span>, <span class="st">"4,292"</span>, <span class="st">"48.9%"</span>),</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">This run</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_mit_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_app_pcls, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_both,     <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(pct_both, <span class="st">"%"</span>)</span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">align =</span> <span class="fu">c</span>(<span class="st">"l"</span>, <span class="st">"r"</span>, <span class="st">"r"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">

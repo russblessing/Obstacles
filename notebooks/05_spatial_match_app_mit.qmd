@@ -681,6 +681,102 @@ st_write(mits_pcls, file.path(out_dir, "mits_pcls.gpkg"),
 
 ---
 
+## 11  Mitigation type classification
+
+Classify each parcel-linked mitigation record by `project_type` for downstream
+analysis. This lookup is used by the manuscript-figures notebook (08) for
+the buyout-versus-elevation decomposition of funded properties.
+
+- **Buyout** — `project_type == "Acquisition"`. Property acquisition and
+  structure demolition; household relocation required.
+- **Elevation** — `project_type == "Elevation"`. Structural elevation;
+  preserves in-place residence.
+- **Other / Unknown** — everything else, including Utility Infrastructure,
+  Quick Connect, Other, and records with no project type recorded.
+
+The classification is rolled up to the parcel level (one row per
+`parcel_index`). Parcels with multiple mit records of mixed type are
+classified as **Buyout** if any record is a buyout, then **Elevation** if any
+record is an elevation, falling through to **Other / Unknown** otherwise.
+
+```{r mit-type-classification}
+#| eval: true
+
+# --- Classify each mit record by project type -----------------------------
+mits_typed <- mits_pcls |>
+  sf::st_drop_geometry() |>
+  dplyr::mutate(
+    mit_type = dplyr::case_when(
+      project_type == "Acquisition" ~ "Buyout",
+      project_type == "Elevation"   ~ "Elevation",
+      TRUE                          ~ "Other/Unknown"
+    )
+  )
+
+# --- Roll up to parcel level (one mit_type per parcel) --------------------
+parcel_mit_type <- mits_typed |>
+  dplyr::filter(!is.na(parcel_index)) |>
+  dplyr::group_by(parcel_index) |>
+  dplyr::summarise(
+    mit_type = dplyr::case_when(
+      any(mit_type == "Buyout")    ~ "Buyout",
+      any(mit_type == "Elevation") ~ "Elevation",
+      TRUE                         ~ "Other/Unknown"
+    ),
+    n_mit_records = dplyr::n(),
+    .groups = "drop"
+  )
+
+# --- Save lookup table for use in step 08 ---------------------------------
+readr::write_csv(parcel_mit_type,
+                 file.path(out_dir, "parcel_mit_type.csv"))
+```
+
+### Summary tables
+
+```{r mit-type-summary}
+#| eval: true
+
+# Mit records by classified type
+record_tally <- mits_typed |>
+  dplyr::count(mit_type, name = "n") |>
+  dplyr::mutate(pct = round(n / sum(n) * 100, 1)) |>
+  dplyr::arrange(dplyr::desc(n))
+
+record_tally |>
+  dplyr::mutate(
+    n   = format(n, big.mark = ","),
+    pct = paste0(pct, "%")
+  ) |>
+  knitr::kable(
+    col.names = c("Mitigation type", "Records", "% of records"),
+    caption   = "Study-area mit records by classified type"
+  )
+
+# Parcels by classified type
+parcel_tally <- parcel_mit_type |>
+  dplyr::count(mit_type, name = "n_parcels") |>
+  dplyr::mutate(pct = round(n_parcels / sum(n_parcels) * 100, 1)) |>
+  dplyr::arrange(dplyr::desc(n_parcels))
+
+parcel_tally |>
+  dplyr::mutate(
+    n_parcels = format(n_parcels, big.mark = ","),
+    pct       = paste0(pct, "%")
+  ) |>
+  knitr::kable(
+    col.names = c("Mitigation type", "Parcels", "% of parcels"),
+    caption   = "Study-area parcels with at least one mit record, by classified type"
+  )
+
+cat("Wrote parcel_mit_type.csv with",
+    format(nrow(parcel_mit_type), big.mark = ","),
+    "classified parcels\n")
+```
+
+
+---
+
 ## Summary
 ```{r load-tier-csvs}
 pri_cols <- cols(g_indicator = col_integer(), geometry_id = col_integer(), distance = col_double())

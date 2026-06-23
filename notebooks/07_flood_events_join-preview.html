@@ -231,6 +231,10 @@
   <li><a href="#sanity-check" id="toc-sanity-check" class="nav-link" data-scroll-target="#sanity-check">6.6 Sanity check</a></li>
   <li><a href="#write" id="toc-write" class="nav-link" data-scroll-target="#write">6.7 Write</a></li>
   </ul></li>
+  <li><a href="#sensitivity-analysis-drop-7-high-uncertainty-events" id="toc-sensitivity-analysis-drop-7-high-uncertainty-events" class="nav-link" data-scroll-target="#sensitivity-analysis-drop-7-high-uncertainty-events">7 Sensitivity analysis: drop 7 high-uncertainty events</a>
+  <ul class="collapse">
+  <li><a href="#baseline-vs-sensitivity-comparison" id="toc-baseline-vs-sensitivity-comparison" class="nav-link" data-scroll-target="#baseline-vs-sensitivity-comparison">Baseline vs sensitivity comparison</a></li>
+  </ul></li>
   <li><a href="#output-schema-parcels_master.gpkg" id="toc-output-schema-parcels_master.gpkg" class="nav-link" data-scroll-target="#output-schema-parcels_master.gpkg">Output schema — <code>parcels_master.gpkg</code></a></li>
   </ul>
 </nav>
@@ -876,6 +880,289 @@ Crosswalk saved to: /proj/mhinolab/users/rbless/data/Obstacles_Output/parcel_cro
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Wrote: /proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_master.gpkg — 103 cols</code></pre>
+</div>
+</div></div>
+<hr>
+</section>
+</section>
+<section id="sensitivity-analysis-drop-7-high-uncertainty-events" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-analysis-drop-7-high-uncertainty-events">7 Sensitivity analysis: drop 7 high-uncertainty events</h2>
+<p>This builds a parallel <code>parcels_events_R_sens.csv</code> keyed on R’s <code>parcel_index</code>, with <code>flooded_any</code> and <code>eligible</code> recomputed from the 71 events that remain after excluding the seven flagged by Garcia et al.&nbsp;(2025) for having unusually high modeled-to-observed damage ratios (<code>bld_claims_ratio &gt; 20</code>).</p>
+<p>The reduced set is used downstream in step 08 to verify that the headline funnel rates and demographic-composition shifts are robust to the exclusion of these uncertain events.</p>
+<p><strong>Excluded events</strong> (by <code>event_number</code> in <code>event_name_number.csv</code>):</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Event</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>47</td>
+<td>Unnamed Piedmont flooding b (2003)</td>
+</tr>
+<tr class="even">
+<td>50</td>
+<td>TS Andrea (2013)</td>
+</tr>
+<tr class="odd">
+<td>54</td>
+<td>TS Allison (2001)</td>
+</tr>
+<tr class="even">
+<td>59</td>
+<td>Unnamed western flooding (2000)</td>
+</tr>
+<tr class="odd">
+<td>62</td>
+<td>Unnamed western flooding (2006)</td>
+</tr>
+<tr class="even">
+<td>65</td>
+<td>Unnamed western flooding (2003)</td>
+</tr>
+<tr class="odd">
+<td>71</td>
+<td>Unnamed eastern flooding (2004)</td>
+</tr>
+</tbody>
+</table>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [18]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>threshold_path <span class="ot">&lt;-</span> <span class="st">"/proj/mhinolab/projects/obstacles2/CRC_May_2025/Intermediary Data/parcels_events_Accuracy.csv"</span></span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>excluded_event_names <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unnamed Piedmont flooding b (2003)"</span>,</span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"TS Andrea (2013)"</span>,</span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"TS Allison (2001)"</span>,</span>
+<span id="cb69-8"><a href="#cb69-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unnamed western flooding (2000)"</span>,</span>
+<span id="cb69-9"><a href="#cb69-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unnamed western flooding (2006)"</span>,</span>
+<span id="cb69-10"><a href="#cb69-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unnamed western flooding (2003)"</span>,</span>
+<span id="cb69-11"><a href="#cb69-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Unnamed eastern flooding (2004)"</span></span>
+<span id="cb69-12"><a href="#cb69-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb69-13"><a href="#cb69-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-14"><a href="#cb69-14" aria-hidden="true" tabindex="-1"></a>excluded_max_cols  <span class="ot">&lt;-</span> <span class="fu">paste0</span>(excluded_event_names, <span class="st">"_max"</span>)</span>
+<span id="cb69-15"><a href="#cb69-15" aria-hidden="true" tabindex="-1"></a>excluded_elig_cols <span class="ot">&lt;-</span> <span class="fu">paste0</span>(excluded_event_names, <span class="st">"_elig"</span>)</span>
+<span id="cb69-16"><a href="#cb69-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-17"><a href="#cb69-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspect column structure</span></span>
+<span id="cb69-18"><a href="#cb69-18" aria-hidden="true" tabindex="-1"></a>header <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(threshold_path, <span class="at">n_max =</span> <span class="dv">0</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb69-19"><a href="#cb69-19" aria-hidden="true" tabindex="-1"></a>all_cols  <span class="ot">&lt;-</span> <span class="fu">names</span>(header)</span>
+<span id="cb69-20"><a href="#cb69-20" aria-hidden="true" tabindex="-1"></a>max_cols  <span class="ot">&lt;-</span> all_cols[<span class="fu">grepl</span>(<span class="st">"_max$"</span>,  all_cols)]</span>
+<span id="cb69-21"><a href="#cb69-21" aria-hidden="true" tabindex="-1"></a>elig_cols <span class="ot">&lt;-</span> all_cols[<span class="fu">grepl</span>(<span class="st">"_elig$"</span>, all_cols)]</span>
+<span id="cb69-22"><a href="#cb69-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-23"><a href="#cb69-23" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Threshold file columns:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Threshold file columns:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  Total:        "</span>, <span class="fu">length</span>(all_cols), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Total:         100 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  _max:         "</span>, <span class="fu">length</span>(max_cols),  <span class="st">"(expected 78)</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  _max:          78 (expected 78)</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"  _elig:        "</span>, <span class="fu">length</span>(elig_cols), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  _elig:         18 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Verify the 7 excluded events are present</span></span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>missing_excl <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(excluded_max_cols, max_cols)</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(missing_excl) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Excluded events not found in threshold file:</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>       <span class="fu">paste</span>(missing_excl, <span class="at">collapse =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>))</span>
+<span id="cb77-7"><a href="#cb77-7" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb77-8"><a href="#cb77-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"  All 7 excluded events found in _max columns</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb77-9"><a href="#cb77-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  All 7 excluded events found in _max columns</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Read only the columns we keep</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>kept_max_cols  <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(max_cols,  excluded_max_cols)</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>kept_elig_cols <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(elig_cols, excluded_elig_cols)</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">Reading threshold file with kept columns only (71 _max + "</span>,</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">length</span>(kept_elig_cols), <span class="st">" _elig)...</span><span class="sc">\n</span><span class="st">"</span>, <span class="at">sep =</span> <span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Reading threshold file with kept columns only (71 _max + 18 _elig)...</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>events_sens <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>  threshold_path,</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_select =</span> <span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"parcel_index"</span>, kept_max_cols, kept_elig_cols)),</span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types  =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="fu">col_character</span>()),</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">parcel_index =</span> <span class="fu">as.integer</span>(parcel_index)) <span class="sc">|&gt;</span></span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(kept_max_cols, kept_elig_cols)),</span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>                <span class="sc">~</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.integer</span>(.)) <span class="sc">|&gt;</span> <span class="fu">replace</span>(<span class="fu">is.na</span>(.), <span class="dv">0</span>L)))</span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Rows loaded:"</span>, <span class="fu">format</span>(<span class="fu">nrow</span>(events_sens), <span class="at">big.mark =</span> <span class="st">","</span>), <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows loaded: 4,187,506 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Aggregate: flooded_any and eligible from the 71-event subset</span></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>events_sens <span class="ot">&lt;-</span> events_sens <span class="sc">|&gt;</span></span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">flooded_any_sens =</span> <span class="fu">rowSums</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(kept_max_cols))  <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">eligible_sens    =</span> <span class="fu">rowSums</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(kept_elig_cols)) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, flooded_any_sens, eligible_sens)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div></div>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [19]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Crosswalk to R parcel_index using the existing crosswalk (Section 1)</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>xwalk <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(xwalk_out_path, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(r_parcel_index, py_parcel_index)</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>sens_R <span class="ot">&lt;-</span> xwalk <span class="sc">|&gt;</span></span>
+<span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(events_sens, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"py_parcel_index"</span> <span class="ot">=</span> <span class="st">"parcel_index"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">parcel_index =</span> r_parcel_index) <span class="sc">|&gt;</span></span>
+<span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(parcel_index, flooded_any_sens, eligible_sens)</span>
+<span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Write sensitivity file</span></span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>sens_out_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(out_dir, <span class="st">"parcels_events_R_sens.csv"</span>)</span>
+<span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(sens_R, sens_out_path)</span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Wrote:"</span>, sens_out_path, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Wrote: /proj/mhinolab/users/rbless/data/Obstacles_Output/parcels_events_R_sens.csv </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Rows:"</span>, <span class="fu">format</span>(<span class="fu">nrow</span>(sens_R), <span class="at">big.mark =</span> <span class="st">","</span>), <span class="st">"</span><span class="sc">\n\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 4,041,245 </code></pre>
+</div>
+</div></div>
+<section id="baseline-vs-sensitivity-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="baseline-vs-sensitivity-comparison">Baseline vs sensitivity comparison</h3>
+<div class="cell-container code-fold"><div class="cell-decorator"><pre>In [20]:</pre></div><div class="cell">
+<details class="code-fold">
+<summary>Show / hide code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare baseline (78 events) vs sensitivity (71 events) at R parcel level</span></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>baseline_R <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(events_out_path, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb88-5"><a href="#cb88-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">parcel_index =</span> <span class="fu">as.integer</span>(r_parcel_index),</span>
+<span id="cb88-6"><a href="#cb88-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">flooded_any_base =</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.integer</span>(flooded_any)),</span>
+<span id="cb88-7"><a href="#cb88-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">eligible_base    =</span> <span class="fu">suppressWarnings</span>(<span class="fu">as.integer</span>(eligible))</span>
+<span id="cb88-8"><a href="#cb88-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb88-9"><a href="#cb88-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-10"><a href="#cb88-10" aria-hidden="true" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> baseline_R <span class="sc">|&gt;</span></span>
+<span id="cb88-11"><a href="#cb88-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(sens_R, <span class="at">by =</span> <span class="st">"parcel_index"</span>)</span>
+<span id="cb88-12"><a href="#cb88-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-13"><a href="#cb88-13" aria-hidden="true" tabindex="-1"></a>n_base_flooded <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>flooded_any_base <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-14"><a href="#cb88-14" aria-hidden="true" tabindex="-1"></a>n_sens_flooded <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>flooded_any_sens <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-15"><a href="#cb88-15" aria-hidden="true" tabindex="-1"></a>n_base_elig    <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>eligible_base    <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-16"><a href="#cb88-16" aria-hidden="true" tabindex="-1"></a>n_sens_elig    <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>eligible_sens    <span class="sc">&gt;=</span> <span class="dv">1</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-17"><a href="#cb88-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-18"><a href="#cb88-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Number of parcels that change category under sensitivity</span></span>
+<span id="cb88-19"><a href="#cb88-19" aria-hidden="true" tabindex="-1"></a>n_no_longer_flooded <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>flooded_any_base <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">&amp;</span></span>
+<span id="cb88-20"><a href="#cb88-20" aria-hidden="true" tabindex="-1"></a>                           comparison<span class="sc">$</span>flooded_any_sens <span class="sc">==</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-21"><a href="#cb88-21" aria-hidden="true" tabindex="-1"></a>n_no_longer_elig    <span class="ot">&lt;-</span> <span class="fu">sum</span>(comparison<span class="sc">$</span>eligible_base <span class="sc">&gt;=</span> <span class="dv">1</span> <span class="sc">&amp;</span></span>
+<span id="cb88-22"><a href="#cb88-22" aria-hidden="true" tabindex="-1"></a>                           comparison<span class="sc">$</span>eligible_sens <span class="sc">==</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb88-23"><a href="#cb88-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-24"><a href="#cb88-24" aria-hidden="true" tabindex="-1"></a>sens_tbl <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb88-25"><a href="#cb88-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">Metric =</span> <span class="fu">c</span>(</span>
+<span id="cb88-26"><a href="#cb88-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Parcels flooded &gt;= 1 event"</span>,</span>
+<span id="cb88-27"><a href="#cb88-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Parcels eligible &gt;= 1 declared event"</span>,</span>
+<span id="cb88-28"><a href="#cb88-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Parcels no longer flooded under sensitivity"</span>,</span>
+<span id="cb88-29"><a href="#cb88-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Parcels no longer eligible under sensitivity"</span></span>
+<span id="cb88-30"><a href="#cb88-30" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb88-31"><a href="#cb88-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Baseline (78 events)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb88-32"><a href="#cb88-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_base_flooded, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb88-33"><a href="#cb88-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_base_elig,    <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb88-34"><a href="#cb88-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"—"</span>, <span class="st">"—"</span></span>
+<span id="cb88-35"><a href="#cb88-35" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb88-36"><a href="#cb88-36" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Sensitivity (71 events)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(</span>
+<span id="cb88-37"><a href="#cb88-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_sens_flooded, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb88-38"><a href="#cb88-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_sens_elig,    <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb88-39"><a href="#cb88-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_no_longer_flooded, <span class="at">big.mark =</span> <span class="st">","</span>),</span>
+<span id="cb88-40"><a href="#cb88-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">format</span>(n_no_longer_elig,    <span class="at">big.mark =</span> <span class="st">","</span>)</span>
+<span id="cb88-41"><a href="#cb88-41" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb88-42"><a href="#cb88-42" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb88-43"><a href="#cb88-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb88-44"><a href="#cb88-44" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb88-45"><a href="#cb88-45" aria-hidden="true" tabindex="-1"></a>  sens_tbl,</span>
+<span id="cb88-46"><a href="#cb88-46" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Baseline (78 events) vs sensitivity (71 events). Difference = parcels that had &gt;= 1 flood baseline but 0 under sensitivity."</span></span>
+<span id="cb88-47"><a href="#cb88-47" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Baseline (78 events) vs sensitivity (71 events). Difference = parcels that had &gt;= 1 flood baseline but 0 under sensitivity.</caption>
+<colgroup>
+<col style="width: 50%">
+<col style="width: 23%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Baseline (78 events)</th>
+<th style="text-align: left;">Sensitivity (71 events)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Parcels flooded &gt;= 1 event</td>
+<td style="text-align: left;">372,779</td>
+<td style="text-align: left;">312,756</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Parcels eligible &gt;= 1 declared event</td>
+<td style="text-align: left;">256,376</td>
+<td style="text-align: left;">235,129</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Parcels no longer flooded under sensitivity</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">60,023</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Parcels no longer eligible under sensitivity</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">21,247</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div></div>
 </section>

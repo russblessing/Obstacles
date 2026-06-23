@@ -460,6 +460,172 @@ st_write(master, master_path, delete_dsn = TRUE, quiet = TRUE)
 cat("Wrote:", master_path, "—", ncol(master), "cols\n")
 ```
 
+---
+
+## 7  Sensitivity analysis: drop 7 high-uncertainty events
+
+This builds a parallel `parcels_events_R_sens.csv` keyed on R's `parcel_index`,
+with `flooded_any` and `eligible` recomputed from the 71 events that remain
+after excluding the seven flagged by Garcia et al. (2025) for having unusually
+high modeled-to-observed damage ratios (`bld_claims_ratio > 20`).
+
+The reduced set is used downstream in step 08 to verify that the headline
+funnel rates and demographic-composition shifts are robust to the exclusion
+of these uncertain events.
+
+**Excluded events** (by `event_number` in `event_name_number.csv`):
+
+| # | Event |
+|---|---|
+| 47 | Unnamed Piedmont flooding b (2003) |
+| 50 | TS Andrea (2013) |
+| 54 | TS Allison (2001) |
+| 59 | Unnamed western flooding (2000) |
+| 62 | Unnamed western flooding (2006) |
+| 65 | Unnamed western flooding (2003) |
+| 71 | Unnamed eastern flooding (2004) |
+
+```{r sensitivity-aggregation}
+#| eval: true
+
+threshold_path <- "/proj/mhinolab/projects/obstacles2/CRC_May_2025/Intermediary Data/parcels_events_Accuracy.csv"
+
+excluded_event_names <- c(
+  "Unnamed Piedmont flooding b (2003)",
+  "TS Andrea (2013)",
+  "TS Allison (2001)",
+  "Unnamed western flooding (2000)",
+  "Unnamed western flooding (2006)",
+  "Unnamed western flooding (2003)",
+  "Unnamed eastern flooding (2004)"
+)
+
+excluded_max_cols  <- paste0(excluded_event_names, "_max")
+excluded_elig_cols <- paste0(excluded_event_names, "_elig")
+
+# Inspect column structure
+header <- read_csv(threshold_path, n_max = 0, show_col_types = FALSE)
+all_cols  <- names(header)
+max_cols  <- all_cols[grepl("_max$",  all_cols)]
+elig_cols <- all_cols[grepl("_elig$", all_cols)]
+
+cat("Threshold file columns:\n")
+cat("  Total:        ", length(all_cols), "\n")
+cat("  _max:         ", length(max_cols),  "(expected 78)\n")
+cat("  _elig:        ", length(elig_cols), "\n")
+
+# Verify the 7 excluded events are present
+missing_excl <- setdiff(excluded_max_cols, max_cols)
+if (length(missing_excl) > 0) {
+  stop("Excluded events not found in threshold file:\n",
+       paste(missing_excl, collapse = "\n"))
+} else {
+  cat("  All 7 excluded events found in _max columns\n")
+}
+
+# Read only the columns we keep
+kept_max_cols  <- setdiff(max_cols,  excluded_max_cols)
+kept_elig_cols <- setdiff(elig_cols, excluded_elig_cols)
+
+cat("\nReading threshold file with kept columns only (71 _max + ",
+    length(kept_elig_cols), " _elig)...\n", sep = "")
+
+events_sens <- read_csv(
+  threshold_path,
+  col_select = all_of(c("parcel_index", kept_max_cols, kept_elig_cols)),
+  col_types  = cols(.default = col_character()),
+  show_col_types = FALSE
+) |>
+  mutate(parcel_index = as.integer(parcel_index)) |>
+  mutate(across(all_of(c(kept_max_cols, kept_elig_cols)),
+                ~ suppressWarnings(as.integer(.)) |> replace(is.na(.), 0L)))
+
+cat("Rows loaded:", format(nrow(events_sens), big.mark = ","), "\n\n")
+
+# Aggregate: flooded_any and eligible from the 71-event subset
+events_sens <- events_sens |>
+  mutate(
+    flooded_any_sens = rowSums(across(all_of(kept_max_cols))  > 0),
+    eligible_sens    = rowSums(across(all_of(kept_elig_cols)) > 0)
+  ) |>
+  select(parcel_index, flooded_any_sens, eligible_sens)
+```
+
+```{r sensitivity-crosswalk-and-write}
+#| eval: true
+
+# Crosswalk to R parcel_index using the existing crosswalk (Section 1)
+xwalk <- read_csv(xwalk_out_path, show_col_types = FALSE) |>
+  select(r_parcel_index, py_parcel_index)
+
+sens_R <- xwalk |>
+  inner_join(events_sens, by = c("py_parcel_index" = "parcel_index")) |>
+  rename(parcel_index = r_parcel_index) |>
+  select(parcel_index, flooded_any_sens, eligible_sens)
+
+# Write sensitivity file
+sens_out_path <- file.path(out_dir, "parcels_events_R_sens.csv")
+write_csv(sens_R, sens_out_path)
+
+cat("Wrote:", sens_out_path, "\n")
+cat("Rows:", format(nrow(sens_R), big.mark = ","), "\n\n")
+```
+
+### Baseline vs sensitivity comparison
+
+```{r sensitivity-comparison-table}
+#| eval: true
+
+# Compare baseline (78 events) vs sensitivity (71 events) at R parcel level
+baseline_R <- read_csv(events_out_path, show_col_types = FALSE) |>
+  transmute(
+    parcel_index = as.integer(r_parcel_index),
+    flooded_any_base = suppressWarnings(as.integer(flooded_any)),
+    eligible_base    = suppressWarnings(as.integer(eligible))
+  )
+
+comparison <- baseline_R |>
+  inner_join(sens_R, by = "parcel_index")
+
+n_base_flooded <- sum(comparison$flooded_any_base >= 1, na.rm = TRUE)
+n_sens_flooded <- sum(comparison$flooded_any_sens >= 1, na.rm = TRUE)
+n_base_elig    <- sum(comparison$eligible_base    >= 1, na.rm = TRUE)
+n_sens_elig    <- sum(comparison$eligible_sens    >= 1, na.rm = TRUE)
+
+# Number of parcels that change category under sensitivity
+n_no_longer_flooded <- sum(comparison$flooded_any_base >= 1 &
+                           comparison$flooded_any_sens == 0, na.rm = TRUE)
+n_no_longer_elig    <- sum(comparison$eligible_base >= 1 &
+                           comparison$eligible_sens == 0, na.rm = TRUE)
+
+sens_tbl <- tibble(
+  Metric = c(
+    "Parcels flooded >= 1 event",
+    "Parcels eligible >= 1 declared event",
+    "Parcels no longer flooded under sensitivity",
+    "Parcels no longer eligible under sensitivity"
+  ),
+  `Baseline (78 events)` = c(
+    format(n_base_flooded, big.mark = ","),
+    format(n_base_elig,    big.mark = ","),
+    "—", "—"
+  ),
+  `Sensitivity (71 events)` = c(
+    format(n_sens_flooded, big.mark = ","),
+    format(n_sens_elig,    big.mark = ","),
+    format(n_no_longer_flooded, big.mark = ","),
+    format(n_no_longer_elig,    big.mark = ",")
+  )
+)
+
+knitr::kable(
+  sens_tbl,
+  caption = "Baseline (78 events) vs sensitivity (71 events). Difference = parcels that had >= 1 flood baseline but 0 under sensitivity."
+)
+```
+
+
+
 ## Output schema — `parcels_master.gpkg`
 
 One row per parcel; downstream consumers (Step 8 figures) read only this file.
