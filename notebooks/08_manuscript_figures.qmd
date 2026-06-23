@@ -244,8 +244,8 @@ fig2 <- ggplot(fig2_data, aes(x = n, y = stage)) +
             hjust = -0.06, size = 3.3, colour = "grey20") +
   facet_wrap(~ panel, ncol = 2, scales = "free_x") +
   scale_x_continuous(
-    expand = expansion(mult = c(0, 0.10)),                    # ← tighter right margin
-    labels = scales::label_dollar(scale = 1e-3, suffix = "k")
+    expand = expansion(mult = c(0, 0.20)),                    
+    labels = scales::label_number(scale = 1e-3, suffix = "k") 
   ) +
   scale_y_discrete(limits = rev) +
   labs(
@@ -602,10 +602,14 @@ fig5_long <- bgs_econ_at_stage |>
                   sep = "_") |>
   mutate(
     stage = recode(stage_key,
-      s1 = "Flooded", s3 = "Community Applied",
-      s4 = "Applied", s5 = "Funded"
+      s1 = "Flooded",
+      s3 = "Community\nApplied",          # ← add \n here
+      s4 = "Applied",
+      s5 = "Funded"
     ),
-    stage = factor(stage, levels = stage_levels_4),
+    stage = factor(stage,
+      levels = c("Flooded", "Community\nApplied", "Applied", "Funded")  # ← match here
+    ),
     subset = factor(recode(subset_key,
       all = "A. All flood-exposed",
       rep = "B. Repeat flood-exposed"
@@ -668,8 +672,8 @@ fig5a <- ggplot(fig5_income, aes(x = val)) +
   theme_minimal(base_size = 11) +
   theme(
     strip.text.x       = element_text(face = "bold", size = 10),
-    strip.text.y.left  = element_text(face = "bold", size = 9, angle = 0,
-                                       hjust = 1, colour = "grey15"),
+    strip.text.y.left  = element_text(face = "bold", size = 7, angle = 90,
+                                       hjust = 0.5, vjust = 0.5, colour = "grey15"),
     strip.background   = element_blank(),
     strip.placement    = "outside",
     panel.grid.minor   = element_blank(),
@@ -709,8 +713,8 @@ fig5b <- ggplot(fig5_hvalue, aes(x = val)) +
   theme_minimal(base_size = 11) +
   theme(
     strip.text.x       = element_text(face = "bold", size = 10),
-    strip.text.y.left  = element_text(face = "bold", size = 9, angle = 0,
-                                       hjust = 1, colour = "grey15"),
+    strip.text.y.left  = element_text(face = "bold", size = 7, angle = 90,
+                                       hjust = 0.5, vjust = 0.5, colour = "grey15"),
     strip.background   = element_blank(),
     strip.placement    = "outside",
     panel.grid.minor   = element_blank(),

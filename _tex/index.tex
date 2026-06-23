@@ -214,13 +214,13 @@ eligible or who applies. We construct a novel parcel-scale dataset
 linking flood exposure across 78 events from 1996 to 2020 with FEMA
 Hazard Mitigation Assistance applications and funding outcomes for 3.14
 million residential properties in eastern North Carolina. Of 202,623
-flood-exposed properties, 65.6\% sit in jurisdictions with at least one
-HMA application, yet only 5,746 (2.8\%) themselves apply, and 3,432
-(59.7\%) of those applications are funded. Repeat-flooded properties
-apply at roughly twice the rate of once-flooded properties but are
-funded at similar rates, indicating the application bottleneck is not
-resolved by greater flood exposure. Funded properties are concentrated
-in lower-value, less-white neighborhoods than the broader flood-exposed
+flood-exposed properties, 65.6\% reside in jurisdictions with at least
+one HMA application, yet only 5,746 (2.8\%) apply, and 3,432 (59.7\%) of
+those applications are funded. Repeat-flooded properties apply at
+roughly twice the rate of once-flooded properties but are funded at
+similar rates, indicating the application bottleneck is not resolved by
+greater flood exposure. Funded properties are concentrated in
+lower-value, less-white neighborhoods than the broader flood-exposed
 population, but within those neighborhoods they are typical rather than
 the cheapest homes, indicating that selection operates between
 neighborhoods rather than within them. Increasing application rates
@@ -425,19 +425,19 @@ and for whom.
 
 We track 3.14 million residential parcels across 78 counties in eastern
 North Carolina through four sequential stages of the federal Hazard
-Mitigation Assistance pipeline: \textbf{flooded} (intersection with any
-of 78 modeled flood-event footprints from 1996 through 2020), \textbf{in
-an applying community} (jurisdiction with at least one HMA application
-submitted during the study period), \textbf{applied} (parcel itself
-named on an HMA application), and \textbf{funded} (application
-ultimately awarded). Flood-exposure data come from a random-forest model
-of NFIP claims and policies-in-force
-\citep{garciaReconstructingRepetitiveFlood2025}, application and funding
-records from the North Carolina Department of Public Safety, and
-neighborhood demographics from the 2013 American Community Survey at the
-block-group scale. Property values come from the CoreLogic database and
-are expressed as percentile ranks across the study-area sample. Detailed
-methods are described in the Materials and Methods section.
+Mitigation Assistance pipeline: flooded (intersection with any of 78
+modeled flood-event footprints from 1996 through 2020), in an applying
+community (jurisdiction with at least one HMA application submitted
+during the study period), applied (parcel itself named on an HMA
+application), and funded (application ultimately awarded).
+Flood-exposure data come from a random-forest model of NFIP claims and
+policies-in-force \citep{garciaReconstructingRepetitiveFlood2025},
+application and funding records from the North Carolina Department of
+Public Safety, and neighborhood demographics from the 2013 American
+Community Survey at the block-group scale. Property values come from the
+CoreLogic database and are expressed as percentile ranks across the
+study-area sample. Detailed methods are described in the Materials and
+Methods section.
 
 \begin{figure}
 
@@ -447,21 +447,20 @@ methods are described in the Materials and Methods section.
 
 }
 
-\caption{\label{fig-data}}
+\caption{\label{fig-data}\textbf{Spatial distribution of properties
+across the flooded-to-funded pipeline.} Left: schematic of the four
+sequential pipeline stages tracked in our analysis. Top-left: flooded
+parcels (n = 202,623) across the 78-county study area, with stacked
+footprints from 78 modeled flood events between 1996 and 2020.
+Top-right: repetitive flooding intensity, with cells colored by the
+number of modeled flood events affecting each location (2, 3, 4, or 5+
+events). Bottom-left: jurisdictions classified as applying communities
+(shaded by share of eligible parcels named on at least one HMA
+application). Bottom-right: representative neighborhood showing
+individual parcels named on HMA applications, distinguished by funding
+outcome (applied but not funded vs.~applied and funded).}
 
 \end{figure}%
-
-\textbf{Spatial distribution of properties across the flooded-to-funded
-pipeline.} Left: schematic of the four sequential pipeline stages
-tracked in our analysis. Top-left: flooded parcels (n = 202,623) across
-the 78-county study area, with stacked footprints from 78 modeled flood
-events between 1996 and 2020. Top-right: repetitive flooding intensity,
-with cells colored by the number of modeled flood events affecting each
-location (2, 3, 4, or 5+ events). Bottom-left: jurisdictions classified
-as applying communities (shaded by share of eligible parcels named on at
-least one HMA application). Bottom-right: representative neighborhood
-showing individual parcels named on HMA applications, distinguished by
-funding outcome (applied but not funded vs.~applied and funded).
 
 While most flooded properties are in communities that have applied for
 funding, very few properties submit applications themselves
@@ -490,20 +489,18 @@ appear to influence selection outcomes among those who do apply.
 
 }
 
-\caption{\label{fig-funnel}}
+\caption{\label{fig-funnel}\textbf{The application stage is the largest
+attrition point in the HMA pipeline: fewer than 3\% of flooded
+properties ever submit an application.} Bars show the number of 1--4
+family residential parcels at each of four pipeline stages: flooded in
+any of the 78 modeled events; in an applying community (jurisdiction
+with at least one HMA application during the study period); itself named
+on an HMA application; and ultimately funded. Panel A: all flood-exposed
+parcels (n = 202,623). Panel B: parcels exposed to flooding in more than
+one event (n = 66,443). Repeat-flooded properties apply at roughly twice
+the rate of once-flooded properties but are funded at similar rates.}
 
 \end{figure}%
-
-\textbf{The application stage is the largest attrition point in the HMA
-pipeline: fewer than 3\% of flooded properties ever submit an
-application.} Bars show the number of 1--4 family residential parcels at
-each of four pipeline stages: flooded in any of the 78 modeled events;
-in an applying community (jurisdiction with at least one HMA application
-during the study period); itself named on an HMA application; and
-ultimately funded. Panel A: all flood-exposed parcels (n = 202,623).
-Panel B: parcels exposed to flooding in more than one event (n =
-66,443). Repeat-flooded properties apply at roughly twice the rate of
-once-flooded properties but are funded at similar rates.
 
 \begin{figure}
 
@@ -513,17 +510,15 @@ once-flooded properties but are funded at similar rates.
 
 }
 
-\caption{\label{fig-value}}
+\caption{\label{fig-value}\textbf{Funded properties are within
+lower-value neighborhoods than the broader flood-exposed population, but
+are typical homes within those neighborhoods.} (A) Distribution of
+property values expressed as percentile ranks relative to the entire
+study-area sample. (B) Distribution expressed as percentile ranks within
+each property's block group. Property values are from CoreLogic (2022
+dollars); red vertical lines mark stage medians.}
 
 \end{figure}%
-
-\textbf{Funded properties are within lower-value neighborhoods than the
-broader flood-exposed population, but are typical homes within those
-neighborhoods.} (A) Distribution of property values expressed as
-percentile ranks relative to the entire study-area sample. (B)
-Distribution expressed as percentile ranks within each property's block
-group. Property values are from CoreLogic (2022 dollars); red vertical
-lines mark stage medians.
 
 Property values shift substantially across pipeline stages, both
 relative to the broader study area and within each property's own block
@@ -795,29 +790,12 @@ from the American Community Survey (ACS).
 
 We use this combined dataset to track residential properties through
 four sequential stages of the flood mitigation funding pipeline
-(Figure~\ref{fig-overview}): whether a property has flooded, whether its
+(Figure~\ref{fig-data}): whether a property has flooded, whether its
 local government has applied for funding, whether the property itself is
 named on an application, and whether that application was funded.
 Eligibility for HMGP funding (defined as inundation during a
 presidentially-declared event in the property's county) is applied as an
-analytical filter within these stages but not displayed separately in
-the figures. The framework allows us to identify, at each transition,
-which properties drop out and how the composition of the remaining pool
-shifts in terms of flood-exposure history, property value, and
-neighborhood racial composition.
-
-\begin{figure}
-
-\centering{
-
-\includegraphics[width=1\linewidth,height=\textheight,keepaspectratio]{figures/Fig5_overview.png}
-
-}
-
-\caption{\label{fig-overview}Overview of the flooded-to-funded
-mitigation pipeline and the key datasets contributing to each stage.}
-
-\end{figure}%
+analytical filter within these stages but not displayed separately.
 
 \subsection{Study area and unit of
 analysis}\label{study-area-and-unit-of-analysis}
@@ -949,18 +927,18 @@ classification}\label{mitigation-type-classification}
 
 To examine whether the wealth and racial-composition shifts we observe
 at the funded stage differ between buyouts and elevations, we classify
-each funded mitigation record by project type. NCDPS records contain a
-\texttt{project\_type} field that distinguishes acquisitions (which
-requires household relocation) from elevations (which preserves in-place
-residence). We classify parcels with at least one acquisition record as
-buyouts and parcels with at least one elevation record (and no
-Acquisition) as elevations. Approximately one third of funded parcels
-lack a project-type classification in the NCDPS records, and the
+each funded mitigation record by mitigation type. NCDPS records
+distinguish acquisitions (in which a property is purchased and the
+structure demolished, requiring household relocation) from elevations
+(in which the existing structure is raised above the flood level,
+preserving in-place residence). We classify parcels with at least one
+acquisition record as buyouts, parcels with at least one elevation
+record (but no acquisition) as elevations, and the remainder ---
+including Utility Infrastructure, Quick Connect, and records with no
+mitigation type specified --- as Other/Unknown. Approximately one third
+of funded parcels fall into the Other/Unknown category, and the
 comparison below is restricted to the classified subset of 2,294
 parcels.
-
-\section*{References}\label{references}
-\addcontentsline{toc}{section}{References}
 
 \section*{Acknowledgments}\label{acknowledgments}
 \addcontentsline{toc}{section}{Acknowledgments}
@@ -979,6 +957,12 @@ Homeland Security or NOAA. NOAA had no role in the design or conduct of
 the study; data analysis or interpretation; preparation, review, or
 approval of the manuscript; or decision to submit the manuscript for
 publication.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\renewcommand{\bibsection}{}
+\bibliography{bibliography.bib}
 
 \section*{Supplementary Materials}\label{supplementary-materials}
 \addcontentsline{toc}{section}{Supplementary Materials}
@@ -1047,13 +1031,13 @@ events}
 
 Garcia et al. \citeyearpar{garciaReconstructingRepetitiveFlood2025} flag
 seven of the 78 events as having unusually high ratios of
-modeled-flooded buildings to NFIP claims
-(\texttt{bld\_claims\_ratio\ \textgreater{}\ 20}): Unnamed Piedmont
-flooding b (2003), TS Andrea (2013), TS Allison (2001), Unnamed western
-flooding (2000), Unnamed western flooding (2006), Unnamed western
-flooding (2003), and Unnamed eastern flooding (2004). We rebuilt the
-full flooded-to-funded pipeline excluding these seven events to verify
-that our headline findings do not depend on them.
+modeled-flooded buildings to NFIP claims (more than 20 buildings per
+claim), indicating greater uncertainty in those event reconstructions.
+We rebuilt the full flooded-to-funded pipeline excluding these seven
+events to verify that our headline findings do not depend on them; the
+excluded events are listed in
+\href{https://doi.org/10.1029/2025EF006026}{Garcia et al.} and
+reproduced in Table~\ref{tbl-sens-funnel}.
 
 Excluding the seven events meaningfully reduces the flooded-residential
 population (202,623 → 172,329 parcels, −14.9\%) and the eligible
@@ -1080,8 +1064,8 @@ high-uncertainty events.
 
 \begin{longtable}[]{@{}lrrr@{}}
 \caption{Pipeline funnel under baseline (all 78 events) and sensitivity
-(71 events excluding the seven Garcia et al.~flag for
-\texttt{bld\_claims\_ratio\ \textgreater{}\ 20}).}\label{tbl-sens-funnel}\tabularnewline
+(71 events, excluding the seven events Garcia et al.~flag as having
+unusually high uncertainty).}\label{tbl-sens-funnel}\tabularnewline
 \toprule\noalign{}
 Stage & Baseline (78 events) & Sensitivity (71 events) & Change \\
 \midrule\noalign{}
@@ -1121,7 +1105,6 @@ KS test: Black (D-statistic) & 0.151 & 0.162 \\
 \end{longtable}
 
 
-\bibliography{bibliography.bib}
 
 
 
