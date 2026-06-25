@@ -658,7 +658,7 @@ fig5a <- ggplot(fig5_income, aes(x = val)) +
   facet_grid(stage ~ subset, scales = "free_y", switch = "y") +
   coord_cartesian(xlim = c(0, 175000)) +
   scale_x_continuous(
-    breaks = seq(0, 175000, 25000),
+    breaks = seq(0, 150000, 50000),                  # ← every $50k, not $25k
     labels = scales::label_dollar(scale = 1e-3, suffix = "k"),
     expand = c(0.005, 0)
   ) +
@@ -699,7 +699,7 @@ fig5b <- ggplot(fig5_hvalue, aes(x = val)) +
   facet_grid(stage ~ subset, scales = "free_y", switch = "y") +
   coord_cartesian(xlim = c(0, 500000)) +
   scale_x_continuous(
-    breaks = seq(0, 500000, 100000),
+    breaks = seq(0, 150000, 50000),                  # ← every $50k, not $25k
     labels = scales::label_dollar(scale = 1e-3, suffix = "k"),
     expand = c(0.005, 0)
   ) +
