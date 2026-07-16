@@ -1,9 +1,21 @@
-stage,median_val,metric
-Flooded,43279.5,income
-Community Applied,42955,income
-Applied,42282,income
-Funded,40694,income
-Flooded,129500,hvalue
-Community Applied,124850,hvalue
-Applied,124350,hvalue
-Funded,109050,hvalue
+stage,subset,median_val,metric
+Flooded,A. All flood-exposed,43279.5,income
+Flooded,B. Repeat flood-exposed,41991,income
+"Community
+Applied",A. All flood-exposed,42955,income
+"Community
+Applied",B. Repeat flood-exposed,42000,income
+Applied,A. All flood-exposed,42282,income
+Applied,B. Repeat flood-exposed,41985,income
+Funded,A. All flood-exposed,40694,income
+Funded,B. Repeat flood-exposed,41278,income
+Flooded,A. All flood-exposed,129500,hvalue
+Flooded,B. Repeat flood-exposed,119200,hvalue
+"Community
+Applied",A. All flood-exposed,124850,hvalue
+"Community
+Applied",B. Repeat flood-exposed,116150,hvalue
+Applied,A. All flood-exposed,124350,hvalue
+Applied,B. Repeat flood-exposed,117850,hvalue
+Funded,A. All flood-exposed,109050,hvalue
+Funded,B. Repeat flood-exposed,107900,hvalue
