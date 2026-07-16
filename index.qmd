@@ -1,13 +1,15 @@
 ---
 title: Identifying Obstacles to Equitable Flood Mitigation Funding 
 author:
-  - name: Julian Plough
-    affiliations: 
-        - ref: unc-eep
   - name: Russell Blessing
+    equal-contributor: true
     affiliations:
         -  ref: unc-dcrp
     orcid: 0000-0003-4973-4032
+  - name: Julian Plough
+    equal-contributor: true
+    affiliations: 
+        - ref: unc-eep
   - name: Miyuki Hino
     affiliations:
         - ref: unc-dcrp
