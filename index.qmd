@@ -3,18 +3,15 @@ title: Identifying Obstacles to Equitable Flood Mitigation Funding 
 author:
   - name: Russell Blessing
     equal-contributor: true
+    note: "These authors contributed equally to this work."
     affiliations:
         -  ref: unc-dcrp
     orcid: 0000-0003-4973-4032
   - name: Julian Plough
     equal-contributor: true
+    note: "These authors contributed equally to this work."
     affiliations: 
         - ref: unc-eep
-  - name: Miyuki Hino
-    affiliations:
-        - ref: unc-dcrp
-        - ref: unc-eep
-    orcid: 0000-0001-9369-5769
   - name: Antonia Sebastian
     affiliations:
         - ref: unc-dcrp
@@ -24,7 +21,11 @@ author:
     affiliations: 
         - ref: unc-eep
     orcid: 0009-0008-3189-1658
-
+  - name: Miyuki Hino
+    affiliations:
+        - ref: unc-dcrp
+        - ref: unc-eep
+    orcid: 0000-0001-9369-5769
 affiliations:
 - id: unc-dcrp
   name: University of North Carolina at Chapel Hill
