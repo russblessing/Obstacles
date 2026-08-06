@@ -390,6 +390,42 @@ ggsave(file.path(here::here("figures"), "fig3.png"),
        fig3, width = 7.5, height = 9, dpi = 300)
 ```
 
+### 7.3  KS tests — property value shift
+
+```{r ks-test-value}
+# KS tests for property-value shifts: flooded baseline vs funded stage.
+# Panel A = study-area percentile (pct_A); Panel B = within-block-group percentile (pct_B).
+# Parallels the racial-composition tests (ks_tests) built for Fig. 4.
+
+val_A_flood  <- value_df |> dplyr::filter(reach1, !is.na(pct_A)) |> dplyr::pull(pct_A)
+val_A_funded <- value_df |> dplyr::filter(reach5, !is.na(pct_A)) |> dplyr::pull(pct_A)
+val_B_flood  <- value_df |> dplyr::filter(reach1, !is.na(pct_B)) |> dplyr::pull(pct_B)
+val_B_funded <- value_df |> dplyr::filter(reach5, !is.na(pct_B)) |> dplyr::pull(pct_B)
+
+ks_val_A <- suppressWarnings(ks.test(val_A_funded, val_A_flood))
+ks_val_B <- suppressWarnings(ks.test(val_B_funded, val_B_flood))
+
+ks_value <- list(
+  area = list(
+    D = unname(ks_val_A$statistic), p = ks_val_A$p.value,
+    n_flooded = length(val_A_flood), n_funded = length(val_A_funded)
+  ),
+  bg = list(
+    D = unname(ks_val_B$statistic), p = ks_val_B$p.value,
+    n_flooded = length(val_B_flood), n_funded = length(val_B_funded)
+  )
+)
+
+cat("KS tests: property-value distribution, flooded baseline vs funded stage\n")
+cat("----------------------------------------------------------------------\n")
+cat(sprintf("Study-area pctile (A):  D = %.3f   p = %s   n_flooded = %d   n_funded = %d\n",
+            ks_value$area$D, format.pval(ks_value$area$p, eps = 1e-4),
+            ks_value$area$n_flooded, ks_value$area$n_funded))
+cat(sprintf("Within-BG pctile  (B):  D = %.3f   p = %s   n_flooded = %d   n_funded = %d\n",
+            ks_value$bg$D, format.pval(ks_value$bg$p, eps = 1e-4),
+            ks_value$bg$n_flooded, ks_value$bg$n_funded))
+```
+
 ---
 
 ## 8  Fig. 4 — neighborhood racial composition by HMA stage
@@ -916,6 +952,82 @@ cat("\nWrote figS2_mit_type_value.png and figS3_mit_type_black.png\n")
 ```
 
 
+### Robustness: are type-missing funded records systematically different?
+
+```{r missing-type-robustness}
+# ~1/3 of funded records lack a project-type classification. We can't observe
+# whether they skew buyout vs. elevation, but we CAN check whether they differ
+# from classified records on observable attributes. (All are funded, so
+# stage-reached is constant; property value and block-group demographics are
+# the meaningful covariates.)
+
+funded_typed_chk <- funded_typed |>
+  dplyr::left_join(value_df |> dplyr::select(parcel_index, pct_A),
+                   by = "parcel_index") |>
+  dplyr::mutate(has_type = mit_type %in% c("Buyout", "Elevation"))
+
+# --- Median comparison ---
+missing_type_summary <- funded_typed_chk |>
+  dplyr::group_by(has_type) |>
+  dplyr::summarise(
+    n             = dplyr::n(),
+    med_value_pct = round(median(pct_A, na.rm = TRUE), 1),
+    med_black_pct = round(median(bg_pct_black_2013, na.rm = TRUE), 1),
+    med_white_pct = round(median(bg_pct_white_2013, na.rm = TRUE), 1),
+    med_income    = round(median(bg_median_income_2013, na.rm = TRUE), 0),
+    .groups = "drop"
+  ) |>
+  dplyr::mutate(group = dplyr::if_else(has_type,
+                                       "Classified (buyout/elevation)",
+                                       "Unclassified")) |>
+  dplyr::select(group, n, med_value_pct, med_black_pct, med_white_pct, med_income)
+
+knitr::kable(
+  missing_type_summary,
+  col.names = c("Group", "n", "Median value pctile", "Median % Black",
+                "Median % White", "Median income ($)"),
+  caption = "Funded records with vs. without project-type classification"
+)
+
+# --- KS tests: classified vs. unclassified on each observable ---
+ks_by_attr <- function(col) {
+  x1 <- funded_typed_chk[[col]][funded_typed_chk$has_type]
+  x2 <- funded_typed_chk[[col]][!funded_typed_chk$has_type]
+  x1 <- x1[!is.na(x1)]; x2 <- x2[!is.na(x2)]
+  if (length(x1) < 2 || length(x2) < 2) return(NULL)
+  k <- suppressWarnings(ks.test(x1, x2))
+  list(D = unname(k$statistic), p = k$p.value,
+       n_classified = length(x1), n_unclassified = length(x2))
+}
+
+missing_type_ks <- list(
+  value  = ks_by_attr("pct_A"),
+  black  = ks_by_attr("bg_pct_black_2013"),
+  white  = ks_by_attr("bg_pct_white_2013"),
+  income = ks_by_attr("bg_median_income_2013")
+)
+
+cat("Classified vs. unclassified funded records (KS tests):\n")
+for (nm in names(missing_type_ks)) {
+  k <- missing_type_ks[[nm]]
+  if (!is.null(k))
+    cat(sprintf("  %-7s D = %.3f  p = %s  (n_class = %d, n_unclass = %d)\n",
+                nm, k$D, format.pval(k$p, eps = 1e-4),
+                k$n_classified, k$n_unclassified))
+}
+
+# --- Bundle for index_inputs (with convenience scalars for inline prose) ---
+pick <- function(col, grp) missing_type_summary[[col]][missing_type_summary$group == grp]
+missing_type_check <- list(
+  summary                = missing_type_summary,
+  ks                     = missing_type_ks,
+  med_value_classified   = pick("med_value_pct", "Classified (buyout/elevation)"),
+  med_value_unclassified = pick("med_value_pct", "Unclassified"),
+  med_black_classified   = pick("med_black_pct", "Classified (buyout/elevation)"),
+  med_black_unclassified = pick("med_black_pct", "Unclassified")
+)
+```
+
 ### Buyouts vs Elevations: Main Text (no rep loss)
 
 ```{r buyout-elevation-plot, fig.width=6, fig.height=5}
@@ -1300,15 +1412,15 @@ index_inputs <- list(
   funnel          = funnel,
   fig3_medians    = fig3_medians,
   fig4_medians    = fig4_medians,
-  fig5_medians    = fig5_medians,                    # ← comma added
-  ks_tests        = ks_tests,                        # ← comma added
+  fig5_medians    = fig5_medians,                    
+  ks_tests        = ks_tests,                        
+  ks_value        = ks_value,                        
   mit_type_analysis    = mit_type_analysis,
+  missing_type_check   = missing_type_check,  
   race_value_cor       = race_value_cor,
   sensitivity_analysis = sensitivity_analysis
 )
 
-# Also pull the CoreLogic-vs-ACS agreement summary from 07b's output, if it exists.
-# Wrapped in tryCatch so Step 8 still runs cleanly if the file isn't there yet.
 acs_cl_summary <- tryCatch({
   cmp <- readr::read_csv(file.path(out_dir, "acs_corelogic_value_comparison.csv"),
                          show_col_types = FALSE)

@@ -210,23 +210,27 @@ Federal flood mitigation funding in the United States flows to
 homeowners through a multi-stage application process administered by
 local governments. Identifying barriers to access has been constrained
 by data: prior studies observe only who receives funding, not who is
-eligible or who applies. We construct a novel parcel-scale dataset
+exposed or who applies. We construct a novel parcel-scale dataset
 linking flood exposure across 78 events from 1996 to 2020 with FEMA
-Hazard Mitigation Assistance applications and funding outcomes for 3.14
-million residential properties in eastern North Carolina. Of the 202,623
-flood-exposed properties, about two-thirds reside in jurisdictions with
-at least one HMA application, yet only 5,746 (2.8\%) apply, of which
-3,432 (59.7\%) are funded. Repeat-flooded properties apply at roughly
-twice the rate of once-flooded properties but are funded at similar
-rates, indicating that the application bottleneck applies even for
-properties for which mitigation would likely be cost-beneficial. Funded
-properties are concentrated in lower-value, less-white neighborhoods
-than the broader flood-exposed population, but within those
-neighborhoods they are typical rather than the cheapest homes,
-indicating that selection operates between neighborhoods rather than
-within them. Increasing application rates --- particularly among
-repetitively flooded households --- is the largest leverage point our
-data identify for expanding cost-effective mitigation investment.
+Hazard Mitigation Assistance (HMA) applications and funding outcomes for
+3.14 million residential properties in eastern North Carolina. Of the
+202,623 flood-exposed properties, about two-thirds are in jurisdictions
+with at least one HMA application, yet only 5,746 (2.8\%) apply, of
+which 3,432 (59.7\%) are funded; the steepest attrition therefore occurs
+at the application stage rather than at community participation or
+funding selection. Funded properties are concentrated in lower-value,
+less-white neighborhoods than the broader flood-exposed population, but
+within those neighborhoods they fall near the median of the local
+property-value distribution rather than at its bottom, indicating that
+value-based selection operates between neighborhoods rather than within
+them. Repeat-flooded properties apply at roughly twice the rate of
+once-flooded properties but are funded at essentially the same rate
+(58.5\% vs.~62.0\%); because repeat-flooded properties carry higher
+expected avoided losses, their greater cost-effectiveness does not
+translate into higher funding. Expanding cost-effective mitigation
+therefore has two complementary levers: raising application rates among
+repeat-flooded households, and raising the share of those applicants
+ultimately funded.
 \end{abstract}
 
 
@@ -302,23 +306,29 @@ to under-resourced communities and tribal nations.
 
 Here, we combine novel datasets spanning over two decades of flood
 exposure, grant applications, and funding allocations in North Carolina
-to examine the full flooded-to-funded pipeline
+to examine the full flooded-to-funded HMA pipeline
 (Figure~\ref{fig-funding-pipeline}). Flood exposure is derived from
 random forest models trained on address-level National Flood Insurance
-Program (NFIP) records, producing inundation footprints for 78 damaging
-events between 1996 and 2020
+Program (NFIP) records. Although trained on the NFIP sample, the models
+interpolate to generate spatially continuous inundation footprints
+covering the entire study area, so flood exposure is estimated for all
+parcels regardless of insurance status. We retain footprints for 78
+damaging events between 1996 and 2020
 \citep{garciaReconstructingRepetitiveFlood2025}. We link these exposure
 records to property-level application and funding data for FEMA Hazard
 Mitigation Assistance (HMA) grant programs, provided by the North
-Carolina Department of Public Safety (NCDPS). Together, these datasets
-allow us to track individual properties across four stages (flooded, in
-an applying community, applied, and funded) and to examine how the
-composition of properties shifts in terms of flood exposure history,
-property value, and neighborhood racial demographics at each transition.
-This is the first analysis to follow properties from flood exposure
-through to mitigation funding outcome at the property level, making it
-possible to distinguish between households applying and not being
-selected and those that never enter the applicant pool at all.
+Carolina Department of Public Safety (NCDPS).
+
+Together, these datasets allow us to track individual properties across
+four stages: (1) whether the property flooded, (2) is located in an
+applying community, (3) applied themsleves, and (4) recieved funding. We
+then used this staged data to examine how the composition of properties
+shifts in terms of flood exposure history, property value, and
+neighborhood racial demographics at each transition. This is the first
+analysis to follow properties from flood exposure through to mitigation
+funding outcome at the property level, making it possible to distinguish
+between households applying and not being selected and those that never
+enter the applicant pool at all.
 
 \begin{figure}
 
@@ -352,21 +362,24 @@ disaster response and administers the nation's largest hazard mitigation
 grants. These programs --- delivered through FEMA's Hazard Mitigation
 Assistance (HMA) framework --- include the post-disaster Hazard
 Mitigation Grant Program (HMGP), which is triggered by presidential
-disaster declarations; Flood Mitigation Assistance (FMA), an annually
-appropriated program targeting flood-insured properties; and Building
-Resilient Infrastructure and Communities (BRIC), a competitive
+disaster declarations (PDDs); Flood Mitigation Assistance (FMA), an
+annually appropriated program targeting flood-insured properties; and
+Building Resilient Infrastructure and Communities (BRIC), a competitive
 pre-disaster program that replaced Pre-Disaster Mitigation (PDM) in
 2020. FEMA made over \$1.6 billion available through BRIC and FMA alone
 in FY2024, with demand for these competitive funds regularly exceeding
 the available pool.
 
 Concerns about equitable access to FEMA assistance in the aftermath of
-disasters have been extensively documented. Following presidential
-disaster declarations, FEMA's Individuals and Households Program (IHP)
-provides up to approximately \$44,000 per household for temporary
-housing, property repair, unemployment assistance, and other immediate
-needs. Racial and income disparities in IHP access have been observed
-across a wide range of events, including the 1994 Northridge earthquake
+disasters have been extensively documented, where race, sex, and other
+social determinants are associated with differential rates of
+participation regardless of need. Following presidential disaster
+declarations, FEMA's Individuals and Households Program (IHP) provides
+up to approximately \$44,000 per household for temporary housing,
+property repair, unemployment assistance, and other immediate needs
+(\citet{fema2024ihp}). Racial and income disparities in IHP access have
+been observed across a wide range of events, including the 1994
+Northridge earthquake
 \citep{bolinNorthridgeEarthquakeCommunitybased1998}, Hurricane Katrina
 \citep{kamelSocialMarginalisationFederal2012}, Hurricane Dolly in South
 Texas \citep{riveraProceduralVulnerabilityIts2022}, and the 2017 Thomas
@@ -388,24 +401,24 @@ in 1985 and now totaling over 43,000 completed transactions nationally,
 the buyout program has shifted from its rural origins into an
 increasingly urban policy \citep{machManagedRetreatVoluntary2019}. Its
 geographic distribution is deeply uneven: states with the highest
-cumulative flood damages (Florida, Louisiana, Mississippi) rank among
-the lowest for buyout deployment, while activity concentrates in
-wealthier, denser counties with greater administrative capacity
-\citep{machManagedRetreatVoluntary2019}. Within those counties,
-bought-out properties are concentrated in lower-income and more racially
-diverse neighborhoods, a pattern Mach et al.
+cumulative flood losses (total dollars) account for comparatively few
+buyouts (number of properties acquired), while nationally, buyout
+activity concentrates in wealthier, denser counties with greater
+administrative capacity \citep{machManagedRetreatVoluntary2019}. Within
+those counties, bought-out properties are concentrated in lower-income
+and more racially diverse neighborhoods, a pattern Mach et al.
 \citeyearpar{machManagedRetreatVoluntary2019} describe as a ``buyout
 paradox'' in which government capacity governs access at the county
 scale while within-county selection follows a different logic
 \citep{elliottRacialInequitiesFederal2020a, loughranUnequalRetreatsHow2022}.
-Home elevation funding exhibits a different pattern, flowing
-disproportionately toward high-income and predominantly white
+By contrast, reporting on FEMA elevation grants suggests that funding
+may flow disproportionately toward high-income and predominantly white
 communities \citep{frankFEMAHomeElevation2022}.
 
 \subsection{Procedural challenges to accessing
 funding}\label{procedural-challenges-to-accessing-funding}
 
-While these structural barriers shape outcomes at a broad scale, the
+While these program-level barriers shape outcomes at a broad scale, the
 mechanisms that produce inequity operate at the level of specific
 program rules and local implementation practices. The HMA application
 process is lengthy and multi-layered. After federal funding is released,
@@ -420,7 +433,7 @@ six years \citep{machManagedRetreatVoluntary2019}. The federal
 government typically covers 75\% of project costs, with states, local
 governments, and in some cases homeowners responsible for the remaining
 25\% non-federal match. Higher federal shares apply in specific
-circumstances --- up to 90\% for small impoverished communities across
+circumstances --- up to 90\% for small, lower-income communities across
 programs, and, under FMA, up to 90\% for Repetitive Loss and 100\% for
 Severe Repetitive Loss properties.
 
@@ -438,8 +451,10 @@ the program. Providing the 25\% non-federal cost share can also be a
 barrier. In some states, including North Carolina, the state government
 covers the matching share for HMGP buyout projects under disaster
 declarations \citep{ncdpsHazardMitigationGrant2026}. Where the state
-does not, the funding must come from local government budgets or
-individual homeowners, which can significantly constrain participation
+does not, the match must come from local government budgets or
+individual homeowners --- and sometimes from community organizations or
+nonprofits, though we do not observe these contributions in our data.
+Reliance on these sources can significantly constrain participation
 among cash-strapped jurisdictions and lower-income households.
 
 At the household level, procedural requirements such as documentation,
@@ -455,10 +470,15 @@ which avoided losses scale with property replacement value, leading to
 concerns that applications from lower-value properties could face
 systematic disadvantages in the benefit-to-cost ratio
 \citep{tateFloodExposureSocial2021, junodEquitableInvestmentsResilience2021a, millerCostCostEffectivenessExpanding2023}.
-However, project costs also scale with property characteristics, and CBA
-exemptions exist for substantially damaged structures below specified
-cost thresholds, so the net distributional effect of CBA on funding
-outcomes remains an open empirical question.
+This expectation is complicated, however. Project costs also rise with
+property value, and some projects (i.e.~acquisitions of substantially
+damaged homes, or any project under \$1 million) can qualify as
+cost-effective without a property-specific benefit-cost analysis,
+relying instead on pre-calculated benefits or a simplified written
+justification
+\citep{femaHMAProgramPolicyGuide2024, femaBCAStreamlined2024}. Whether
+CBA, on net, pushes funded properties toward higher or lower property
+values therefore remains an open empirical question.
 
 \section{Results}\label{results}
 
@@ -468,8 +488,9 @@ pipeline: flooded (intersection with any of 78 modeled flood-event
 footprints from 1996 through 2020), in an applying community
 (jurisdiction with at least one HMA application submitted during the
 study period), applied (parcel itself named on an HMA application), and
-funded (application ultimately awarded). Flood-exposure data come from a
-random-forest model of NFIP claims and policies-in-force
+funded (application ultimately awarded). Flood-exposure data come from
+flood extent maps created using random forest models trained on NFIP
+claims and policies-in-force
 \citep{garciaReconstructingRepetitiveFlood2025}, application and funding
 records from the North Carolina Department of Public Safety, and
 neighborhood demographics from the 2013 American Community Survey at the
@@ -500,25 +521,23 @@ outcome (applied but not funded vs.~applied and funded).}
 
 \end{figure}%
 
-While most flooded properties are in communities that have applied for
-funding, very few properties submit applications themselves
-(Figure~\ref{fig-funnel}). Among all flooded properties
-(Figure~\ref{fig-funnel}, left panel), 65.6\% are in jurisdictions where
-local government assisted with the submission of at least one HMA
-application. Only 2.8\% of flooded properties are themselves named on an
-application, and 59.7\% of those applications are funded (only 1.7\% of
-all flooded properties).
+Among all flooded properties (Figure~\ref{fig-funnel}, Panel A), 65.6\%
+are in jurisdictions where the local government submitted at least one
+HMA application, yet only 2.8\% apply themselves. Of those that apply,
+59.7\% are funded --- just 1.7\% of all flooded properties. The steepest
+attrition occurs at the application step, not at community participation
+or funding selection.
 
 Approximately 32.8\% of flooded properties were exposed to more than one
 of the 78 modeled events (Figure~\ref{fig-funnel}, right panel).
 Repeat-flooded properties are more likely to be located in jurisdictions
 with at least one HMA application (81.1\% versus 65.6\% among all
-flooded properties) and themselves apply at roughly twice the rate of
-once-flooded properties (5.6\% versus 2.8\%). However, the share of
-applications that ultimately receive funding is essentially the same
-across the two groups (58.5\% versus 59.7\%), indicating that while
-greater flood exposure increases the likelihood of applying, it does not
-appear to influence selection outcomes among those who do apply.
+flooded properties) and apply at roughly twice the rate of once-flooded
+properties (5.6\% versus 2.8\%). However, the share of applications that
+ultimately receive funding is essentially the same across the two groups
+(58.5\% versus 59.7\%), indicating that while greater flood exposure
+increases the likelihood of applying, it does not appear to influence
+selection likelihood among those who do apply.
 
 \begin{figure}
 
@@ -549,14 +568,14 @@ the rate of once-flooded properties but are funded at similar rates.}
 
 }
 
-\caption{\label{fig-value}\textbf{Funded properties average lower
-property values than the broader flood-exposed population, but are
-typical homes for their neighborhoods.} (A) Distribution of property
-values for parcels reaching each stage of the flooded-to-funded
-pipeline, expressed as percentile ranks relative to the entire
-study-area sample. (B) The same distributions, expressed as percentile
-ranks within each parcel's block group. Property values are from
-CoreLogic (2022 dollars); red vertical lines mark stage medians.}
+\caption{\label{fig-value}\textbf{Funded properties are lower-value than
+the broader flood-exposed population, but are not the lowest-value homes
+within their own neighborhoods.} (A) Distribution of property values for
+parcels reaching each stage of the flooded-to-funded pipeline, expressed
+as percentile ranks relative to the entire study-area sample. (B) The
+same distributions, expressed as percentile ranks within each parcel's
+block group. Property values are from CoreLogic (2022 dollars); red
+vertical lines mark stage medians.}
 
 \end{figure}%
 
@@ -573,9 +592,15 @@ near the 60th percentile (Flooded: 61st, Funded: 57th). The much larger
 spread in Panel A, where flooded properties are within the 51st
 percentile and funded properties at the 23rd, indicates that the
 property-value shift across pipeline stages is driven by selection
-between neighborhoods rather than within them. Funded properties are
-typical homes in lower-value neighborhoods, not the lowest-value homes
-in any given neighborhood.
+between neighborhoods rather than within them. Funded properties are not
+the lowest-value homes in their neighborhoods --- they sit slightly
+above the local median (around the 57th percentile), a position that
+changes little across pipeline stages. Two-sample Kolmogorov--Smirnov
+tests echo this contrast: the property-value distribution shifts
+substantially between the flooded and funded stages relative to the
+study area (D = 0.342) but much less within block groups (D = 0.126).
+The shift toward lower-value properties therefore operates between
+neighborhoods rather than within them.
 
 \begin{figure}
 
@@ -599,30 +624,29 @@ Properties applying for and receiving mitigation funding are located in
 block groups with lower shares of non-Hispanic White residents and
 correspondingly higher shares of Black residents than block groups at
 preceding pipeline stages (Figure~\ref{fig-race}). Two-sample
-Kolmogorov-Smirnov tests confirm that the distributions of block-group
-racial composition at the funded stage differ significantly from those
-at the flooded stage (NH White: D = 0.131, p \textless{} 0.001; Black: D
-= 0.151, p \textless{} 0.001). Median NH White share declines from
-69.3\% at the flooded stage to 60.0\% at funded properties, with a
+Kolmogorov--Smirnov tests show that the block-group racial-composition
+distributions shift substantially between the flooded and funded stages
+(NH White: D = 0.131; Black: D = 0.151). Median NH White share declines
+from 69.3\% at the flooded stage to 60.0\% at funded properties, with a
 near-symmetric rise in Black share from 16.4\% to 26.1\%.
 
 The racial composition of funded parcels differs substantially by
 mitigation type (Figure~\ref{fig-mit-type}), which contributes to the
 funded-stage shift documented in Figure~\ref{fig-race}. Among funded
 parcels with a classified project type, buyouts outnumber elevations by
-approximately 4:1 (1,879 buyouts vs 415 elevations). Buyouts are located
-in block groups with substantially higher shares of Black residents than
-elevations (median 47\% versus 35.7\%; Kolmogorov-Smirnov D = 0.366, p
-\textless{} 0.001), while property-value differences between mitigation
-types are more modest (median 20th versus 25.7th percentile; D = 0.141,
-p \textless{} 0.001). The pattern holds in the repeat-flooded subset (D
-= 0.32 for racial composition), indicating that the buyout-elevation
-divergence is not driven by event-specific dynamics. Because roughly
-one-third of funded parcels have project types we could not classify, we
-cannot fully attribute the Figure~\ref{fig-race} shift to either
-mechanism, but the combination of buyouts' higher prevalence and their
-concentration in less-white neighborhoods suggests they are a meaningful
-contributor.
+approximately 4:1 (1,879 buyouts vs 415 elevations). Buyouts sit in
+block groups with substantially higher shares of Black residents than
+elevations (median 47\% versus 35.7\%; Kolmogorov--Smirnov D = 0.366, p
+\textless{} 0.001). By contrast, the two types occupy similarly valued
+properties --- their property-value distributions largely overlap
+(median 20th versus 25.7th percentile; D = 0.141, p \textless{} 0.001).
+The buyout--elevation difference in racial composition also holds among
+repeat-flooded funded parcels (D = 0.32), so it is not confined to
+once-flooded properties. Because roughly one-third of funded parcels
+have project types we could not classify, we cannot fully attribute the
+Figure~\ref{fig-race} shift to either mechanism, but buyouts' higher
+prevalence and their concentration in less-white neighborhoods suggest
+they are a meaningful contributor.
 
 \begin{figure}
 
@@ -632,16 +656,19 @@ contributor.
 
 }
 
-\caption{\label{fig-mit-type}\textbf{The racial composition shift at the
-funded stage is driven primarily by buyouts, while property-value
-differences between mitigation types are modest.} Distribution of (A)
-study-area property-value percentile rank and (B) block-group share of
-Black residents for funded parcels classified as buyouts (Acquisition,
-blue) and elevations (Elevation, red). Dashed vertical lines mark each
-group's median. Funded parcels without a recorded project-type
-classification (approximately one-third of the funded set) are excluded.
-Statistical comparison: property value D = 0.141, \% Black D = 0.366
-(both p \textless{} 0.001).}
+\caption{\label{fig-mit-type}\textbf{The racial-composition shift at the
+funded stage is driven by buyouts.} Distributions of (A) study-area
+property-value percentile rank and (B) block-group share of Black
+residents, comparing funded parcels classified as buyouts (blue) and
+elevations (red); dashed vertical lines mark each group's median. Within
+each panel, a two-sample Kolmogorov--Smirnov test compares the buyout
+and elevation distributions, where D is the maximum distance between
+their cumulative distributions (0 = identical, 1 = fully separated).
+Buyouts and elevations differ sharply in neighborhood Black share (Panel
+B: D = 0.366, p \textless{} 0.001) but overlap in property value (Panel
+A: D = 0.141, p \textless{} 0.001). Funded parcels without a recorded
+project-type classification (approximately one-third of the funded set)
+are excluded.}
 
 \end{figure}%
 
@@ -652,43 +679,52 @@ point in the flooded-to-funded HMA pipeline. Of all flooded residential
 properties in eastern North Carolina, only 2.8\% apply for funding, and
 of those, 59.7\% receive an award. By tracking the full population of
 flooded properties rather than only those that received funding, we
-identify a substantial population of households who would benefit from
-mitigation assistance but do not appear in the applicant pool. Many of
-these properties have flooded repeatedly, suggesting that mitigation
-would likely be cost-beneficial and that they would meet the
-benefit-cost thresholds required for federal funding. This unrealized
-demand, to our knowledge not previously quantified at the property
-scale, suggests that interventions targeting the application stage may
-shift the composition of who ultimately receives funding more than
-further refinement of the selection criteria applied to existing
-applicants. Because HMA-funded mitigations have repeatedly been found to
-be cost-effective at the project level
-\citep{multihazardmitigationcouncilNaturalHazardMitigation2017},
-expanding the applicant and funding pool among flooded households would
-translate to more cost-effective mitigation in aggregate, not merely a
-more competitive selection process among existing applicants.
+identify a substantial population of households --- to our knowledge not
+previously quantified at the property scale --- that would benefit from
+mitigation assistance but never enter the applicant pool. This
+unrealized demand suggests that interventions targeting the application
+stage may do more to expand the reach of funding to flooded households
+than refining the selection criteria applied to the small pool of
+existing applicants.
 
-Among the small fraction of properties that do receive funding, the
-composition shifts toward lower-value, less-white neighborhoods,
-indicating that the selection process among applicants is not itself
-driving inequitable funding outcomes. Funded properties are within the
-23rd percentile of the study-area property-value distribution (compared
-to the 51st at the flooded stage) and in block groups with a median
-non-Hispanic white share of 60\% (compared to 69.3\%) and Black share of
-26.1\% (compared to 16.4\%). The shift occurs primarily between
-neighborhoods rather than within them: within-block-group percentiles
-for funded properties differ only modestly from those at the flooded
-stage. This pattern aligns with the neighborhood-scale evidence in prior
-work
+Many of these non-applying properties have flooded repeatedly. Because
+repeatedly flooded properties carry higher expected avoided losses ---
+and thus more readily clear federal benefit-cost thresholds --- yet are
+funded at no higher a rate than other applicants, directing outreach
+toward these households could raise the average cost-effectiveness of
+the funded portfolio, which refining selection among existing applicants
+cannot achieve. Fully capturing the unmet demand we document, however,
+would require additional mitigation appropriations rather than
+reallocation of a fixed budget, since demand already exceeds available
+funding.
+
+Among the small fraction of properties that receive funding, the
+composition shifts toward lower-value, less-white neighborhoods.
+Relative to the flooded stage, funded properties fall at the 23rd
+percentile of the study-area property-value distribution (from the
+51st), sit in block groups with a median non-Hispanic white share of
+60\% (from 69.3\%) and a median Black share of 26.1\% (from 16.4\%).
+This shift occurs primarily between neighborhoods rather than within
+them: within-block-group percentiles for funded properties differ only
+modestly from those at the flooded stage. The racial shift likely tracks
+the value shift through the strong correlation between race and property
+value in eastern North Carolina, where less-white neighborhoods tend to
+be lower-value (Figure~\ref{fig-si-race-value}). This neighborhood-scale
+pattern aligns with prior work
 \citep{machManagedRetreatVoluntary2019, elliottRacialInequitiesFederal2020a},
-which finds that within whiter, wealthier counties, funding concentrates
-in lower-value, less-white neighborhoods. Because we do not conduct an
+which finds that within whiter, wealthier counties funding concentrates
+in lower-value, less-white neighborhoods; because we do not conduct an
 analogous county-level comparison, our results speak to this
 within-county scale rather than the county-scale pattern those studies
-also document. It likely reflects the strong correlation between race
-and property value in eastern North Carolina, where less-white
-neighborhoods tend to also be lower-value
-(Figure~\ref{fig-si-race-value}).
+also document.
+
+That funding reaches these lower-value, less-white neighborhoods
+indicates applicants from them are not disadvantaged at the selection
+stage --- the inequity we identify arises earlier, at application.
+Whether the shift is itself equitable is a separate question, however,
+particularly for buyouts, where funding concentrated in lower-income,
+less-white neighborhoods may reflect the disproportionate relocation of
+marginalized residents rather than an equitable distribution of benefit.
 
 Repeat-flooded properties apply at roughly twice the rate of
 once-flooded properties but are funded at similar rates. This pattern
@@ -697,56 +733,61 @@ more than selection outcomes, and points to an underused targeting lever
 for HMA prioritization. HMGP, which dominates HMA funding in our study
 area, becomes available event-by-event following PDDs and weights damage
 from a single event heavily in the cost-benefit calculation. Mitigation
-programs that gave greater weight to a property's cumulative flood
-history, rather than only the severity of a single damaging event, would
-more closely align selection with the population our data identifies as
-most likely to be affected again.
+programs that weighted cumulative flood history over single-event
+severity would concentrate funding where expected avoided losses, and
+thus cost-effectiveness, are greatest.
 
-Decomposing the funded set by mitigation type reveals that the racial
-composition shift at the funded stage is driven primarily by buyout
-activity rather than elevation activity (Figure~\ref{fig-mit-type}).
-Buyouts dominate the funded record (approximately 4:1 over elevations
-among classified parcels) and concentrate in block groups with
-substantially higher shares of Black residents than elevations (KS D =
-0.366, p \textless{} 0.001). Property-value differences between
-mitigation types are more modest (D = 0.141), suggesting that the
-property-value shift across the pipeline reflects a neighborhood-scale
-selection process affecting both mitigation types similarly, while the
-racial composition shift reflects a buyout-specific dynamic. This
-pattern extends prior county-scale findings of demographic differences
-between buyout and elevation targeting
-\citep{machManagedRetreatVoluntary2019, elliottRacialInequitiesFederal2020a, frankFEMAHomeElevation2022}
-to the parcel scale within neighborhoods, and persists in the
-repeat-flooded subset (D = 0.32), suggesting it reflects structural
-differences in how buyouts and elevations are sited rather than
-event-specific dynamics.
+Decomposing the funded set by mitigation type shows that the
+racial-composition shift at the funded stage is a buyout phenomenon
+(Figure~\ref{fig-mit-type}). Buyouts sit in block groups with a
+substantially higher median Black share than elevations (47\%
+vs.~35.7\%; KS D = 0.366, p \textless{} 0.001;
+Figure~\ref{fig-mit-type}, Panel B). By contrast, the property-value
+distributions of buyouts and elevations largely overlap (D = 0.141, p
+\textless{} 0.001), so the property-value shift across the pipeline
+reflects a neighborhood-scale selection process affecting both
+mitigation types similarly, whereas the racial-composition shift is
+buyout-specific. This parcel-scale, within-neighborhood pattern extends
+prior county-scale findings of demographic differences between buyout
+and elevation targeting
+\citep{machManagedRetreatVoluntary2019, elliottRacialInequitiesFederal2020a, frankFEMAHomeElevation2022}.
+The gap is not confined to once-flooded properties: among repeat-flooded
+funded parcels, buyouts still fall in markedly more-Black block groups
+than elevations (D = 0.32, p \textless{} 0.001), consistent with a
+systematic difference in how the two programs are sited.
 
 Our cross-sectional data also let us rule out several candidate
 mechanisms for the equity patterns we observe. If the federal CBA
 requirement were primarily driving selection toward higher-value
 properties, we would expect funded properties to be concentrated at
-higher property values; instead, we see the opposite, especially given
-that we observe many lower-value properties applying. Because CBA is a
+higher property values; instead, we see the opposite, and many
+lower-value properties apply. This holds within neighborhoods as well
+where funded properties sit only slightly above their block-group median
+(\textasciitilde60th percentile, roughly the same position they occupy
+at the flooded stage) so funding shows no tendency to select
+higher-value homes even within a given neighborhood. Because CBA is a
 federal rule applied uniformly across states, this pattern should
-generalize beyond North Carolina. The high community participation rate
-in our study area (65.6\% of flooded properties are in jurisdictions
-with at least one HMA application) similarly argues against wholesale
-community-level non-participation as the binding constraint, though this
-likely differs in states without state-level cost-share absorption like
-North Carolina's. We also see no evidence of applicant pools dominated
-by high-value properties, which would be consistent with local
-governments selectively recruiting wealthier households for application
-support, though this pattern may be specific to North Carolina and could
-differ in states with different local capacity or outreach practices.
-Together, these patterns suggest that the concentration of funding in
-lower-value, less-white communities is determined primarily at the
-application stage --- where the median shift toward these communities is
-largest --- rather than by selection within the applicant pool, where
-the applied-to-funded shift is comparatively modest. In other words, the
-pattern appears to be a function of who applies, and who is solicited to
-apply, more than which applications are chosen. Disentangling whether
-this reflects differential outreach, programmatic preferences for buyout
-siting, or other mechanisms is an important direction for future work.
+generalize beyond North Carolina. Community participation is not the
+binding constraint in our study area: 65.6\% of flooded properties sit
+in jurisdictions with at least one HMA application, yet only 2.8\% apply
+themselves. The sharp attrition occurs at the individual application
+stage, not the community stage. This likely differs in states without
+North Carolina's state-level cost-share absorption, where community
+participation may itself be a larger barrier. We also see no evidence of
+applicant pools dominated by high-value properties, which would be
+consistent with local governments selectively recruiting wealthier
+households for application support, though this pattern may be specific
+to North Carolina and could differ in states with different local
+capacity or outreach practices. Together, these patterns suggest that
+the concentration of funding in lower-value, less-white communities is
+determined primarily at the application stage --- where the median shift
+toward these communities is largest --- rather than by selection within
+the applicant pool, where the applied-to-funded shift is comparatively
+modest. In other words, the pattern appears to be a function of who
+applies, and who is solicited to apply, more than which applications are
+chosen. Disentangling whether this reflects differential outreach,
+programmatic preferences for buyout siting, or other mechanisms is an
+important direction for future work.
 
 Several methodological limitations apply. First, our flood-exposure data
 come from a reconstruction of 78 flood events in eastern North Carolina
@@ -755,7 +796,7 @@ The underlying models are conservative and likely underestimate the true
 population of flood-exposed properties. A sensitivity analysis dropping
 the seven events Garcia et al.~flag for unusually high
 modeled-to-observed damage ratios produces materially identical headline
-findings: the funded population shifts by only 2.3\% and median
+findings: the number of funded parcels changes by only 2.3\%, and median
 demographic compositions move by less than half a percentage point
 (Supplementary Materials). Second, our data on the timing of
 applications and mitigations is incomplete, so we do not distinguish
@@ -764,28 +805,34 @@ mitigation. This is particularly relevant for our repeat-flood analysis:
 properties that were elevated or bought out before a subsequent modeled
 flood event may appear in our data as repeat-flooded even though the
 structure may no longer have been exposed or may have been physically
-removed. Because these cases require a property to have already been
-funded for mitigation, they should be concentrated in the funded stage
-and are unlikely to be numerous; they would, if anything, modestly
-overstate the funding rate among repeat-flooded properties rather than
-change our central conclusion that repeat-flooded properties apply at
-higher rates but are funded at similar rates to once-flooded properties.
-Third, approximately one third of funded mitigation records in our data
-lack a project-type classification, so our buyout-versus-elevation
-comparison (Results section, Figure~\ref{fig-mit-type}) is restricted to
-the classified subset. The unclassified records may not be randomly
-distributed across mitigation types, and any systematic gap (for
-example, if smaller or older projects disproportionately lack
-documentation) could affect the magnitude of the buyout-elevation
-contrast we report. Fourth, our block-group demographic data come from
-the 2013 American Community Survey, which falls near the midpoint of the
-study window but does not capture demographic changes over the full
-1996--2020 period. Finally, while we document more of the application
-process than past studies, there are still many aspects that we do not
-observe, such as how local governments approach (or fail to approach)
-flooded households about funding opportunities, procedural obstacles
-that may deter applications from interested households, and sources of
-non-governmental assistance.
+removed. Because we do not observe the date on which each buyout or
+elevation was completed, we cannot determine when a property entered its
+mitigated state; rather than drop these properties on the basis of
+assumptions, we conservatively retain them throughout the sample.
+Because these cases require a property to have already been funded for
+mitigation, they should be concentrated in the funded stage and are
+unlikely to be numerous; they would, if anything, modestly overstate the
+funding rate among repeat-flooded properties rather than change our
+central conclusion that repeat-flooded properties apply at higher rates
+but are funded at similar rates to once-flooded properties. Third,
+approximately one third of funded mitigation records lack a project-type
+classification, so our buyout-versus-elevation comparison
+(Figure~\ref{fig-mit-type}) is restricted to the classified subset. We
+cannot observe whether these unclassified records skew toward buyouts or
+elevations; on the attributes we do observe, however, they closely
+resemble the classified records (median value percentile 27.5 vs.~21;
+median block-group Black share 34\% vs.~47\%), suggesting the missing
+classifications are not strongly systematic along the dimensions central
+to our findings. We nonetheless cannot rule out differences by
+mitigation type itself, which we do not observe. Fourth, our block-group
+demographic data come from the 2013 American Community Survey, which
+falls near the midpoint of the study window but does not capture
+demographic changes over the full 1996--2020 period. Finally, while we
+document more of the application process than past studies, there are
+still many aspects that we do not observe, such as how local governments
+approach (or fail to approach) flooded households about funding
+opportunities, procedural obstacles that may deter applications from
+interested households, and sources of non-governmental assistance.
 
 A broader interpretive caveat concerns what our findings imply for
 affected households. Federal mitigation funding flows disproportionately
@@ -797,13 +844,18 @@ post-mitigation outcome data we do not have; this is particularly
 relevant for buyouts, where prior research has questioned whether
 participation reflects informed preference or limited alternatives
 \citep{machManagedRetreatVoluntary2019}. Within block groups, funded
-properties are typical of the local housing stock rather than the
-cheapest, suggesting that within-community project selection does not
-systematically filter out lower-value homes. The broader compositional
-shift we observe is determined largely by upstream pipeline stages such
-as community participation, application rates, and the spatial
-distribution of flood exposure itself, rather than by within-community
-project selection. Procedural neutrality at any one step is not
+properties sit slightly above the local median rather than being the
+lowest-value homes, so the compositional shift we observe is driven
+largely by upstream pipeline stages --- community participation,
+application rates, and the spatial distribution of flood exposure itself
+--- rather than by the within-neighborhood selection of which properties
+are ultimately funded. We do not observe within-neighborhood racial
+shifts directly, since racial composition is measured only at the
+block-group level; however, the stability of within-neighborhood
+property-value percentiles across pipeline stages, together with the
+strong neighborhood-scale correlation between race and property value,
+gives us some basis to infer that little within-neighborhood racial
+selection occurs. Procedural neutrality at any one step is not
 sufficient to establish that the cumulative distribution of funding is
 substantively equitable.
 
@@ -813,12 +865,20 @@ This study follows individual residential properties from flood exposure
 through mitigation funding outcome at each significant stage, including
 the previously unobserved application stage. The largest falloff in the
 pipeline occurs at the application step, and properties that reach
-subsequent stages tend to be lower-value and concentrated in less-white
-neighborhoods, primarily through between-neighborhood selection rather
-than within-neighborhood selection. These results identify the
-application stage as a leverage point for expanding access to federal
-mitigation funding, one that prior work focused on funded outcomes alone
-has been unable to observe.
+subsequent stages tend to be lower-value and located in less-white
+neighborhoods. For property value, this shift operates primarily between
+neighborhoods rather than within them; because racial composition is
+measured only at the block-group level, the racial shift is necessarily
+a between-neighborhood pattern, and within-neighborhood racial selection
+is something we cannot observe. These results identify two leverage
+points that prior work --- focused on funded outcomes alone --- could
+not observe. The first is the application stage: expanding who applies
+would broaden access to federal mitigation funding. The second lies in
+the funding decision itself, where repeatedly flooded applicants are
+funded at no higher a rate than once-flooded applicants despite their
+higher expected avoided losses; reweighting cost-benefit criteria toward
+cumulative flood history offers a concrete, lower-cost way to align
+funding with risk.
 
 These findings arrive amid significant federal restructuring of hazard
 mitigation policy. The FEMA Review Council's May 2026 final report
@@ -846,15 +906,37 @@ FEMA Region IV \citep{garciaReconstructingRepetitiveFlood2025}. The
 model domain encompasses the entirety of the Neuse--Pamlico and Cape
 Fear watersheds and portions of the Pee Dee and Chowan--Roanoke
 watersheds that drain through eastern North Carolina, overlapping with
-78 of North Carolina's 100 counties. This measure indicates whether a
-parcel intersected the modeled footprint of an event but does not
-capture the severity of any individual exposure; some properties
-classified as flooded may have experienced relatively minor inundation.
-We link these flood exposure data to parcel geometries from the North
-Carolina OneMap database, attribute records from the CoreLogic property
-database, application and funding records from the North Carolina
-Department of Public Safety (NCDPS), and block-group demographic data
-from the American Community Survey (ACS).
+78 of North Carolina's 100 counties (Figure~\ref{fig-studyarea}). This
+measure indicates whether a parcel intersected the modeled footprint of
+an event but does not capture the severity of any individual exposure;
+some properties classified as flooded may have experienced relatively
+minor inundation. We link these flood exposure data to parcel geometries
+from the North Carolina OneMap database, attribute records from the
+CoreLogic property database, application and funding records from the
+North Carolina Department of Public Safety (NCDPS), and block-group
+demographic data from the American Community Survey (ACS).
+
+\phantomsection\label{cell-fig-studyarea}
+\begin{figure}[H]
+
+\centering{
+
+\pandocbounded{\includegraphics[keepaspectratio]{index_files/figure-pdf/fig-studyarea-1.pdf}}
+
+}
+
+\caption{\label{fig-studyarea}Study-area domain within North Carolina.
+The shaded region shows the model domain (the union of the
+Neuse--Pamlico and Cape Fear watersheds and the portions of the Pee Dee
+and Chowan--Roanoke watersheds draining through eastern North Carolina);
+unshaded counties fall outside the domain. County boundaries are shown
+for reference.}
+
+\end{figure}%
+
+\textsubscript{Source:
+\href{https://russblessing.github.io/Obstacles/index-preview.html}{Article
+Notebook}}
 
 We use this combined dataset to track residential properties through
 four sequential stages of the flood mitigation funding pipeline
@@ -892,15 +974,19 @@ stages}\label{flooded-to-funded-pipeline-stages}
 Flood exposure is constructed at the parcel level using the inundation
 footprints generated by Garcia et al.
 \citeyearpar{garciaReconstructingRepetitiveFlood2025}, which resolve
-individual flood events on a 30 m × 30 m grid. We retain the 78 events
-with the largest claim counts in the study area, which together account
-for 95\% of all NFIP claims filed over the period
-\citep{garciaReconstructingRepetitiveFlood2025}. A parcel is classified
-as flooded if its geometry intersects the footprint of at least one of
-these 78 events. This property-resolved flood history serves as the
-reference set against which subsequent pipeline stages are measured,
-enabling the first parcel-level linkage between flood exposure and
-federal mitigation outcomes in the region.
+individual flood events on a 30 m × 30 m grid. Garcia et al.~identify
+discrete flood events by detecting temporal clusters of NFIP claims: an
+event is defined as at least 15 claims recorded within a 7-day window in
+a single USGS HUC-6 watershed
+\citep{garciaReconstructingRepetitiveFlood2025}. This procedure yields
+78 events between January 1996 and September 2020, which together
+account for 67,259 claims --- 95\% of all NFIP claims filed in the study
+area over the period. We use all 78. A parcel is classified as flooded
+if its geometry intersects the footprint of at least one of these 78
+events. This property-resolved flood history serves as the reference set
+against which subsequent pipeline stages are measured, enabling the
+first parcel-level linkage between flood exposure and federal mitigation
+outcomes in the region.
 
 Application and funding records cover two FEMA Hazard Mitigation
 Assistance (HMA) programs administered by NCDPS: the Hazard Mitigation
@@ -942,10 +1028,10 @@ applied but not funded, or applied and funded.
 
 \subsection{Pipeline analysis}\label{pipeline-analysis}
 
-Property values are taken from the most recent CoreLogic vintage and
-used at the parcel level. We express each property's value as a
-percentile rank across all 1--4 family residential parcels in the study
-area, using relative rather than absolute property value as our primary
+Property values are taken from the 2022 CoreLogic vintage and used at
+the parcel level. We express each property's value as a percentile rank
+across all 1--4 family residential parcels in the study area, using
+relative rather than absolute property value as our primary
 property-value measure throughout the analysis. To complement the broad
 ranking, we also compute each property's value as a percentile rank
 within its own census block group. This within-neighborhood percentile
@@ -958,8 +1044,8 @@ block-group scale and joined to each parcel based on its containing
 block group. We use the 2013 vintage of the American Community Survey
 because it falls near the midpoint of our 1996--2020 flood-exposure
 window. The 18 disaster declarations represented in our study area span
-this period, with the earliest being Hurricane Fran (1996) and the most
-recent being Hurricane Florence (2018). Block-group variables include
+this period, with the earliest being Hurricane Bertha (1996) and the
+most recent being Hurricane Isaias (2020). Block-group variables include
 the share of residents identifying as non-Hispanic white, the share
 identifying as non-Hispanic Black, and median household income. We
 aggregate parcel-level results to the block group when reporting
@@ -975,13 +1061,30 @@ the number of events a parcel intersected, not the severity (such as
 depth, duration, or damage) of any individual exposure. Second, we
 describe the distribution of property values (study area wide percentile
 rank) and block-group demographics at each stage, to identify where in
-the pipeline shifts in wealth and racial composition emerge.
+the pipeline shifts in wealth and racial composition emerge. To test
+whether the property-value and neighborhood racial-composition
+distributions shift across the pipeline, we compare the funded stage
+against the flooded baseline using two-sample Kolmogorov--Smirnov (KS)
+tests. The KS test statistic D is the maximum absolute difference
+between the two groups' empirical cumulative distribution functions,
+ranging from 0 (identical distributions) to 1 (no overlap); it captures
+the overall difference in distributional shape rather than a difference
+in means or medians. Property-value tests are conducted at the parcel
+level on both the study-area percentile and the within-block-group
+percentile, the latter restricted to block groups containing at least
+five residential parcels; racial-composition tests are conducted at the
+block-group level, with one observation per block group reaching each
+stage. Because the pipeline stages are nested subsets rather than
+independent samples, we interpret these tests as descriptive comparisons
+of distributional shape rather than as formal statistical inference.
 
 This cross-sectional design intentionally treats the pipeline as a
 series of selection filters. By observing applications, funding, and
 flood exposure at the parcel level for every residential property in the
-study area, we identify the transitions at which inequities emerge,
-rather than inferring them from funded properties alone.
+study area, we identify the transitions at which the composition of the
+surviving population shifts --- in flood exposure, property value, and
+neighborhood demographics --- rather than inferring these shifts from
+funded properties alone.
 
 \subsection{Mitigation type
 classification}\label{mitigation-type-classification}
