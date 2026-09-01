@@ -57,6 +57,7 @@ _site_libs/
 
 # binary data
 *.rds
+!figures/index_inputs.rds
 *.rda
 *.parquet
 *.feather
